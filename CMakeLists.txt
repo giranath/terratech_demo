@@ -7,7 +7,7 @@ find_package(mapgen 0.2 REQUIRED)
 find_package(sdl2 REQUIRED)
 
 add_executable(mmap_demo
-        main.cpp)
+        src/main.cpp src/wrapper/sdl.hpp src/wrapper/sdl.cpp src/game.cpp src/game.hpp)
 target_include_directories(mmap_demo PUBLIC ${mapgen_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
 target_link_libraries(mmap_demo ${mapgen_LIBRARIES} ${SDL2_LIBRARIES})
 target_compile_definitions(mmap_demo PRIVATE -DGAME_VERSION="${PROJECT_VERSION}")

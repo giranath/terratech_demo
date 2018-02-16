@@ -1,0 +1,98 @@
+#include "sdl.hpp"
+
+namespace sdl {
+
+//
+// Poll event iterator
+//
+
+poll_event_iterator::poll_event_iterator()
+: event()
+, is_last(true) {
+}
+
+poll_event_iterator::poll_event_iterator(SDL_Event event)
+: event(event)
+, is_last(false) {
+
+}
+
+poll_event_iterator poll_event_iterator::operator++(int) noexcept {
+    auto temp = *this;
+
+    (*this)++;
+
+    return temp;
+}
+
+poll_event_iterator& poll_event_iterator::operator++() noexcept {
+    is_last = SDL_PollEvent(&event) == 0;
+
+    return *this;
+}
+
+bool poll_event_iterator::operator==(const poll_event_iterator& other) const noexcept {
+    return is_last == other.is_last;
+}
+
+bool poll_event_iterator::operator!=(const poll_event_iterator& other) const noexcept {
+    return is_last != other.is_last;
+}
+
+poll_event_iterator::reference poll_event_iterator::operator*() const noexcept {
+    return event;
+}
+
+poll_event_iterator::pointer poll_event_iterator::operator->() const noexcept {
+    return &event;
+}
+
+//
+// WINDOW
+//
+
+window::window(const char* title, int width, int height) noexcept
+: sdl_window(SDL_CreateWindow(title,
+                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                              width, height,
+                              SDL_WINDOW_OPENGL))
+, gl_ctx{SDL_GL_CreateContext(sdl_window)} {
+
+}
+
+window::window(window&& other) noexcept
+: sdl_window(other.sdl_window) {
+    other.sdl_window = nullptr;
+}
+
+window& window::operator=(window&& other) noexcept {
+    std::swap(sdl_window, other.sdl_window);
+
+    return *this;
+}
+
+window::~window() noexcept {
+    SDL_GL_DeleteContext(gl_ctx);
+    SDL_DestroyWindow(sdl_window);
+}
+
+void window::gl_swap() const noexcept {
+    SDL_GL_SwapWindow(sdl_window);
+}
+
+bool window::good() const noexcept {
+    return sdl_window != nullptr && gl_ctx != 0;
+}
+
+bool window::gl_good() const noexcept {
+    return gl_ctx != 0;
+}
+
+window::operator SDL_Window*() {
+    return sdl_window;
+}
+
+window::operator const SDL_Window*() const {
+    return sdl_window;
+}
+}
