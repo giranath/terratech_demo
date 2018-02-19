@@ -34,6 +34,12 @@ int main() {
         return 1;
     }
 
+    gl::vertex_array vao = gl::vertex_array::make();
+
+    gl::bind(vao);
+
+    gl::buffer vbo = gl::buffer::make();
+
     const auto TARGET_FRAME_DURATION = std::chrono::milliseconds(17);
 
     game::frame_duration last_frame_duration = TARGET_FRAME_DURATION;
@@ -45,6 +51,8 @@ int main() {
     while(is_running) {
         const auto start_of_frame = game::clock::now();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>{vbo});
+
         game_state.render();
         window.gl_swap();
 
