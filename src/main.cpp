@@ -1,3 +1,4 @@
+#include "wrapper/opengl.hpp"
 #include "wrapper/sdl.hpp"
 #include "game.hpp"
 
@@ -27,6 +28,12 @@ int main() {
         return 1;
     }
 
+    // Initializes gl3w with context created in window
+    if(gl3wInit() != 0) {
+        std::cerr << "cannot initialize gl3w" << std::endl;
+        return 1;
+    }
+
     const auto TARGET_FRAME_DURATION = std::chrono::milliseconds(17);
 
     game::frame_duration last_frame_duration = TARGET_FRAME_DURATION;
@@ -37,6 +44,7 @@ int main() {
     bool is_running = true;
     while(is_running) {
         const auto start_of_frame = game::clock::now();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         game_state.render();
         window.gl_swap();
 
