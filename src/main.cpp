@@ -7,6 +7,9 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
+#include <fstream>
+#include <vector>
+#include <memory>
 
 int main() {
     sdl::context<>& sdl = sdl::context<>::instance();
@@ -40,6 +43,23 @@ int main() {
 
     gl::buffer vbo = gl::buffer::make();
 
+    std::vector<gl::shader> shaders;
+    gl::vertex_shader vertex_shader;
+    gl::fragment_shader fragment_shader;
+
+    std::ifstream shader_stream{"src/shader/standard.vert"};
+    auto vert_status = vertex_shader.compile(shader_stream);
+    std::cout << "vertex: " << vert_status.message() << std::endl;
+    shaders.push_back(std::move(vertex_shader));
+
+    shader_stream = std::ifstream("src/shader/standard.frag");
+    auto frag_status = fragment_shader.compile(shader_stream);
+    std::cout << "fragment: " << frag_status.message() << std::endl;
+    shaders.push_back(std::move(fragment_shader));
+
+    gl::program shader_prog;
+    shader_prog.attach(shaders.begin(), shaders.end());
+
     const auto TARGET_FRAME_DURATION = std::chrono::milliseconds(17);
 
     game::frame_duration last_frame_duration = TARGET_FRAME_DURATION;
@@ -51,6 +71,7 @@ int main() {
     while(is_running) {
         const auto start_of_frame = game::clock::now();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        gl::bind(shader_prog);
         gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>{vbo});
 
         game_state.render();
