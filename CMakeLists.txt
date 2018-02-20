@@ -18,8 +18,9 @@ add_executable(mmap_demo
         src/wrapper/sdl.cpp
         src/game.cpp
         src/game.hpp
-        src/wrapper/opengl.cpp
-        src/wrapper/opengl.hpp)
+        src/opengl/opengl.hpp
+        src/opengl/shader.cpp
+        src/opengl/shader.hpp src/opengl/program.cpp src/opengl/program.hpp src/opengl/bind.hpp src/opengl/vertex_array.cpp src/opengl/vertex_array.hpp src/opengl/buffer.cpp src/opengl/buffer.hpp)
 
 target_include_directories(mmap_demo PUBLIC ${mapgen_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS} "${CMAKE_BINARY_DIR}/include")
 target_link_libraries(mmap_demo ${mapgen_LIBRARIES} ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} ${CMAKE_DL_LIBS})

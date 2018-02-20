@@ -1,4 +1,4 @@
-#include "wrapper/opengl.hpp"
+#include "opengl/opengl.hpp"
 #include "wrapper/sdl.hpp"
 #include "game.hpp"
 
