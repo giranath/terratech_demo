@@ -14,14 +14,34 @@ execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/thirdparty/gl3
 add_executable(mmap_demo
         "${CMAKE_BINARY_DIR}/src/gl3w.c"
         src/main.cpp
-        src/wrapper/sdl.hpp
-        src/wrapper/sdl.cpp
+        src/sdl/sdl.hpp
         src/game.cpp
         src/game.hpp
         src/opengl/opengl.hpp
         src/opengl/shader.cpp
-        src/opengl/shader.hpp src/opengl/program.cpp src/opengl/program.hpp src/opengl/bind.hpp src/opengl/vertex_array.cpp src/opengl/vertex_array.hpp src/opengl/buffer.cpp src/opengl/buffer.hpp)
+        src/opengl/shader.hpp
+        src/opengl/program.cpp
+        src/opengl/program.hpp
+        src/opengl/bind.hpp
+        src/opengl/vertex_array.cpp
+        src/opengl/vertex_array.hpp
+        src/opengl/buffer.cpp
+        src/opengl/buffer.hpp
+        src/sdl/poll_event_iterator.cpp
+        src/sdl/poll_event_iterator.hpp
+        src/sdl/window.cpp
+        src/sdl/window.hpp
+        src/sdl/context.hpp)
 
-target_include_directories(mmap_demo PUBLIC ${mapgen_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS} "${CMAKE_BINARY_DIR}/include")
-target_link_libraries(mmap_demo ${mapgen_LIBRARIES} ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} ${CMAKE_DL_LIBS})
+target_include_directories(mmap_demo PUBLIC
+        ${mapgen_INCLUDE_DIRS}
+        ${SDL2_INCLUDE_DIRS}
+        ${OPENGL_INCLUDE_DIRS}
+        "${CMAKE_BINARY_DIR}/include")
+target_link_libraries(mmap_demo
+        ${mapgen_LIBRARIES}
+        ${SDL2_LIBRARIES}
+        ${OPENGL_LIBRARIES}
+        ${CMAKE_DL_LIBS})
+
 target_compile_definitions(mmap_demo PRIVATE -DGAME_VERSION="${PROJECT_VERSION}")
