@@ -1,3 +1,4 @@
+#include "opengl/opengl.hpp"
 #include "wrapper/sdl.hpp"
 #include "game.hpp"
 
@@ -6,6 +7,9 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
+#include <fstream>
+#include <vector>
+#include <memory>
 
 int main() {
     sdl::context<>& sdl = sdl::context<>::instance();
@@ -24,6 +28,12 @@ int main() {
     sdl::window window("RTS v." GAME_VERSION " (mapgen v." MAPGEN_VERSION_STR ")", 800, 600);
     if(!window.good()) {
         std::cerr << "cannot create window: " << SDL_GetError() << std::endl;
+        return 1;
+    }
+
+    // Initializes gl3w with context created in window
+    if(gl3wInit() != 0) {
+        std::cerr << "cannot initialize gl3w" << std::endl;
         return 1;
     }
 
