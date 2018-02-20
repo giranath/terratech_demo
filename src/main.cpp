@@ -11,14 +11,6 @@
 #include <vector>
 #include <memory>
 
-template<typename shader_type>
-std::unique_ptr<gl::shader> load_shader(std::istream& stream) {
-    std::unique_ptr<gl::shader> shader_ptr = std::make_unique<shader_type>();
-    shader_ptr->compile(stream);
-
-    return shader_ptr;
-}
-
 int main() {
     sdl::context<>& sdl = sdl::context<>::instance();
 
@@ -45,29 +37,6 @@ int main() {
         return 1;
     }
 
-    gl::vertex_array vao = gl::vertex_array::make();
-
-    gl::bind(vao);
-
-    gl::buffer vbo = gl::buffer::make();
-
-    std::vector<std::unique_ptr<gl::shader>> shaders;
-    gl::fragment_shader fragment_shader;
-
-    std::ifstream shader_stream{"src/shader/standard.vert"};
-    shaders.push_back(load_shader<gl::vertex_shader>(shader_stream));
-
-    shader_stream = std::ifstream("src/shader/standard.frag");
-    shaders.push_back(load_shader<gl::fragment_shader>(shader_stream));
-
-    gl::program shader_prog;
-    //std::vector<const gl::shader&> shader_ptrs;
-    //std::transform(shaders.begin(), shaders.end(), std::back_inserter(shader_ptrs), [](const auto& shader) {
-    //   return *shader.get();
-    //});
-
-    //shader_prog.attach(std::begin(shader_ptrs), std::end(shader_ptrs));
-
     const auto TARGET_FRAME_DURATION = std::chrono::milliseconds(17);
 
     game::frame_duration last_frame_duration = TARGET_FRAME_DURATION;
@@ -78,10 +47,6 @@ int main() {
     bool is_running = true;
     while(is_running) {
         const auto start_of_frame = game::clock::now();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        gl::bind(shader_prog);
-        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>{vbo});
-
         game_state.render();
         window.gl_swap();
 
