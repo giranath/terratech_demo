@@ -11,6 +11,14 @@
 #include <vector>
 #include <memory>
 
+template<typename shader_type>
+std::unique_ptr<gl::shader> load_shader(std::istream& stream) {
+    std::unique_ptr<gl::shader> shader_ptr = std::make_unique<shader_type>();
+    shader_ptr->compile(stream);
+
+    return shader_ptr;
+}
+
 int main() {
     sdl::context<>& sdl = sdl::context<>::instance();
 
@@ -43,22 +51,22 @@ int main() {
 
     gl::buffer vbo = gl::buffer::make();
 
-    std::vector<gl::shader> shaders;
-    gl::vertex_shader vertex_shader;
+    std::vector<std::unique_ptr<gl::shader>> shaders;
     gl::fragment_shader fragment_shader;
 
     std::ifstream shader_stream{"src/shader/standard.vert"};
-    auto vert_status = vertex_shader.compile(shader_stream);
-    std::cout << "vertex: " << vert_status.message() << std::endl;
-    shaders.push_back(std::move(vertex_shader));
+    shaders.push_back(load_shader<gl::vertex_shader>(shader_stream));
 
     shader_stream = std::ifstream("src/shader/standard.frag");
-    auto frag_status = fragment_shader.compile(shader_stream);
-    std::cout << "fragment: " << frag_status.message() << std::endl;
-    shaders.push_back(std::move(fragment_shader));
+    shaders.push_back(load_shader<gl::fragment_shader>(shader_stream));
 
     gl::program shader_prog;
-    shader_prog.attach(shaders.begin(), shaders.end());
+    //std::vector<const gl::shader&> shader_ptrs;
+    //std::transform(shaders.begin(), shaders.end(), std::back_inserter(shader_ptrs), [](const auto& shader) {
+    //   return *shader.get();
+    //});
+
+    //shader_prog.attach(std::begin(shader_ptrs), std::end(shader_ptrs));
 
     const auto TARGET_FRAME_DURATION = std::chrono::milliseconds(17);
 

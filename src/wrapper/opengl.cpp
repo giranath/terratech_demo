@@ -1,5 +1,8 @@
 #include "opengl.hpp"
 
+#include <iterator>
+#include <algorithm>
+
 namespace gl {
 
 //======================================================================================================================
@@ -121,8 +124,6 @@ shader::compilation_status shader::compile(std::istream& source_stream) const no
 }
 
 shader::compilation_status shader::compile(const char* source) const noexcept {
-    bool compiled = false;
-
     // Load the sources into the shader
     glShaderSource(raw, 1, &source, nullptr);
 
@@ -135,11 +136,14 @@ shader::compilation_status shader::compile(const char* source) const noexcept {
     glGetShaderiv(raw, GL_INFO_LOG_LENGTH, &log_len);
 
     std::string message;
-    GLchar* message_buffer = new(std::nothrow) GLchar[log_len];
-    if(message_buffer) {
-        glGetShaderInfoLog(raw, log_len, nullptr, message_buffer);
-        message = std::string{message_buffer};
-        delete[] message_buffer;
+    if(log_len > 0) {
+        GLchar *message_buffer = new(std::nothrow) GLchar[log_len];
+        std::fill(message_buffer, message_buffer + log_len, 0);
+        if (message_buffer) {
+            glGetShaderInfoLog(raw, log_len, nullptr, message_buffer);
+            message = std::string{message_buffer};
+            delete[] message_buffer;
+        }
     }
 
     return compilation_status{is_compiled == GL_TRUE, message};

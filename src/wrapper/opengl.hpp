@@ -1,10 +1,13 @@
 #ifndef MMAP_DEMO_OPENGL_HPP
 #define MMAP_DEMO_OPENGL_HPP
 
-#include <iostream>
-#include <string>
 #include <GL/gl3w.h>
 #include <SDL_opengl.h>
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <type_traits>
+#include <memory>
 
 namespace gl {
 
@@ -106,10 +109,66 @@ struct is_shader<shader> {
     static const bool value = true;
 };
 
+template<>
+struct is_shader<const shader> {
+    static const bool value = true;
+};
+
+template<>
+struct is_shader<shader&> {
+    static const bool value = true;
+};
+
+template<>
+struct is_shader<const shader&> {
+    static const bool value = true;
+};
+
 template<typename T>
 struct is_shader<typed_shader<T>> {
     static const bool value = true;
 };
+
+template<typename T>
+struct is_shader<const typed_shader<T>> {
+    static const bool value = true;
+};
+
+template<typename T>
+struct is_shader<typed_shader<T>&> {
+    static const bool value = true;
+};
+
+template<typename T>
+struct is_shader<const typed_shader<T>&> {
+    static const bool value = true;
+};
+
+template<typename ptr>
+struct is_pointer_like {
+    static const bool value = false;
+};
+
+template<typename ptr>
+struct is_pointer_like<ptr*> {
+    static const bool value = true;
+};
+
+template<typename ptr>
+struct is_pointer_like<const ptr*> {
+    static const bool value = true;
+};
+
+template<typename ptr>
+struct is_pointer_like<std::unique_ptr<ptr>> {
+    static const bool value = true;
+};
+
+template<typename ptr>
+struct is_pointer_like<std::shared_ptr<ptr>> {
+    static const bool value = true;
+};
+
 
 class program {
     GLuint prog;
@@ -140,16 +199,31 @@ public:
     void attach(const SHADER& shader) const noexcept {
         static_assert(is_shader<SHADER>::value, "you must specify a shader type");
 
+        std::cout << "attaching shader: " << static_cast<GLuint>(shader) << std::endl;
         glAttachShader(prog, shader);
     }
 
-    template<typename It>
-    void attach(It begin, It end) const noexcept {
-        static_assert(is_shader<typename It::value_type>::value, "you must specify an iterator on shader");
+    template<typename it>
+    void attach(it begin, it end) const noexcept {
+        using iterator_type = typename std::iterator_traits<it>::value_type;
 
-        std::for_each(begin, end, [this](const typename It::value_type& shader){
-            attach(shader);
-        });
+        static_assert(is_shader<iterator_type>::value
+                   || (is_pointer_like<iterator_type>::value
+                       && is_shader<typename std::pointer_traits<iterator_type>::element_type>::value), "unsupported iterator type");
+
+        // If iterator on shaders
+        if constexpr(is_shader<iterator_type>::value) {
+            std::for_each(begin, end, [this](const gl::shader& shader) {
+               attach(shader);
+            });
+        }
+        // If iterator on pointer of shaders
+        else if constexpr(is_pointer_like<iterator_type>::value
+                       && is_shader<typename std::pointer_traits<iterator_type>::element_type>::value) {
+            std::for_each(begin, end, [this](const auto& ptr) {
+                attach(*ptr);
+            });
+        }
     }
 
     operator GLuint() const noexcept;
