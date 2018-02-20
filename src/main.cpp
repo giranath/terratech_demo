@@ -1,5 +1,5 @@
 #include "opengl/opengl.hpp"
-#include "wrapper/sdl.hpp"
+#include "sdl/sdl.hpp"
 #include "game.hpp"
 
 #include <mapgen/mapgen.h>
