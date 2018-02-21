@@ -88,17 +88,41 @@ static const GLfloat g_color_buffer_data[] = {
 gl::program load_program(const std::string& name) {
     gl::vertex_shader ver;
     std::ifstream vert_file("src/shader/" + name + ".vert");
-    ver.compile(vert_file);
+    auto vert_res = ver.compile(vert_file);
 
+    std::ostream* out = &std::cout;
+    if(!vert_res.good()) {
+        out = &std::cerr;
+    }
+    if(!vert_res.message().empty()) *out << vert_res.message() << std::endl;
+
+    out = &std::cout;
     gl::fragment_shader frag;
     std::ifstream frag_file("src/shader/" + name + ".frag");
-    frag.compile(frag_file);
+    auto frag_res = frag.compile(frag_file);
+    if(!frag_res.good()) {
+        out = &std::cerr;
+    }
+    if(!frag_res.message().empty()) *out << frag_res.message() << std::endl;
 
-    gl::program prog;
+    gl::program prog{};
+
     prog.attach(ver);
     prog.attach(frag);
 
+    prog.link();
+
     return prog;
+}
+
+void opengl_message_cb(GLenum source, GLenum type, GLuint id, GLenum severity,
+                       GLsizei len, const GLchar* message, const void* user_params) {
+    std::cerr << "opengl: "
+              << (type == GL_DEBUG_TYPE_ERROR ? "ERROR" : "") << " "
+              << "type: " << type << " "
+              << "severity: " << severity
+              << "\n"
+              << "  " << message << std::endl;
 }
 
 int main() {
@@ -135,12 +159,18 @@ int main() {
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback((GLDEBUGPROC) opengl_message_cb, 0);
+
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS);
 
     gl::vertex_array vao = gl::vertex_array::make();
-
     gl::bind(vao);
+
+    gl::program prog = load_program("standard");
+
+    GLint MatrixID = glGetUniformLocation(prog, "MVP");
 
     gl::buffer vbo = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vbo));
@@ -149,10 +179,6 @@ int main() {
     gl::buffer cbo = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(cbo));
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
-
-    gl::program prog = load_program("standard");
-
-    GLuint MatrixID = glGetUniformLocation(prog, "MVP");
 
     // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
     glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);

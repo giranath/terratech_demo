@@ -22,7 +22,6 @@ const std::string& program::link_status::message() const noexcept {
 
 program::program() noexcept
 : prog{glCreateProgram()}{
-
 }
 
 program::program(program&& other) noexcept

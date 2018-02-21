@@ -55,7 +55,7 @@ shader::compilation_status shader::compile(const char* source) const noexcept {
         }
     }
 
-    return compilation_status{is_compiled == GL_TRUE, message};
+    return compilation_status{is_compiled == GL_FALSE, message};
 }
 
 shader::compilation_status shader::compile(const std::string& source) const noexcept {
