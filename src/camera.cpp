@@ -26,5 +26,5 @@ glm::mat4 camera::projection() const noexcept {
 glm::mat4 camera::view() const noexcept {
     const glm::mat4 translation = glm::translate(glm::mat4{1.f}, -pos);
 
-    return translation;
+    return translation * camera::isometric_model();
 }

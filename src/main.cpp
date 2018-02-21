@@ -200,8 +200,6 @@ int main() {
 
         model_matrix = glm::rotate(model_matrix, 0.01f, {0.f, 1.f, 0.f});
 
-        const glm::mat4 iso_model_matrix = camera::isometric_model() * model_matrix;
-
         const auto start_of_frame = game::clock::now();
         game_state.render();
 
@@ -209,10 +207,8 @@ int main() {
 
         gl::bind(prog);
 
-        const glm::mat4 camera_matrix = god_cam.matrix();
-
-        glUniformMatrix4fv(model_matrix_uniform, 1, GL_FALSE, glm::value_ptr(iso_model_matrix));
-        glUniformMatrix4fv(camera_matrix_uniform, 1, GL_FALSE, glm::value_ptr(camera_matrix));
+        glUniformMatrix4fv(model_matrix_uniform, 1, GL_FALSE, glm::value_ptr(model_matrix));
+        glUniformMatrix4fv(camera_matrix_uniform, 1, GL_FALSE, glm::value_ptr(god_cam.matrix()));
 
         // 1rst attribute buffer : vertices
         glEnableVertexAttribArray(0);
