@@ -37,7 +37,7 @@ class buffer_bind {
     const buffer& buf;
 public:
     explicit buffer_bind(const buffer& buf)
-            : buf{buf} {
+    : buf{buf} {
 
     }
 

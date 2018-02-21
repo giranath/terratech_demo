@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(mapgen 0.2 REQUIRED)
 find_package(sdl2 REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(glm REQUIRED)
 find_package(PythonInterp REQUIRED)
 
 # Generates GL3W files
@@ -31,12 +32,13 @@ add_executable(mmap_demo
         src/sdl/poll_event_iterator.hpp
         src/sdl/window.cpp
         src/sdl/window.hpp
-        src/sdl/context.hpp)
+        src/sdl/context.hpp src/camera.cpp src/camera.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${mapgen_INCLUDE_DIRS}
         ${SDL2_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
+        ${GLM_INCLUDE_DIRS}
         "${CMAKE_BINARY_DIR}/include")
 target_link_libraries(mmap_demo
         ${mapgen_LIBRARIES}

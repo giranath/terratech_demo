@@ -1,13 +1,14 @@
 #include "window.hpp"
+#include <algorithm>
 
 namespace sdl {
 
 window::window(const char* title, int width, int height) noexcept
-        : sdl_window(SDL_CreateWindow(title,
-                                      SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                      width, height,
-                                      SDL_WINDOW_OPENGL))
-        , gl_ctx{SDL_GL_CreateContext(sdl_window)} {
+: sdl_window(SDL_CreateWindow(title,
+                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                              width, height,
+                              SDL_WINDOW_OPENGL))
+, gl_ctx{SDL_GL_CreateContext(sdl_window)} {
 
 }
 

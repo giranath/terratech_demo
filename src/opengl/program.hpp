@@ -8,8 +8,9 @@
 #include "shader.hpp"
 #include "bind.hpp"
 
-
+#include <memory>
 #include <string>
+#include <algorithm>
 
 namespace gl {
 
@@ -67,7 +68,6 @@ public:
     void attach(const SHADER& shader) const noexcept {
         static_assert(is_shader<SHADER>::value, "you must specify a shader type");
 
-        std::cout << "attaching shader: " << static_cast<GLuint>(shader) << std::endl;
         glAttachShader(prog, shader);
     }
 

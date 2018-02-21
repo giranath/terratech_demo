@@ -41,8 +41,8 @@ public:
         bool has_failed;
     public:
         compilation_status(bool has_failed, const std::string& msg)
-                : msg{msg}
-                , has_failed{has_failed} {
+        : msg{msg}
+        , has_failed{has_failed} {
 
         }
 
