@@ -189,13 +189,20 @@ int main() {
 
     glm::mat4 model_matrix = glm::scale(glm::mat4{1.f}, {100.f, 100.f, 100.f});
 
-    camera god_cam(0.f, 800.f, 600.f, 0.f, 1.f, 1000.f);
-    god_cam.reset({-60.f, -50.f, -50.f});
-    //god_cam.reset({0.f, 0.f, 0.f});
+    camera god_cam(-400.f, 400.f, -300.f, 300.f, 0.001f, 1000.f);
+    god_cam.reset({200.f, 200.f, 200.f});
+
+    const float CAMERA_SPEED = 250.f; // 3.5 pixels per seconds
 
     // Game loop
     bool is_running = true;
     while(is_running) {
+        const float LAST_FRAME_DURATION = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration).count() / 1000.f;
+
+        model_matrix = glm::rotate(model_matrix, 0.01f, {0.f, 1.f, 0.f});
+
+        const glm::mat4 iso_model_matrix = camera::isometric_model() * model_matrix;
+
         const auto start_of_frame = game::clock::now();
         game_state.render();
 
@@ -203,7 +210,7 @@ int main() {
 
         gl::bind(prog);
 
-        model_matrix_uniform.set(model_matrix);
+        model_matrix_uniform.set(iso_model_matrix);
         camera_matrix_uniform.set(god_cam.matrix());
 
         // 1rst attribute buffer : vertices
@@ -237,6 +244,8 @@ int main() {
 
         window.gl_swap();
 
+        const float cam_speed = CAMERA_SPEED * LAST_FRAME_DURATION;
+
         // Handle events from user here
         for(auto event : sdl.poll_events()) {
             if(event.type == SDL_QUIT) {
@@ -245,16 +254,16 @@ int main() {
             else if(event.type == SDL_KEYDOWN) {
                 switch(event.key.keysym.sym) {
                     case SDLK_LEFT:
-                        god_cam.translate({-1.f, 0.f, 0.f});
+                        god_cam.translate({-cam_speed, 0.f, 0.f});
                         break;
                     case SDLK_RIGHT:
-                        god_cam.translate({1.f, 0.f, 0.f});
+                        god_cam.translate({cam_speed, 0.f, 0.f});
                         break;
                     case SDLK_UP:
-                        god_cam.translate({0.f, 0.f, -1.f});
+                        god_cam.translate({0.f, cam_speed, 0.f});
                         break;
                     case SDLK_DOWN:
-                        god_cam.translate({0.f, 0.f, 1.f});
+                        god_cam.translate({0.f, -cam_speed, 0.f});
                         break;
                 }
             }
