@@ -160,7 +160,7 @@ int main() {
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_DEBUG_OUTPUT);
-    glDebugMessageCallback((GLDEBUGPROC) opengl_message_cb, 0);
+    glDebugMessageCallback((GLDEBUGPROC) opengl_message_cb, nullptr);
 
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS);
@@ -170,7 +170,7 @@ int main() {
 
     gl::program prog = load_program("standard");
 
-    GLint MatrixID = glGetUniformLocation(prog, "MVP");
+    GLint mvp_uniform = glGetUniformLocation(prog, "MVP");
 
     gl::buffer vbo = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vbo));
@@ -181,17 +181,17 @@ int main() {
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
 
     // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-    glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
     // Camera matrix
-    glm::mat4 View       = glm::lookAt(
+    glm::mat4 view       = glm::lookAt(
             glm::vec3(4,3,-3), // Camera is at (4,3,-3), in World Space
             glm::vec3(0,0,0), // and looks at the origin
             glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
     );
     // Model matrix : an identity matrix (model will be at the origin)
-    glm::mat4 Model      = glm::mat4(1.0f);
+    glm::mat4 model_matrix      = glm::mat4(1.0f);
     // Our ModelViewProjection : multiplication of our 3 matrices
-    glm::mat4 MVP = Projection * View * Model; // Remember, matrix multiplication is the other way around
+    glm::mat4 mvp_matrix = projection * view * model_matrix; // Remember, matrix multiplication is the other way around
 
     // Game loop
     bool is_running = true;
@@ -203,7 +203,7 @@ int main() {
 
         gl::bind(prog);
 
-        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        glUniformMatrix4fv(mvp_uniform, 1, GL_FALSE, &mvp_matrix[0][0]);
 
         // 1rst attribute buffer : vertices
         glEnableVertexAttribArray(0);
@@ -214,7 +214,7 @@ int main() {
                 GL_FLOAT,           // type
                 GL_FALSE,           // normalized?
                 0,                  // stride
-                (void*)0            // array buffer offset
+                nullptr            // array buffer offset
         );
 
         // 2nd attribute buffer : colors
@@ -226,7 +226,7 @@ int main() {
                 GL_FLOAT,                         // type
                 GL_FALSE,                         // normalized?
                 0,                                // stride
-                (void*)0                          // array buffer offset
+                nullptr                          // array buffer offset
         );
 
         glDrawArrays(GL_TRIANGLES, 0, 12*3);
