@@ -159,8 +159,11 @@ int main() {
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_DEBUG_OUTPUT);
-    glDebugMessageCallback((GLDEBUGPROC) opengl_message_cb, nullptr);
+
+    if(gl3wIsSupported(4, 3)) {
+        glEnable(GL_DEBUG_OUTPUT);
+        glDebugMessageCallback((GLDEBUGPROC) opengl_message_cb, nullptr);
+    }
 
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS);
