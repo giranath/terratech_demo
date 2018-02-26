@@ -175,7 +175,6 @@ int main() {
 
     gl::program prog = load_program("standard");
 
-
     auto model_matrix_uniform = prog.find_uniform<glm::mat4>("model_matrix");
     auto camera_matrix_uniform = prog.find_uniform<glm::mat4>("camera_matrix");
 
