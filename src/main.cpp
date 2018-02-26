@@ -173,7 +173,8 @@ int main() {
 
     gl::program prog = load_program("standard");
 
-    GLint mvp_uniform = glGetUniformLocation(prog, "MVP");
+    //GLint mvp_uniform = glGetUniformLocation(prog, "MVP");
+    auto mvp_uniform = prog.find_uniform<glm::mat4>("MVP");
 
     gl::buffer vbo = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vbo));
@@ -206,7 +207,7 @@ int main() {
 
         gl::bind(prog);
 
-        glUniformMatrix4fv(mvp_uniform, 1, GL_FALSE, &mvp_matrix[0][0]);
+        mvp_uniform.set(mvp_matrix);
 
         // 1rst attribute buffer : vertices
         glEnableVertexAttribArray(0);
