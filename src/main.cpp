@@ -175,8 +175,8 @@ int main() {
 
     gl::program prog = load_program("standard");
 
-    GLint model_matrix_uniform = glGetUniformLocation(prog, "model_matrix");
-    GLint camera_matrix_uniform = glGetUniformLocation(prog, "camera_matrix");
+    auto model_matrix_uniform = prog.find_uniform<glm::mat4>("model_matrix");
+    auto camera_matrix_uniform = prog.find_uniform<glm::mat4>("camera_matrix");
 
     gl::buffer vbo = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vbo));
@@ -207,8 +207,8 @@ int main() {
 
         gl::bind(prog);
 
-        glUniformMatrix4fv(model_matrix_uniform, 1, GL_FALSE, glm::value_ptr(model_matrix));
-        glUniformMatrix4fv(camera_matrix_uniform, 1, GL_FALSE, glm::value_ptr(god_cam.matrix()));
+        model_matrix_uniform.set(model_matrix);
+        camera_matrix_uniform.set(god_cam.matrix());
 
         // 1rst attribute buffer : vertices
         glEnableVertexAttribArray(0);

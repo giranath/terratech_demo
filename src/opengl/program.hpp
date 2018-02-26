@@ -6,6 +6,7 @@
 #include <SDL_opengl.h>
 
 #include "shader.hpp"
+#include "uniform.hpp"
 #include "bind.hpp"
 
 #include <memory>
@@ -99,6 +100,17 @@ public:
     link_status link() const noexcept;
 
     void bind() const noexcept;
+
+    template<typename T>
+    uniform<T> find_uniform(const char* name) const noexcept {
+        GLint uniform_location = glGetUniformLocation(prog, name);
+
+        if(uniform_location >= 0) {
+            return uniform<T>{static_cast<GLuint>(uniform_location)};
+        }
+
+        return uniform<T>{};
+    }
 };
 
 template<>
