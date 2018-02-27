@@ -87,44 +87,142 @@ static const GLfloat g_color_buffer_data[] = {
         0.517f,  0.713f,  0.338f
 };
 
+template<typename Shader>
+Shader load_shader(const std::string& name) {
+    std::ifstream file("src/shader/" + name);
+    Shader shader;
+
+    auto res = shader.compile(file);
+    if(!res.good()) {
+        std::cerr << res.message() << std::endl;
+        shader = Shader{};
+    }
+    else if(!res.message().empty()) {
+        std::cout << res.message() << std::endl;
+    }
+
+    return shader;
+}
+
 gl::program load_program(const std::string& name) {
-    gl::vertex_shader ver;
-    std::ifstream vert_file("src/shader/" + name + ".vert");
-    auto vert_res = ver.compile(vert_file);
-
-    std::ostream* out = &std::cout;
-    if(!vert_res.good()) {
-        out = &std::cerr;
-    }
-    if(!vert_res.message().empty()) *out << vert_res.message() << std::endl;
-
-    out = &std::cout;
-    gl::fragment_shader frag;
-    std::ifstream frag_file("src/shader/" + name + ".frag");
-    auto frag_res = frag.compile(frag_file);
-    if(!frag_res.good()) {
-        out = &std::cerr;
-    }
-    if(!frag_res.message().empty()) *out << frag_res.message() << std::endl;
+    auto ver = load_shader<gl::vertex_shader>(name + ".vert");
+    auto frag = load_shader<gl::fragment_shader>(name + ".frag");
 
     gl::program prog{};
-
     prog.attach(ver);
     prog.attach(frag);
 
-    prog.link();
+    auto res = prog.link();
+    if(!res.good()) {
+        prog = gl::program{};
+        std::cerr << res.message() << std::endl;
+    }
 
     return prog;
 }
 
+std::ostream& print_opengl_severity(std::ostream& os, GLenum severity) {
+    switch(severity) {
+        case GL_DEBUG_SEVERITY_HIGH_ARB:
+            os << "high";
+            break;
+        case GL_DEBUG_SEVERITY_MEDIUM_ARB:
+            os << "medium";
+            break;
+        case GL_DEBUG_SEVERITY_LOW_ARB:
+            os << "low";
+            break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+            os << "debug";
+            break;
+        default:
+            os << "unknown";
+            break;
+    }
+
+    return os;
+}
+
+std::ostream& print_opengl_type(std::ostream& os, GLenum type) {
+    switch(type) {
+        case GL_DEBUG_TYPE_ERROR_ARB:
+            os << "error";
+            break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+            os << "deprecated";
+            break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
+            os << "undefined behavior";
+            break;
+        case GL_DEBUG_TYPE_PORTABILITY_ARB:
+            os << "portability";
+            break;
+        case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+            os << "performance";
+            break;
+        case GL_DEBUG_TYPE_MARKER:
+            os << "marker";
+            break;
+        case GL_DEBUG_TYPE_PUSH_GROUP:
+            os << "push group";
+            break;
+        case GL_DEBUG_TYPE_POP_GROUP:
+            os << "pop group";
+            break;
+        case GL_DEBUG_TYPE_OTHER:
+            os << "other";
+            break;
+        default:
+            os << "unknown";
+            break;
+    }
+    return os;
+}
+
+std::ostream& print_opengl_source(std::ostream& os, GLenum source) {
+    switch(source) {
+        case GL_DEBUG_SOURCE_API:
+            os << "api";
+            break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
+            os << "window";
+            break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
+            os << "compiler";
+            break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
+            os << "third-party";
+            break;
+        case GL_DEBUG_SOURCE_APPLICATION_ARB:
+            os << "application";
+            break;
+        case GL_DEBUG_SOURCE_OTHER_ARB:
+            os << "other";
+            break;
+        default:
+            os << "unknown";
+            break;
+    }
+    return os;
+}
+
 void opengl_message_cb(GLenum source, GLenum type, GLuint id, GLenum severity,
                        GLsizei len, const GLchar* message, const void* user_params) {
-    std::cerr << "opengl: "
-              << (type == GL_DEBUG_TYPE_ERROR ? "ERROR" : "") << " "
-              << "type: " << type << " "
-              << "severity: " << severity
-              << "\n"
-              << "  " << message << std::endl;
+    std::cerr << "[GL:" << id << "]";
+
+    std::cerr << "[";
+    print_opengl_source(std::cerr, source);
+    std::cerr << "]";
+
+    std::cerr << "[";
+    print_opengl_severity(std::cerr, severity);
+    std::cerr << "]";
+
+    std::cerr << "[";
+    print_opengl_type(std::cerr, type);
+    std::cerr << "] ";
+
+    std::cerr << message << std::endl;
 }
 
 int main() {
@@ -162,9 +260,16 @@ int main() {
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
 
-    if(gl3wIsSupported(4, 3)) {
+    // We check if glDebugMessageCallback exists
+    GL3WglProc debug_msg_callback_extension = gl3wGetProcAddress("glDebugMessageCallbackARB");
+    if(debug_msg_callback_extension) {
         glEnable(GL_DEBUG_OUTPUT);
-        glDebugMessageCallback((GLDEBUGPROC) opengl_message_cb, nullptr);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+
+        typedef GLvoid (APIENTRYP DebugMessageCallbackARBPROC )(GLDEBUGPROCARB callback, GLvoid* userParam);
+        DebugMessageCallbackARBPROC glDebugMessageCallbackARB = reinterpret_cast<DebugMessageCallbackARBPROC>(debug_msg_callback_extension);
+
+        glDebugMessageCallbackARB((GLDEBUGPROCARB) opengl_message_cb, nullptr);
     }
 
     // Accept fragment if it closer to the camera than the former one

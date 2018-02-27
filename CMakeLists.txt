@@ -34,7 +34,8 @@ add_executable(mmap_demo
         src/sdl/window.hpp
         src/sdl/context.hpp
         src/camera.cpp
-        src/camera.hpp src/opengl/uniform.hpp)
+        src/camera.hpp
+        src/opengl/uniform.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${mapgen_INCLUDE_DIRS}
