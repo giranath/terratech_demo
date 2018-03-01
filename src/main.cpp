@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <mapgen/mapgen.h>
+#include <terratech/terratech.h>
 #include <fstream>
 
 static const GLfloat g_vertex_buffer_data[] = {
@@ -225,6 +225,36 @@ void opengl_message_cb(GLenum source, GLenum type, GLuint id, GLenum severity,
     std::cerr << message << std::endl;
 }
 
+void setup_opengl_debug_msg() {
+    // We check if glDebugMessageCallback exists
+    GL3WglProc debug_msg_callback_extension = gl3wGetProcAddress("glDebugMessageCallbackARB");
+    if(debug_msg_callback_extension) {
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+
+        typedef GLvoid (APIENTRYP DebugMessageCallbackARBPROC )(GLDEBUGPROCARB callback, GLvoid* userParam);
+        DebugMessageCallbackARBPROC glDebugMessageCallbackARB = reinterpret_cast<DebugMessageCallbackARBPROC>(debug_msg_callback_extension);
+
+        glDebugMessageCallbackARB((GLDEBUGPROCARB) opengl_message_cb, nullptr);
+    }
+}
+
+void setup_opengl() {
+    // Enable depth test
+    glEnable(GL_DEPTH_TEST);
+
+    setup_opengl_debug_msg();
+
+    // Accept fragment if it closer to the camera than the former one
+    glDepthFunc(GL_LESS);
+}
+
+void set_opengl_version(int major, int minor) {
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, major);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, minor);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+}
+
 int main() {
     sdl::context<>& sdl = sdl::context<>::instance();
 
@@ -234,12 +264,10 @@ int main() {
     }
 
     // Setup OpenGL attributes
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    set_opengl_version(3, 3);
 
     // Setup the window
-    sdl::window window("RTS v." GAME_VERSION " (mapgen v." MAPGEN_VERSION_STR ")", 800, 600);
+    sdl::window window("RTS v." GAME_VERSION " (terratech v." TERRA_VERSION_STR ")", 800, 600);
     if(!window.good()) {
         std::cerr << "cannot create window: " << SDL_GetError() << std::endl;
         return 1;
@@ -257,23 +285,7 @@ int main() {
 
     game game_state;
 
-    // Enable depth test
-    glEnable(GL_DEPTH_TEST);
-
-    // We check if glDebugMessageCallback exists
-    GL3WglProc debug_msg_callback_extension = gl3wGetProcAddress("glDebugMessageCallbackARB");
-    if(debug_msg_callback_extension) {
-        glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-
-        typedef GLvoid (APIENTRYP DebugMessageCallbackARBPROC )(GLDEBUGPROCARB callback, GLvoid* userParam);
-        DebugMessageCallbackARBPROC glDebugMessageCallbackARB = reinterpret_cast<DebugMessageCallbackARBPROC>(debug_msg_callback_extension);
-
-        glDebugMessageCallbackARB((GLDEBUGPROCARB) opengl_message_cb, nullptr);
-    }
-
-    // Accept fragment if it closer to the camera than the former one
-    glDepthFunc(GL_LESS);
+    setup_opengl();
 
     gl::vertex_array vao = gl::vertex_array::make();
     gl::bind(vao);
@@ -296,7 +308,7 @@ int main() {
     camera god_cam(-400.f, 400.f, -300.f, 300.f, 0.001f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
 
-    const float CAMERA_SPEED = 250.f; // 3.5 pixels per seconds
+    const float CAMERA_SPEED = 250.f; // 250 pixels per seconds
 
     // Game loop
     bool is_running = true;
