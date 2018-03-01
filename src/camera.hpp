@@ -24,12 +24,10 @@ public:
     glm::mat4 projection() const noexcept;
     glm::mat4 view() const noexcept;
 
-    static glm::mat4 isometric_model() noexcept {
-        const glm::mat4 x_rotation = glm::rotate(glm::mat4{1.f}, 35.264f, {1.f, 0.f, 0.f});
-        const glm::mat4 y_rotation = glm::rotate(glm::mat4{1.f}, -45.f, {0.f, 1.f, 0.f});
+    glm::vec3 up() const noexcept;
+    glm::vec3 right() const noexcept;
 
-        return x_rotation * y_rotation;
-    }
+    static glm::mat4 isometric_model() noexcept;
 };
 
 
