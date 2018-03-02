@@ -4,90 +4,13 @@
 #include "camera.hpp"
 #include "world/world.hpp"
 #include "world/world_generator.hpp"
+#include "chunk_renderer.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <terratech/terratech.h>
 #include <fstream>
-
-static const GLfloat g_vertex_buffer_data[] = {
-        -1.0f,-1.0f,-1.0f, // triangle 1 : begin
-        -1.0f,-1.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f, // triangle 1 : end
-         1.0f, 1.0f,-1.0f, // triangle 2 : begin
-        -1.0f,-1.0f,-1.0f,
-        -1.0f, 1.0f,-1.0f, // triangle 2 : end
-         1.0f,-1.0f, 1.0f,
-        -1.0f,-1.0f,-1.0f,
-         1.0f,-1.0f,-1.0f,
-         1.0f, 1.0f,-1.0f,
-         1.0f,-1.0f,-1.0f,
-        -1.0f,-1.0f,-1.0f,
-        -1.0f,-1.0f,-1.0f,
-        -1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f,-1.0f,
-         1.0f,-1.0f, 1.0f,
-        -1.0f,-1.0f, 1.0f,
-        -1.0f,-1.0f,-1.0f,
-        -1.0f, 1.0f, 1.0f,
-        -1.0f,-1.0f, 1.0f,
-         1.0f,-1.0f, 1.0f,
-         1.0f, 1.0f, 1.0f,
-         1.0f,-1.0f,-1.0f,
-         1.0f, 1.0f,-1.0f,
-         1.0f,-1.0f,-1.0f,
-         1.0f, 1.0f, 1.0f,
-         1.0f,-1.0f, 1.0f,
-         1.0f, 1.0f, 1.0f,
-         1.0f, 1.0f,-1.0f,
-        -1.0f, 1.0f,-1.0f,
-         1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f,-1.0f,
-        -1.0f, 1.0f, 1.0f,
-         1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f,
-         1.0f,-1.0f, 1.0f
-};
-
-static const GLfloat g_color_buffer_data[] = {
-        0.583f,  0.771f,  0.014f,
-        0.583f,  0.771f,  0.014f,
-        0.583f,  0.771f,  0.014f,
-        0.583f,  0.771f,  0.014f,
-        0.583f,  0.771f,  0.014f,
-        0.583f,  0.771f,  0.014f,
-        0.597f,  0.770f,  0.761f,
-        0.597f,  0.770f,  0.761f,
-        0.597f,  0.770f,  0.761f,
-        0.597f,  0.770f,  0.761f,
-        0.597f,  0.770f,  0.761f,
-        0.597f,  0.770f,  0.761f,
-        0.014f,  0.184f,  0.576f,
-        0.014f,  0.184f,  0.576f,
-        0.014f,  0.184f,  0.576f,
-        0.014f,  0.184f,  0.576f,
-        0.014f,  0.184f,  0.576f,
-        0.014f,  0.184f,  0.576f,
-        0.997f,  0.513f,  0.064f,
-        0.997f,  0.513f,  0.064f,
-        0.997f,  0.513f,  0.064f,
-        0.997f,  0.513f,  0.064f,
-        0.997f,  0.513f,  0.064f,
-        0.997f,  0.513f,  0.064f,
-        0.055f,  0.953f,  0.042f,
-        0.055f,  0.953f,  0.042f,
-        0.055f,  0.953f,  0.042f,
-        0.055f,  0.953f,  0.042f,
-        0.055f,  0.953f,  0.042f,
-        0.055f,  0.953f,  0.042f,
-        0.517f,  0.713f,  0.338f,
-        0.517f,  0.713f,  0.338f,
-        0.517f,  0.713f,  0.338f,
-        0.517f,  0.713f,  0.338f,
-        0.517f,  0.713f,  0.338f,
-        0.517f,  0.713f,  0.338f
-};
 
 template<typename Shader>
 Shader load_shader(const std::string& name) {
@@ -300,31 +223,20 @@ int main() {
     auto model_matrix_uniform = prog.find_uniform<glm::mat4>("model_matrix");
     auto camera_matrix_uniform = prog.find_uniform<glm::mat4>("camera_matrix");
 
-    gl::buffer vbo = gl::buffer::make();
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vbo));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+    chunk_renderer chunk_ren{chunk};
 
-    gl::buffer cbo = gl::buffer::make();
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(cbo));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
+    glm::mat4 model_matrix{1.f};
 
-    glm::mat4 model_matrix = glm::scale(glm::mat4{1.f}, {100.f, 100.f, 100.f});
-
-    camera god_cam(-400.f, 400.f, -300.f, 300.f, 0.001f, 1000.f);
+    camera god_cam(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
 
-    const float CAMERA_SPEED = 250.f; // 250 pixels per seconds
-    const float ROTATION_SPEED = 1.f;
-
+    bool show_wireframe = false;
     // Game loop
     bool is_running = true;
     while(is_running) {
         const float LAST_FRAME_DURATION = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration).count() / 1000.f;
 
-        model_matrix = glm::rotate(model_matrix, ROTATION_SPEED * LAST_FRAME_DURATION, {0.f, 1.f, 0.f});
-
         const auto start_of_frame = game::clock::now();
-        game_state.render();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -333,38 +245,13 @@ int main() {
         model_matrix_uniform.set(model_matrix);
         camera_matrix_uniform.set(god_cam.matrix());
 
-        // 1rst attribute buffer : vertices
-        glEnableVertexAttribArray(0);
-        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vbo));
-        glVertexAttribPointer(
-                0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-                3,                  // size
-                GL_FLOAT,           // type
-                GL_FALSE,           // normalized?
-                0,                  // stride
-                nullptr            // array buffer offset
-        );
+        game_state.render();
 
-        // 2nd attribute buffer : colors
-        glEnableVertexAttribArray(1);
-        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(cbo));
-        glVertexAttribPointer(
-                1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-                3,                                // size
-                GL_FLOAT,                         // type
-                GL_FALSE,                         // normalized?
-                0,                                // stride
-                nullptr                          // array buffer offset
-        );
-
-        glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
-
-        glDisableVertexAttribArray(1);
-        glDisableVertexAttribArray(0);
+        chunk_ren.render();
 
         window.gl_swap();
 
-        const float cam_speed = CAMERA_SPEED * LAST_FRAME_DURATION;
+        constexpr float CAM_SPEED = 10.f;
 
         // Handle events from user here
         for(auto event : sdl.poll_events()) {
@@ -374,16 +261,21 @@ int main() {
             else if(event.type == SDL_KEYDOWN) {
                 switch(event.key.keysym.sym) {
                     case SDLK_LEFT:
-                        god_cam.translate({-cam_speed, 0.f, 0.f});
+                        god_cam.translate({-CAM_SPEED, 0.f, 0.f});
                         break;
                     case SDLK_RIGHT:
-                        god_cam.translate({cam_speed, 0.f, 0.f});
+                        god_cam.translate({CAM_SPEED, 0.f, 0.f});
                         break;
                     case SDLK_UP:
-                        god_cam.translate({0.f, cam_speed, 0.f});
+                        god_cam.translate({0.f, CAM_SPEED, 0.f});
                         break;
                     case SDLK_DOWN:
-                        god_cam.translate({0.f, -cam_speed, 0.f});
+                        god_cam.translate({0.f, -CAM_SPEED, 0.f});
+                        break;
+                    case SDLK_m:
+                        show_wireframe = !show_wireframe;
+
+                        glPolygonMode( GL_FRONT_AND_BACK, show_wireframe ? GL_LINE : GL_FILL);
                         break;
                 }
             }
