@@ -89,7 +89,7 @@ static const GLfloat g_color_buffer_data[] = {
 
 template<typename Shader>
 Shader load_shader(const std::string& name) {
-    std::ifstream file("src/shader/" + name);
+    std::ifstream file("asset/shader/" + name);
     Shader shader;
 
     auto res = shader.compile(file);
