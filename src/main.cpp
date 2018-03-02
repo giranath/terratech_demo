@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <mapgen/mapgen.h>
+#include <terratech/terratech.h>
 #include <fstream>
 
 static const GLfloat g_vertex_buffer_data[] = {
@@ -87,44 +87,172 @@ static const GLfloat g_color_buffer_data[] = {
         0.517f,  0.713f,  0.338f
 };
 
+template<typename Shader>
+Shader load_shader(const std::string& name) {
+    std::ifstream file("src/shader/" + name);
+    Shader shader;
+
+    auto res = shader.compile(file);
+    if(!res.good()) {
+        std::cerr << res.message() << std::endl;
+        shader = Shader{};
+    }
+    else if(!res.message().empty()) {
+        std::cout << res.message() << std::endl;
+    }
+
+    return shader;
+}
+
 gl::program load_program(const std::string& name) {
-    gl::vertex_shader ver;
-    std::ifstream vert_file("src/shader/" + name + ".vert");
-    auto vert_res = ver.compile(vert_file);
-
-    std::ostream* out = &std::cout;
-    if(!vert_res.good()) {
-        out = &std::cerr;
-    }
-    if(!vert_res.message().empty()) *out << vert_res.message() << std::endl;
-
-    out = &std::cout;
-    gl::fragment_shader frag;
-    std::ifstream frag_file("src/shader/" + name + ".frag");
-    auto frag_res = frag.compile(frag_file);
-    if(!frag_res.good()) {
-        out = &std::cerr;
-    }
-    if(!frag_res.message().empty()) *out << frag_res.message() << std::endl;
+    auto ver = load_shader<gl::vertex_shader>(name + ".vert");
+    auto frag = load_shader<gl::fragment_shader>(name + ".frag");
 
     gl::program prog{};
-
     prog.attach(ver);
     prog.attach(frag);
 
-    prog.link();
+    auto res = prog.link();
+    if(!res.good()) {
+        prog = gl::program{};
+        std::cerr << res.message() << std::endl;
+    }
 
     return prog;
 }
 
+std::ostream& print_opengl_severity(std::ostream& os, GLenum severity) {
+    switch(severity) {
+        case GL_DEBUG_SEVERITY_HIGH_ARB:
+            os << "high";
+            break;
+        case GL_DEBUG_SEVERITY_MEDIUM_ARB:
+            os << "medium";
+            break;
+        case GL_DEBUG_SEVERITY_LOW_ARB:
+            os << "low";
+            break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+            os << "debug";
+            break;
+        default:
+            os << "unknown";
+            break;
+    }
+
+    return os;
+}
+
+std::ostream& print_opengl_type(std::ostream& os, GLenum type) {
+    switch(type) {
+        case GL_DEBUG_TYPE_ERROR_ARB:
+            os << "error";
+            break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+            os << "deprecated";
+            break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
+            os << "undefined behavior";
+            break;
+        case GL_DEBUG_TYPE_PORTABILITY_ARB:
+            os << "portability";
+            break;
+        case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+            os << "performance";
+            break;
+        case GL_DEBUG_TYPE_MARKER:
+            os << "marker";
+            break;
+        case GL_DEBUG_TYPE_PUSH_GROUP:
+            os << "push group";
+            break;
+        case GL_DEBUG_TYPE_POP_GROUP:
+            os << "pop group";
+            break;
+        case GL_DEBUG_TYPE_OTHER:
+            os << "other";
+            break;
+        default:
+            os << "unknown";
+            break;
+    }
+    return os;
+}
+
+std::ostream& print_opengl_source(std::ostream& os, GLenum source) {
+    switch(source) {
+        case GL_DEBUG_SOURCE_API:
+            os << "api";
+            break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
+            os << "window";
+            break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
+            os << "compiler";
+            break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
+            os << "third-party";
+            break;
+        case GL_DEBUG_SOURCE_APPLICATION_ARB:
+            os << "application";
+            break;
+        case GL_DEBUG_SOURCE_OTHER_ARB:
+            os << "other";
+            break;
+        default:
+            os << "unknown";
+            break;
+    }
+    return os;
+}
+
 void opengl_message_cb(GLenum source, GLenum type, GLuint id, GLenum severity,
                        GLsizei len, const GLchar* message, const void* user_params) {
-    std::cerr << "opengl: "
-              << (type == GL_DEBUG_TYPE_ERROR ? "ERROR" : "") << " "
-              << "type: " << type << " "
-              << "severity: " << severity
-              << "\n"
-              << "  " << message << std::endl;
+    std::cerr << "[GL:" << id << "]";
+
+    std::cerr << "[";
+    print_opengl_source(std::cerr, source);
+    std::cerr << "]";
+
+    std::cerr << "[";
+    print_opengl_severity(std::cerr, severity);
+    std::cerr << "]";
+
+    std::cerr << "[";
+    print_opengl_type(std::cerr, type);
+    std::cerr << "] ";
+
+    std::cerr << message << std::endl;
+}
+
+void setup_opengl_debug_msg() {
+    // We check if glDebugMessageCallback exists
+    GL3WglProc debug_msg_callback_extension = gl3wGetProcAddress("glDebugMessageCallbackARB");
+    if(debug_msg_callback_extension) {
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+
+        typedef GLvoid (APIENTRYP DebugMessageCallbackARBPROC )(GLDEBUGPROCARB callback, GLvoid* userParam);
+        DebugMessageCallbackARBPROC glDebugMessageCallbackARB = reinterpret_cast<DebugMessageCallbackARBPROC>(debug_msg_callback_extension);
+
+        glDebugMessageCallbackARB((GLDEBUGPROCARB) opengl_message_cb, nullptr);
+    }
+}
+
+void setup_opengl() {
+    // Enable depth test
+    glEnable(GL_DEPTH_TEST);
+
+    setup_opengl_debug_msg();
+
+    // Accept fragment if it closer to the camera than the former one
+    glDepthFunc(GL_LESS);
+}
+
+void set_opengl_version(int major, int minor) {
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, major);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, minor);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 }
 
 int main() {
@@ -136,12 +264,10 @@ int main() {
     }
 
     // Setup OpenGL attributes
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    set_opengl_version(3, 3);
 
     // Setup the window
-    sdl::window window("RTS v." GAME_VERSION " (mapgen v." MAPGEN_VERSION_STR ")", 800, 600);
+    sdl::window window("RTS v." GAME_VERSION " (terratech v." TERRA_VERSION_STR ")", 800, 600);
     if(!window.good()) {
         std::cerr << "cannot create window: " << SDL_GetError() << std::endl;
         return 1;
@@ -159,16 +285,7 @@ int main() {
 
     game game_state;
 
-    // Enable depth test
-    glEnable(GL_DEPTH_TEST);
-
-    if(gl3wIsSupported(4, 3)) {
-        glEnable(GL_DEBUG_OUTPUT);
-        glDebugMessageCallback((GLDEBUGPROC) opengl_message_cb, nullptr);
-    }
-
-    // Accept fragment if it closer to the camera than the former one
-    glDepthFunc(GL_LESS);
+    setup_opengl();
 
     gl::vertex_array vao = gl::vertex_array::make();
     gl::bind(vao);
@@ -191,7 +308,7 @@ int main() {
     camera god_cam(-400.f, 400.f, -300.f, 300.f, 0.001f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
 
-    const float CAMERA_SPEED = 250.f; // 3.5 pixels per seconds
+    const float CAMERA_SPEED = 250.f; // 250 pixels per seconds
 
     // Game loop
     bool is_running = true;
