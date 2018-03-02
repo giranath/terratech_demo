@@ -25,6 +25,40 @@ public:
     operator const terra_chunk*() noexcept;
 };
 
+enum {
+    BIOME_RAIN_FOREST,
+    BIOME_SWAMP,
+    BIOME_SEASONAL_FOREST,
+    BIOME_FOREST,
+    BIOME_TAIGA,
+    BIOME_WOODS,
+    BIOME_SAVANNA,
+    BIOME_DESERT,
+    BIOME_GRASS_DESERT,
+    BIOME_TUNDRA,
+    BIOME_WATER,
+    BIOME_DEEP_WATER,
+    BIOME_COUNT
+};
+
+enum {
+    SITE_NOTHING,
+    SITE_HORSES,
+    SITE_IRON,
+    SITE_COAL,
+    SITE_OIL,
+    SITE_ALUMINUM,
+    SITE_URANIUM,
+    SITE_BANANA,
+    SITE_CATTLE,
+    SITE_DEER,
+    SITE_SHEEP,
+    SITE_WHEAT,
+    SITE_STONE,
+    SITE_PEARLS,
+    SITE_FISH,
+};
+
 class world_generator {
     terra_map* map_generator;
     terra_layer_handle altitude_layer;
@@ -37,40 +71,6 @@ class world_generator {
     void setup_resources();
 
 public:
-    enum {
-        BIOME_RAIN_FOREST,
-        BIOME_SWAMP,
-        BIOME_SEASONAL_FOREST,
-        BIOME_FOREST,
-        BIOME_TAIGA,
-        BIOME_WOODS,
-        BIOME_SAVANNA,
-        BIOME_DESERT,
-        BIOME_GRASS_DESERT,
-        BIOME_TUNDRA,
-        BIOME_WATER,
-        BIOME_DEEP_WATER,
-        BIOME_COUNT
-    };
-
-    enum {
-        SITE_NOTHING,
-        SITE_HORSES,
-        SITE_IRON,
-        SITE_COAL,
-        SITE_OIL,
-        SITE_ALUMINUM,
-        SITE_URANIUM,
-        SITE_BANANA,
-        SITE_CATTLE,
-        SITE_DEER,
-        SITE_SHEEP,
-        SITE_WHEAT,
-        SITE_STONE,
-        SITE_PEARLS,
-        SITE_FISH,
-    };
-
     world_generator(uint32_t seed, uint32_t chunk_width, uint32_t chunk_depth);
     ~world_generator();
 

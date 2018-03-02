@@ -17,3 +17,9 @@ void world_chunk::load(terra_chunk* chunk) noexcept {
     }
     // TODO: Iterate on chunk
 }
+
+int world_chunk::biome_at(int x, int y, int z) const noexcept {
+    const std::size_t Y_OFFSET = world::CHUNK_WIDTH * world::CHUNK_DEPTH;
+    const std::size_t Z_OFFSET = world::CHUNK_WIDTH;
+    return biomes[y * Y_OFFSET + z * Z_OFFSET + x];
+}

@@ -13,6 +13,8 @@ public:
      * @param chunk The terratech chunk to load
      */
     void load(terra_chunk* chunk) noexcept;
+
+    int biome_at(int x, int y, int z) const noexcept;
 };
 
 #endif //MMAP_DEMO_WORLD_CHUNK_H
