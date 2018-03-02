@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.9)
 project(mmap_demo VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(terratech 0.5 REQUIRED)
 find_package(sdl2 REQUIRED)
@@ -36,7 +38,7 @@ add_executable(mmap_demo
         src/sdl/context.hpp
         src/camera.cpp
         src/camera.hpp
-        src/opengl/uniform.hpp)
+        src/opengl/uniform.hpp src/crypto/rsa.cpp src/crypto/rsa.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
