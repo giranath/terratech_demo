@@ -136,18 +136,18 @@ void world_generator::setup_resources() {
     };
 
     static const std::vector<std::vector<int>> SITES_DISTRIBUTION_SITES = {
-            { SITE_NOTHING, SITE_DEER, SITE_COAL, SITE_OIL },
-            { SITE_NOTHING, SITE_HORSES, SITE_STONE },
-            { SITE_NOTHING, SITE_URANIUM, SITE_IRON, SITE_OIL },
-            { SITE_NOTHING, SITE_DEER, SITE_CATTLE, SITE_IRON },
-            { SITE_NOTHING, SITE_DEER, SITE_CATTLE, SITE_IRON },
-            { SITE_NOTHING, SITE_CATTLE, SITE_WHEAT, SITE_STONE },
-            { SITE_NOTHING, SITE_DEER, SITE_BANANA, SITE_SHEEP },
-            { SITE_NOTHING, SITE_DEER, SITE_BANANA, SITE_SHEEP },
-            { SITE_NOTHING, SITE_BANANA, SITE_FISH, SITE_COAL },
-            { SITE_NOTHING, SITE_DEER, SITE_SHEEP, SITE_WHEAT },
-            { SITE_NOTHING, SITE_FISH },
-            { SITE_NOTHING, SITE_FISH, SITE_PEARLS }
+            { SITE_NOTHING, SITE_DEER,    SITE_COAL,   SITE_OIL   },
+            { SITE_NOTHING, SITE_HORSES,  SITE_STONE              },
+            { SITE_NOTHING, SITE_URANIUM, SITE_IRON,   SITE_OIL   },
+            { SITE_NOTHING, SITE_DEER,    SITE_CATTLE, SITE_IRON  },
+            { SITE_NOTHING, SITE_DEER,    SITE_CATTLE, SITE_IRON  },
+            { SITE_NOTHING, SITE_CATTLE,  SITE_WHEAT,  SITE_STONE },
+            { SITE_NOTHING, SITE_DEER,    SITE_BANANA, SITE_SHEEP },
+            { SITE_NOTHING, SITE_DEER,    SITE_BANANA, SITE_SHEEP },
+            { SITE_NOTHING, SITE_BANANA,  SITE_FISH,   SITE_COAL  },
+            { SITE_NOTHING, SITE_DEER,    SITE_SHEEP,  SITE_WHEAT },
+            { SITE_NOTHING, SITE_FISH                             },
+            { SITE_NOTHING, SITE_FISH,    SITE_PEARLS             }
 
     };
 
