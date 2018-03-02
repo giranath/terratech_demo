@@ -2,6 +2,7 @@
 #include "sdl/sdl.hpp"
 #include "game.hpp"
 #include "camera.hpp"
+#include "world/world.hpp"
 #include "world/world_generator.hpp"
 
 #include <glm/glm.hpp>
@@ -257,7 +258,8 @@ void set_opengl_version(int major, int minor) {
 }
 
 int main() {
-    world_generator world_gen(146135, 32, 32);
+    world game_world(static_cast<uint32_t>(std::time(nullptr)));
+    auto chunk = game_world.generate_at(0, 0);
 
     sdl::context<>& sdl = sdl::context<>::instance();
 
@@ -312,13 +314,14 @@ int main() {
     god_cam.reset({200.f, 200.f, 200.f});
 
     const float CAMERA_SPEED = 250.f; // 250 pixels per seconds
+    const float ROTATION_SPEED = 1.f;
 
     // Game loop
     bool is_running = true;
     while(is_running) {
         const float LAST_FRAME_DURATION = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration).count() / 1000.f;
 
-        model_matrix = glm::rotate(model_matrix, 0.01f, {0.f, 1.f, 0.f});
+        model_matrix = glm::rotate(model_matrix, ROTATION_SPEED * LAST_FRAME_DURATION, {0.f, 1.f, 0.f});
 
         const auto start_of_frame = game::clock::now();
         game_state.render();

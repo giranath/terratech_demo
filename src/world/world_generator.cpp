@@ -2,39 +2,22 @@
 
 #include <vector>
 
-enum {
-    BIOME_RAIN_FOREST,
-    BIOME_SWAMP,
-    BIOME_SEASONAL_FOREST,
-    BIOME_FOREST,
-    BIOME_TAIGA,
-    BIOME_WOODS,
-    BIOME_SAVANNA,
-    BIOME_DESERT,
-    BIOME_GRASS_DESERT,
-    BIOME_TUNDRA,
-    BIOME_WATER,
-    BIOME_DEEP_WATER,
-    BIOME_COUNT
-};
+world_generator_chunk::world_generator_chunk(terra_chunk* chunk)
+: chunk {chunk} {
 
-enum {
-    SITE_NOTHING,
-    SITE_HORSES,
-    SITE_IRON,
-    SITE_COAL,
-    SITE_OIL,
-    SITE_ALUMINUM,
-    SITE_URANIUM,
-    SITE_BANANA,
-    SITE_CATTLE,
-    SITE_DEER,
-    SITE_SHEEP,
-    SITE_WHEAT,
-    SITE_STONE,
-    SITE_PEARLS,
-    SITE_FISH,
-};
+}
+
+world_generator_chunk::~world_generator_chunk() {
+    terra_chunk_release(chunk);
+}
+
+world_generator_chunk::operator terra_chunk*() noexcept {
+    return chunk;
+}
+
+world_generator_chunk::operator const terra_chunk*() noexcept {
+    return chunk;
+}
 
 world_generator::world_generator(uint32_t seed, uint32_t chunk_width, uint32_t chunk_depth)
 : map_generator{terra_map_create(seed, chunk_width, 1, chunk_depth, CHUNK_NOISE_RATIO)}
@@ -53,6 +36,12 @@ world_generator::world_generator(uint32_t seed, uint32_t chunk_width, uint32_t c
 
 world_generator::~world_generator() {
     terra_map_destroy(map_generator);
+}
+
+world_generator_chunk world_generator::generate_chunk(int x, int y, int z) const noexcept {
+    terra_chunk* chunk = terra_map_generate_chunk(map_generator, x, z);
+
+    return world_generator_chunk{chunk};
 }
 
 void world_generator::setup_biomes() {
