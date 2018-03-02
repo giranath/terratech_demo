@@ -2,6 +2,7 @@
 #include "sdl/sdl.hpp"
 #include "game.hpp"
 #include "camera.hpp"
+#include "world/world_generator.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -256,6 +257,8 @@ void set_opengl_version(int major, int minor) {
 }
 
 int main() {
+    world_generator world_gen(146135, 32, 32);
+
     sdl::context<>& sdl = sdl::context<>::instance();
 
     if(!sdl.good()) {

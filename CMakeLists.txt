@@ -37,7 +37,7 @@ add_executable(mmap_demo
         src/sdl/context.hpp
         src/camera.cpp
         src/camera.hpp
-        src/opengl/uniform.hpp src/crypto/rsa.cpp src/crypto/rsa.hpp)
+        src/opengl/uniform.hpp src/crypto/rsa.cpp src/crypto/rsa.hpp src/world/world.cpp src/world/world.hpp src/world/world_generator.cpp src/world/world_generator.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
