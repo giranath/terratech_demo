@@ -310,6 +310,9 @@ int main() {
 
     const float CAMERA_SPEED = 250.f; // 250 pixels per seconds
 
+    bool is_scrolling = false;
+    bool show_wireframe = false;
+
     // Game loop
     bool is_running = true;
     while(is_running) {
@@ -367,18 +370,28 @@ int main() {
             }
             else if(event.type == SDL_KEYDOWN) {
                 switch(event.key.keysym.sym) {
-                    case SDLK_LEFT:
-                        god_cam.translate({cam_speed, 0.f, 0.f});
+                    case SDLK_m:
+                        show_wireframe = !show_wireframe;
+
+                        glPolygonMode(GL_FRONT_AND_BACK, show_wireframe ? GL_LINE : GL_FILL);
                         break;
-                    case SDLK_RIGHT:
-                        god_cam.translate({-cam_speed, 0.f, 0.f});
+                    default:
                         break;
-                    case SDLK_UP:
-                        god_cam.translate({0.f, 0.f, cam_speed});
-                        break;
-                    case SDLK_DOWN:
-                        god_cam.translate({0.f, 0.f, -cam_speed});
-                        break;
+                }
+            }
+            else if(event.type == SDL_MOUSEBUTTONDOWN) {
+                if(event.button.button == SDL_BUTTON_MIDDLE) {
+                    is_scrolling = true;
+                }
+            }
+            else if(event.type == SDL_MOUSEBUTTONUP) {
+                if(event.button.button == SDL_BUTTON_MIDDLE) {
+                    is_scrolling = false;
+                }
+            }
+            else if(event.type == SDL_MOUSEMOTION) {
+                if(is_scrolling) {
+                    god_cam.translate({event.motion.xrel, 0.f, event.motion.yrel});
                 }
             }
             // TODO: Dispatch the game events to the game
