@@ -10,7 +10,7 @@ constexpr glm::vec3 spherical_space_vec(float theta, float phi) {
 
 camera::camera(float left, float right, float bottom, float top, float near, float far)
 : pos{}
-, target_direction{spherical_space_vec(X_ANGLE, Y_ANGLE)}
+, target_direction{spherical_space_vec(Y_ANGLE, X_ANGLE)}
 , projection_mat{glm::ortho(left, right, bottom, top, near, far)}{
 
 }
