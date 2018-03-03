@@ -183,6 +183,7 @@ void set_opengl_version(int major, int minor) {
 int main() {
     world game_world(static_cast<uint32_t>(std::time(nullptr)));
     auto chunk = game_world.generate_at(0, 0);
+    auto chunk2 = game_world.generate_at(1, 0);
 
     sdl::context<>& sdl = sdl::context<>::instance();
 
@@ -224,30 +225,41 @@ int main() {
     auto camera_matrix_uniform = prog.find_uniform<glm::mat4>("camera_matrix");
 
     chunk_renderer chunk_ren{chunk};
+    chunk_renderer chunk2_ren{chunk2};
 
-    glm::mat4 model_matrix{1.f};
+
 
     camera god_cam(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
 
+    const float CAMERA_SPEED = 250.f; // 250 pixels per seconds
+
+    bool is_scrolling = false;
     bool show_wireframe = false;
+
     // Game loop
     bool is_running = true;
     while(is_running) {
         const float LAST_FRAME_DURATION = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration).count() / 1000.f;
-
         const auto start_of_frame = game::clock::now();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         gl::bind(prog);
 
+        glm::mat4 model_matrix{1.f};
         model_matrix_uniform.set(model_matrix);
         camera_matrix_uniform.set(god_cam.matrix());
 
         game_state.render();
 
+        // Render first chunk
         chunk_ren.render();
+
+        // Render second chunk
+        model_matrix = glm::translate(model_matrix, {world::CHUNK_WIDTH * chunk_renderer::SQUARE_SIZE, 0.f, 0.f});
+        model_matrix_uniform.set(model_matrix);
+        chunk2_ren.render();
 
         window.gl_swap();
 
@@ -260,23 +272,28 @@ int main() {
             }
             else if(event.type == SDL_KEYDOWN) {
                 switch(event.key.keysym.sym) {
-                    case SDLK_LEFT:
-                        god_cam.translate({-CAM_SPEED, 0.f, 0.f});
-                        break;
-                    case SDLK_RIGHT:
-                        god_cam.translate({CAM_SPEED, 0.f, 0.f});
-                        break;
-                    case SDLK_UP:
-                        god_cam.translate({0.f, CAM_SPEED, 0.f});
-                        break;
-                    case SDLK_DOWN:
-                        god_cam.translate({0.f, -CAM_SPEED, 0.f});
-                        break;
                     case SDLK_m:
                         show_wireframe = !show_wireframe;
 
-                        glPolygonMode( GL_FRONT_AND_BACK, show_wireframe ? GL_LINE : GL_FILL);
+                        glPolygonMode(GL_FRONT_AND_BACK, show_wireframe ? GL_LINE : GL_FILL);
                         break;
+                    default:
+                        break;
+                }
+            }
+            else if(event.type == SDL_MOUSEBUTTONDOWN) {
+                if(event.button.button == SDL_BUTTON_MIDDLE) {
+                    is_scrolling = true;
+                }
+            }
+            else if(event.type == SDL_MOUSEBUTTONUP) {
+                if(event.button.button == SDL_BUTTON_MIDDLE) {
+                    is_scrolling = false;
+                }
+            }
+            else if(event.type == SDL_MOUSEMOTION) {
+                if(is_scrolling) {
+                    god_cam.translate({event.motion.xrel, 0.f, event.motion.yrel});
                 }
             }
             // TODO: Dispatch the game events to the game
