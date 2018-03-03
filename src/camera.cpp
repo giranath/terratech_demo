@@ -1,8 +1,16 @@
 #include "camera.hpp"
 
+#include <cmath>
+
+constexpr glm::vec3 spherical_space_vec(float theta, float phi) {
+    return {std::cos(phi) * std::sin(theta),
+            std::sin(phi),
+            std::cos(phi) * std::cos(theta)};
+}
 
 camera::camera(float left, float right, float bottom, float top, float near, float far)
 : pos{}
+, target_direction{spherical_space_vec(X_ANGLE, Y_ANGLE)}
 , projection_mat{glm::ortho(left, right, bottom, top, near, far)}{
 
 }
@@ -24,22 +32,5 @@ glm::mat4 camera::projection() const noexcept {
 }
 
 glm::mat4 camera::view() const noexcept {
-    const glm::mat4 translation = glm::translate(glm::mat4{1.f}, -pos);
-
-    return translation * camera::isometric_model();
-}
-
-glm::vec3 camera::up() const noexcept {
-    return {0.f, 1.f, 0.f};
-}
-
-glm::vec3 camera::right() const noexcept {
-    return {1.f, 0.f, 0.f};
-}
-
-glm::mat4 camera::isometric_model() noexcept {
-    const glm::mat4 x_rotation = glm::rotate(glm::mat4{1.f}, 35.264f, {1.f, 0.f, 0.f});
-    const glm::mat4 y_rotation = glm::rotate(glm::mat4{1.f}, -45.f, {0.f, 1.f, 0.f});
-
-    return x_rotation * y_rotation;
+    return glm::lookAt(pos, pos + target_direction, {0.f, 1.f, 0.f});
 }
