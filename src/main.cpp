@@ -183,6 +183,7 @@ void set_opengl_version(int major, int minor) {
 int main() {
     world game_world(static_cast<uint32_t>(std::time(nullptr)));
     auto chunk = game_world.generate_at(0, 0);
+    auto chunk2 = game_world.generate_at(1, 0);
 
     sdl::context<>& sdl = sdl::context<>::instance();
 
@@ -224,8 +225,9 @@ int main() {
     auto camera_matrix_uniform = prog.find_uniform<glm::mat4>("camera_matrix");
 
     chunk_renderer chunk_ren{chunk};
+    chunk_renderer chunk2_ren{chunk2};
 
-    glm::mat4 model_matrix{1.f};
+
 
     camera god_cam(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
@@ -245,12 +247,19 @@ int main() {
 
         gl::bind(prog);
 
+        glm::mat4 model_matrix{1.f};
         model_matrix_uniform.set(model_matrix);
         camera_matrix_uniform.set(god_cam.matrix());
 
         game_state.render();
 
+        // Render first chunk
         chunk_ren.render();
+
+        // Render second chunk
+        model_matrix = glm::translate(model_matrix, {world::CHUNK_WIDTH * chunk_renderer::SQUARE_SIZE, 0.f, 0.f});
+        model_matrix_uniform.set(model_matrix);
+        chunk2_ren.render();
 
         window.gl_swap();
 
