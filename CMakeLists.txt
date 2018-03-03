@@ -7,7 +7,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(terratech 0.5 REQUIRED)
 find_package(sdl2 REQUIRED)
-find_package(sdl2_image REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
 find_package(PythonInterp REQUIRED)
@@ -38,19 +37,25 @@ add_executable(mmap_demo
         src/sdl/context.hpp
         src/camera.cpp
         src/camera.hpp
-        src/opengl/uniform.hpp src/crypto/rsa.cpp src/crypto/rsa.hpp)
+        src/opengl/uniform.hpp
+        src/crypto/rsa.cpp
+        src/crypto/rsa.hpp
+        src/world/world.cpp
+        src/world/world.hpp
+        src/world/world_generator.cpp
+        src/world/world_generator.hpp
+        src/world/world_chunk.cpp
+        src/world/world_chunk.hpp src/chunk_renderer.cpp src/chunk_renderer.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
         ${SDL2_INCLUDE_DIRS}
-        ${SDL2_IMAGE_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
         ${GLM_INCLUDE_DIRS}
         "${CMAKE_BINARY_DIR}/include")
 target_link_libraries(mmap_demo
         ${terratech_LIBRARIES}
         ${SDL2_LIBRARIES}
-        ${SDL2_IMAGE_LIBRARIES}
         ${OPENGL_gl_LIBRARY}
         ${CMAKE_DL_LIBS})
 
