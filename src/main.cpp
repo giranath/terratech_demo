@@ -2,6 +2,9 @@
 #include "sdl/sdl.hpp"
 #include "game.hpp"
 #include "camera.hpp"
+#include "debug/profiler.hpp"
+#include "debug/profiler_administrator.hpp"
+#include "control/input_handler.hpp"
 #include "world/world.hpp"
 #include "world/world_generator.hpp"
 #include "chunk_renderer.hpp"
@@ -180,13 +183,13 @@ void set_opengl_version(int major, int minor) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+
     world game_world(static_cast<uint32_t>(std::time(nullptr)));
     auto chunk = game_world.generate_at(0, 0);
     auto chunk2 = game_world.generate_at(1, 0);
 
     sdl::context<>& sdl = sdl::context<>::instance();
-
     if(!sdl.good()) {
         std::cerr << "cannot initialize SDL: " << SDL_GetError() << std::endl;
         return 1;
@@ -196,6 +199,7 @@ int main() {
     set_opengl_version(3, 3);
 
     // Setup the window
+
     sdl::window window("RTS v." GAME_VERSION " (terratech v." TERRA_VERSION_STR ")", 800, 600);
     if(!window.good()) {
         std::cerr << "cannot create window: " << SDL_GetError() << std::endl;
@@ -237,10 +241,13 @@ int main() {
     bool is_scrolling = false;
     bool show_wireframe = false;
 
+    input_handler input(god_cam);
     // Game loop
     bool is_running = true;
+    bool show_wireframe = false;
     while(is_running) {
         const float LAST_FRAME_DURATION = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration).count() / 1000.f;
+
         const auto start_of_frame = game::clock::now();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -263,23 +270,15 @@ int main() {
 
         window.gl_swap();
 
+
         constexpr float CAM_SPEED = 10.f;
 
         // Handle events from user here
         for(auto event : sdl.poll_events()) {
+            profiler<std::chrono::nanoseconds> p("test");
+            input.is_pressed(event.key.keysym.sym);
             if(event.type == SDL_QUIT) {
                 is_running = false;
-            }
-            else if(event.type == SDL_KEYDOWN) {
-                switch(event.key.keysym.sym) {
-                    case SDLK_m:
-                        show_wireframe = !show_wireframe;
-
-                        glPolygonMode(GL_FRONT_AND_BACK, show_wireframe ? GL_LINE : GL_FILL);
-                        break;
-                    default:
-                        break;
-                }
             }
             else if(event.type == SDL_MOUSEBUTTONDOWN) {
                 if(event.button.button == SDL_BUTTON_MIDDLE) {
@@ -298,7 +297,7 @@ int main() {
             }
             // TODO: Dispatch the game events to the game
         }
-
+        
         // Update state here
         game_state.update(last_frame_duration);
 

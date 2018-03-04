@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+
 find_package(terratech 0.5 REQUIRED)
 find_package(sdl2 REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -45,7 +46,10 @@ add_executable(mmap_demo
         src/world/world_generator.cpp
         src/world/world_generator.hpp
         src/world/world_chunk.cpp
-        src/world/world_chunk.hpp src/chunk_renderer.cpp src/chunk_renderer.hpp)
+        src/world/world_chunk.hpp src/chunk_renderer.cpp src/chunk_renderer.hpp
+        src/control/all_commands.hpp
+		src/control/command.hpp
+		src/control/input_handler.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
