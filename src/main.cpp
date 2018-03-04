@@ -238,13 +238,10 @@ int main(int argc, char* argv[]) {
 
     const float CAMERA_SPEED = 250.f; // 250 pixels per seconds
 
-    bool is_scrolling = false;
-    bool show_wireframe = false;
-
     input_handler input(god_cam);
     // Game loop
     bool is_running = true;
-    bool show_wireframe = false;
+    bool is_scrolling = false;
     while(is_running) {
         const float LAST_FRAME_DURATION = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration).count() / 1000.f;
 
@@ -276,7 +273,7 @@ int main(int argc, char* argv[]) {
         // Handle events from user here
         for(auto event : sdl.poll_events()) {
             profiler<std::chrono::nanoseconds> p("test");
-            input.is_pressed(event.key.keysym.sym);
+            
             if(event.type == SDL_QUIT) {
                 is_running = false;
             }
@@ -294,6 +291,10 @@ int main(int argc, char* argv[]) {
                 if(is_scrolling) {
                     god_cam.translate({event.motion.xrel, 0.f, event.motion.yrel});
                 }
+            }
+            else if (event.type == SDL_KEYDOWN)
+            {
+                input.is_pressed(event.key.keysym.sym);
             }
             // TODO: Dispatch the game events to the game
         }
