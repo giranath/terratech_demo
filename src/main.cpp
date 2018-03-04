@@ -2,11 +2,13 @@
 #include "sdl/sdl.hpp"
 #include "game.hpp"
 #include "camera.hpp"
-
+#include "debug/profiler.hpp"
+#include "debug/profiler_administrator.hpp"
+#include "control/input_handler.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <mapgen/mapgen.h>
+#include <terratech/terratech.h>
 #include <fstream>
 
 static const GLfloat g_vertex_buffer_data[] = {
@@ -127,9 +129,8 @@ void opengl_message_cb(GLenum source, GLenum type, GLuint id, GLenum severity,
               << "  " << message << std::endl;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     sdl::context<>& sdl = sdl::context<>::instance();
-
     if(!sdl.good()) {
         std::cerr << "cannot initialize SDL: " << SDL_GetError() << std::endl;
         return 1;
@@ -141,7 +142,7 @@ int main() {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
     // Setup the window
-    sdl::window window("RTS v." GAME_VERSION " (mapgen v." MAPGEN_VERSION_STR ")", 800, 600);
+    sdl::window window("RTS v." GAME_VERSION " (mapgen v." TERRA_VERSION_STR ")", 800, 600);
     if(!window.good()) {
         std::cerr << "cannot create window: " << SDL_GetError() << std::endl;
         return 1;
@@ -186,19 +187,21 @@ int main() {
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(cbo));
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
 
-    glm::mat4 model_matrix = glm::scale(glm::mat4{1.f}, {100.f, 100.f, 100.f});
+    glm::mat4 model_matrix = glm::scale(glm::mat4{1.f}, {500.f, 500.f, 500.f});
 
     camera god_cam(-400.f, 400.f, -300.f, 300.f, 0.001f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
 
     const float CAMERA_SPEED = 250.f; // 3.5 pixels per seconds
 
+    input_handler input(god_cam);
     // Game loop
     bool is_running = true;
+    bool show_wireframe = false;
     while(is_running) {
         const float LAST_FRAME_DURATION = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration).count() / 1000.f;
 
-        model_matrix = glm::rotate(model_matrix, 0.01f, {0.f, 1.f, 0.f});
+        //model_matrix = glm::rotate(model_matrix, 0.01f, {0.f, 1.f, 0.f});
 
         const auto start_of_frame = game::clock::now();
         game_state.render();
@@ -241,32 +244,21 @@ int main() {
 
         window.gl_swap();
 
-        const float cam_speed = CAMERA_SPEED * LAST_FRAME_DURATION;
+        const float cam_speed = CAMERA_SPEED * LAST_FRAME_DURATION * 4;
 
         // Handle events from user here
         for(auto event : sdl.poll_events()) {
+            profiler<std::chrono::nanoseconds> p("test");
             if(event.type == SDL_QUIT) {
                 is_running = false;
             }
             else if(event.type == SDL_KEYDOWN) {
-                switch(event.key.keysym.sym) {
-                    case SDLK_LEFT:
-                        god_cam.translate({-cam_speed, 0.f, 0.f});
-                        break;
-                    case SDLK_RIGHT:
-                        god_cam.translate({cam_speed, 0.f, 0.f});
-                        break;
-                    case SDLK_UP:
-                        god_cam.translate({0.f, cam_speed, 0.f});
-                        break;
-                    case SDLK_DOWN:
-                        god_cam.translate({0.f, -cam_speed, 0.f});
-                        break;
-                }
+                input.is_pressed(event.key.keysym.sym);
+                
             }
             // TODO: Dispatch the game events to the game
         }
-
+        
         // Update state here
         game_state.update(last_frame_duration);
 
