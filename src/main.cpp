@@ -5,131 +5,190 @@
 #include "debug/profiler.hpp"
 #include "debug/profiler_administrator.hpp"
 #include "control/input_handler.hpp"
+#include "world/world.hpp"
+#include "world/world_generator.hpp"
+#include "chunk_renderer.hpp"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <terratech/terratech.h>
 #include <fstream>
 
-static const GLfloat g_vertex_buffer_data[] = {
-        -1.0f,-1.0f,-1.0f, // triangle 1 : begin
-        -1.0f,-1.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f, // triangle 1 : end
-         1.0f, 1.0f,-1.0f, // triangle 2 : begin
-        -1.0f,-1.0f,-1.0f,
-        -1.0f, 1.0f,-1.0f, // triangle 2 : end
-         1.0f,-1.0f, 1.0f,
-        -1.0f,-1.0f,-1.0f,
-         1.0f,-1.0f,-1.0f,
-         1.0f, 1.0f,-1.0f,
-         1.0f,-1.0f,-1.0f,
-        -1.0f,-1.0f,-1.0f,
-        -1.0f,-1.0f,-1.0f,
-        -1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f,-1.0f,
-         1.0f,-1.0f, 1.0f,
-        -1.0f,-1.0f, 1.0f,
-        -1.0f,-1.0f,-1.0f,
-        -1.0f, 1.0f, 1.0f,
-        -1.0f,-1.0f, 1.0f,
-         1.0f,-1.0f, 1.0f,
-         1.0f, 1.0f, 1.0f,
-         1.0f,-1.0f,-1.0f,
-         1.0f, 1.0f,-1.0f,
-         1.0f,-1.0f,-1.0f,
-         1.0f, 1.0f, 1.0f,
-         1.0f,-1.0f, 1.0f,
-         1.0f, 1.0f, 1.0f,
-         1.0f, 1.0f,-1.0f,
-        -1.0f, 1.0f,-1.0f,
-         1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f,-1.0f,
-        -1.0f, 1.0f, 1.0f,
-         1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f,
-         1.0f,-1.0f, 1.0f
-};
+template<typename Shader>
+Shader load_shader(const std::string& name) {
+    std::ifstream file("asset/shader/" + name);
+    Shader shader;
 
-static const GLfloat g_color_buffer_data[] = {
-        0.583f,  0.771f,  0.014f,
-        0.583f,  0.771f,  0.014f,
-        0.583f,  0.771f,  0.014f,
-        0.583f,  0.771f,  0.014f,
-        0.583f,  0.771f,  0.014f,
-        0.583f,  0.771f,  0.014f,
-        0.597f,  0.770f,  0.761f,
-        0.597f,  0.770f,  0.761f,
-        0.597f,  0.770f,  0.761f,
-        0.597f,  0.770f,  0.761f,
-        0.597f,  0.770f,  0.761f,
-        0.597f,  0.770f,  0.761f,
-        0.014f,  0.184f,  0.576f,
-        0.014f,  0.184f,  0.576f,
-        0.014f,  0.184f,  0.576f,
-        0.014f,  0.184f,  0.576f,
-        0.014f,  0.184f,  0.576f,
-        0.014f,  0.184f,  0.576f,
-        0.997f,  0.513f,  0.064f,
-        0.997f,  0.513f,  0.064f,
-        0.997f,  0.513f,  0.064f,
-        0.997f,  0.513f,  0.064f,
-        0.997f,  0.513f,  0.064f,
-        0.997f,  0.513f,  0.064f,
-        0.055f,  0.953f,  0.042f,
-        0.055f,  0.953f,  0.042f,
-        0.055f,  0.953f,  0.042f,
-        0.055f,  0.953f,  0.042f,
-        0.055f,  0.953f,  0.042f,
-        0.055f,  0.953f,  0.042f,
-        0.517f,  0.713f,  0.338f,
-        0.517f,  0.713f,  0.338f,
-        0.517f,  0.713f,  0.338f,
-        0.517f,  0.713f,  0.338f,
-        0.517f,  0.713f,  0.338f,
-        0.517f,  0.713f,  0.338f
-};
+    auto res = shader.compile(file);
+    if(!res.good()) {
+        std::cerr << res.message() << std::endl;
+        shader = Shader{};
+    }
+    else if(!res.message().empty()) {
+        std::cout << res.message() << std::endl;
+    }
+
+    return shader;
+}
 
 gl::program load_program(const std::string& name) {
-    gl::vertex_shader ver;
-    std::ifstream vert_file("src/shader/" + name + ".vert");
-    auto vert_res = ver.compile(vert_file);
-
-    std::ostream* out = &std::cout;
-    if(!vert_res.good()) {
-        out = &std::cerr;
-    }
-    if(!vert_res.message().empty()) *out << vert_res.message() << std::endl;
-
-    out = &std::cout;
-    gl::fragment_shader frag;
-    std::ifstream frag_file("src/shader/" + name + ".frag");
-    auto frag_res = frag.compile(frag_file);
-    if(!frag_res.good()) {
-        out = &std::cerr;
-    }
-    if(!frag_res.message().empty()) *out << frag_res.message() << std::endl;
+    auto ver = load_shader<gl::vertex_shader>(name + ".vert");
+    auto frag = load_shader<gl::fragment_shader>(name + ".frag");
 
     gl::program prog{};
-
     prog.attach(ver);
     prog.attach(frag);
 
-    prog.link();
+    auto res = prog.link();
+    if(!res.good()) {
+        prog = gl::program{};
+        std::cerr << res.message() << std::endl;
+    }
 
     return prog;
 }
 
+std::ostream& print_opengl_severity(std::ostream& os, GLenum severity) {
+    switch(severity) {
+        case GL_DEBUG_SEVERITY_HIGH_ARB:
+            os << "high";
+            break;
+        case GL_DEBUG_SEVERITY_MEDIUM_ARB:
+            os << "medium";
+            break;
+        case GL_DEBUG_SEVERITY_LOW_ARB:
+            os << "low";
+            break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+            os << "debug";
+            break;
+        default:
+            os << "unknown";
+            break;
+    }
+
+    return os;
+}
+
+std::ostream& print_opengl_type(std::ostream& os, GLenum type) {
+    switch(type) {
+        case GL_DEBUG_TYPE_ERROR_ARB:
+            os << "error";
+            break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+            os << "deprecated";
+            break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
+            os << "undefined behavior";
+            break;
+        case GL_DEBUG_TYPE_PORTABILITY_ARB:
+            os << "portability";
+            break;
+        case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+            os << "performance";
+            break;
+        case GL_DEBUG_TYPE_MARKER:
+            os << "marker";
+            break;
+        case GL_DEBUG_TYPE_PUSH_GROUP:
+            os << "push group";
+            break;
+        case GL_DEBUG_TYPE_POP_GROUP:
+            os << "pop group";
+            break;
+        case GL_DEBUG_TYPE_OTHER:
+            os << "other";
+            break;
+        default:
+            os << "unknown";
+            break;
+    }
+    return os;
+}
+
+std::ostream& print_opengl_source(std::ostream& os, GLenum source) {
+    switch(source) {
+        case GL_DEBUG_SOURCE_API:
+            os << "api";
+            break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
+            os << "window";
+            break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
+            os << "compiler";
+            break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
+            os << "third-party";
+            break;
+        case GL_DEBUG_SOURCE_APPLICATION_ARB:
+            os << "application";
+            break;
+        case GL_DEBUG_SOURCE_OTHER_ARB:
+            os << "other";
+            break;
+        default:
+            os << "unknown";
+            break;
+    }
+    return os;
+}
+
 void opengl_message_cb(GLenum source, GLenum type, GLuint id, GLenum severity,
                        GLsizei len, const GLchar* message, const void* user_params) {
-    std::cerr << "opengl: "
-              << (type == GL_DEBUG_TYPE_ERROR ? "ERROR" : "") << " "
-              << "type: " << type << " "
-              << "severity: " << severity
-              << "\n"
-              << "  " << message << std::endl;
+    std::cerr << "[GL:" << id << "]";
+
+    std::cerr << "[";
+    print_opengl_source(std::cerr, source);
+    std::cerr << "]";
+
+    std::cerr << "[";
+    print_opengl_severity(std::cerr, severity);
+    std::cerr << "]";
+
+    std::cerr << "[";
+    print_opengl_type(std::cerr, type);
+    std::cerr << "] ";
+
+    std::cerr << message << std::endl;
+}
+
+void setup_opengl_debug_msg() {
+    // We check if glDebugMessageCallback exists
+    GL3WglProc debug_msg_callback_extension = gl3wGetProcAddress("glDebugMessageCallbackARB");
+    if(debug_msg_callback_extension) {
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+
+        typedef GLvoid (APIENTRYP DebugMessageCallbackARBPROC )(GLDEBUGPROCARB callback, GLvoid* userParam);
+        DebugMessageCallbackARBPROC glDebugMessageCallbackARB = reinterpret_cast<DebugMessageCallbackARBPROC>(debug_msg_callback_extension);
+
+        glDebugMessageCallbackARB((GLDEBUGPROCARB) opengl_message_cb, nullptr);
+    }
+}
+
+void setup_opengl() {
+    // Enable depth test
+    glEnable(GL_DEPTH_TEST);
+
+    setup_opengl_debug_msg();
+
+    // Accept fragment if it closer to the camera than the former one
+    glDepthFunc(GL_LESS);
+}
+
+void set_opengl_version(int major, int minor) {
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, major);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, minor);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 }
 
 int main(int argc, char* argv[]) {
+
+    world game_world(static_cast<uint32_t>(std::time(nullptr)));
+    auto chunk = game_world.generate_at(0, 0);
+    auto chunk2 = game_world.generate_at(1, 0);
+
     sdl::context<>& sdl = sdl::context<>::instance();
     if(!sdl.good()) {
         std::cerr << "cannot initialize SDL: " << SDL_GetError() << std::endl;
@@ -137,12 +196,11 @@ int main(int argc, char* argv[]) {
     }
 
     // Setup OpenGL attributes
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    set_opengl_version(3, 3);
 
     // Setup the window
-    sdl::window window("RTS v." GAME_VERSION " (mapgen v." TERRA_VERSION_STR ")", 800, 600);
+
+    sdl::window window("RTS v." GAME_VERSION " (terratech v." TERRA_VERSION_STR ")", 800, 600);
     if(!window.good()) {
         std::cerr << "cannot create window: " << SDL_GetError() << std::endl;
         return 1;
@@ -160,16 +218,7 @@ int main(int argc, char* argv[]) {
 
     game game_state;
 
-    // Enable depth test
-    glEnable(GL_DEPTH_TEST);
-
-    if(gl3wIsSupported(4, 3)) {
-        glEnable(GL_DEBUG_OUTPUT);
-        glDebugMessageCallback((GLDEBUGPROC) opengl_message_cb, nullptr);
-    }
-
-    // Accept fragment if it closer to the camera than the former one
-    glDepthFunc(GL_LESS);
+    setup_opengl();
 
     gl::vertex_array vao = gl::vertex_array::make();
     gl::bind(vao);
@@ -179,20 +228,18 @@ int main(int argc, char* argv[]) {
     auto model_matrix_uniform = prog.find_uniform<glm::mat4>("model_matrix");
     auto camera_matrix_uniform = prog.find_uniform<glm::mat4>("camera_matrix");
 
-    gl::buffer vbo = gl::buffer::make();
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vbo));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+    chunk_renderer chunk_ren{chunk};
+    chunk_renderer chunk2_ren{chunk2};
 
-    gl::buffer cbo = gl::buffer::make();
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(cbo));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
 
-    glm::mat4 model_matrix = glm::scale(glm::mat4{1.f}, {500.f, 500.f, 500.f});
 
-    camera god_cam(-400.f, 400.f, -300.f, 300.f, 0.001f, 1000.f);
+    camera god_cam(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
 
-    const float CAMERA_SPEED = 250.f; // 3.5 pixels per seconds
+    const float CAMERA_SPEED = 250.f; // 250 pixels per seconds
+
+    bool is_scrolling = false;
+    bool show_wireframe = false;
 
     input_handler input(god_cam);
     // Game loop
@@ -201,60 +248,52 @@ int main(int argc, char* argv[]) {
     while(is_running) {
         const float LAST_FRAME_DURATION = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration).count() / 1000.f;
 
-        //model_matrix = glm::rotate(model_matrix, 0.01f, {0.f, 1.f, 0.f});
-
         const auto start_of_frame = game::clock::now();
-        game_state.render();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         gl::bind(prog);
 
+        glm::mat4 model_matrix{1.f};
         model_matrix_uniform.set(model_matrix);
         camera_matrix_uniform.set(god_cam.matrix());
 
-        // 1rst attribute buffer : vertices
-        glEnableVertexAttribArray(0);
-        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vbo));
-        glVertexAttribPointer(
-                0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-                3,                  // size
-                GL_FLOAT,           // type
-                GL_FALSE,           // normalized?
-                0,                  // stride
-                nullptr            // array buffer offset
-        );
+        game_state.render();
 
-        // 2nd attribute buffer : colors
-        glEnableVertexAttribArray(1);
-        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(cbo));
-        glVertexAttribPointer(
-                1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-                3,                                // size
-                GL_FLOAT,                         // type
-                GL_FALSE,                         // normalized?
-                0,                                // stride
-                nullptr                          // array buffer offset
-        );
+        // Render first chunk
+        chunk_ren.render();
 
-        glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
-
-        glDisableVertexAttribArray(1);
-        glDisableVertexAttribArray(0);
+        // Render second chunk
+        model_matrix = glm::translate(model_matrix, {world::CHUNK_WIDTH * chunk_renderer::SQUARE_SIZE, 0.f, 0.f});
+        model_matrix_uniform.set(model_matrix);
+        chunk2_ren.render();
 
         window.gl_swap();
 
-        const float cam_speed = CAMERA_SPEED * LAST_FRAME_DURATION * 4;
+
+        constexpr float CAM_SPEED = 10.f;
 
         // Handle events from user here
         for(auto event : sdl.poll_events()) {
             profiler<std::chrono::nanoseconds> p("test");
+            input.is_pressed(event.key.keysym.sym);
             if(event.type == SDL_QUIT) {
                 is_running = false;
             }
-            else if(event.type == SDL_KEYDOWN) {
-                input.is_pressed(event.key.keysym.sym);
-                
+            else if(event.type == SDL_MOUSEBUTTONDOWN) {
+                if(event.button.button == SDL_BUTTON_MIDDLE) {
+                    is_scrolling = true;
+                }
+            }
+            else if(event.type == SDL_MOUSEBUTTONUP) {
+                if(event.button.button == SDL_BUTTON_MIDDLE) {
+                    is_scrolling = false;
+                }
+            }
+            else if(event.type == SDL_MOUSEMOTION) {
+                if(is_scrolling) {
+                    god_cam.translate({event.motion.xrel, 0.f, event.motion.yrel});
+                }
             }
             // TODO: Dispatch the game events to the game
         }

@@ -2,8 +2,11 @@ cmake_minimum_required(VERSION 3.9)
 project(mmap_demo VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(terratech 0.4 REQUIRED)
+
+find_package(terratech 0.5 REQUIRED)
 find_package(sdl2 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
@@ -34,8 +37,17 @@ add_executable(mmap_demo
         src/sdl/window.hpp
         src/sdl/context.hpp
         src/camera.cpp
-        src/camera.hpp src/opengl/uniform.hpp
-		src/control/all_commands.hpp
+        src/camera.hpp
+        src/opengl/uniform.hpp
+        src/crypto/rsa.cpp
+        src/crypto/rsa.hpp
+        src/world/world.cpp
+        src/world/world.hpp
+        src/world/world_generator.cpp
+        src/world/world_generator.hpp
+        src/world/world_chunk.cpp
+        src/world/world_chunk.hpp src/chunk_renderer.cpp src/chunk_renderer.hpp
+        src/control/all_commands.hpp
 		src/control/command.hpp
 		src/control/input_handler.hpp)
 
@@ -48,7 +60,7 @@ target_include_directories(mmap_demo PUBLIC
 target_link_libraries(mmap_demo
         ${terratech_LIBRARIES}
         ${SDL2_LIBRARIES}
-        ${OPENGL_LIBRARIES}
+        ${OPENGL_gl_LIBRARY}
         ${CMAKE_DL_LIBS})
 
 target_compile_definitions(mmap_demo PRIVATE -DGAME_VERSION="${PROJECT_VERSION}")

@@ -5,7 +5,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 class camera {
+    static constexpr float X_ANGLE = glm::radians(-35.264f);
+    static constexpr float Y_ANGLE = glm::radians(-45.f);
+
     glm::vec3 pos;
+    glm::vec3 target_direction;
     glm::mat4 projection_mat;
 
 public:
@@ -23,13 +27,6 @@ public:
 
     glm::mat4 projection() const noexcept;
     glm::mat4 view() const noexcept;
-
-    static glm::mat4 isometric_model() noexcept {
-        const glm::mat4 x_rotation = glm::rotate(glm::mat4{1.f}, 35.264f, {1.f, 0.f, 0.f});
-        const glm::mat4 y_rotation = glm::rotate(glm::mat4{1.f}, -45.f, {0.f, 1.f, 0.f});
-
-        return x_rotation * y_rotation;
-    }
 };
 
 
