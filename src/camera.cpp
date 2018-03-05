@@ -47,3 +47,7 @@ glm::vec3 camera::up() const noexcept {
 glm::vec3 camera::forward() const noexcept {
     return spherical_space_vec(Y_ANGLE, 0.f);
 }
+
+glm::vec3 camera::direction() const noexcept {
+    return target_direction;
+}
