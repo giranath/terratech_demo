@@ -38,6 +38,10 @@ public:
         bind_key_to_command(SDLK_RIGHT, look_right.get());
         bind_key_to_command(SDLK_UP, look_up.get());
         bind_key_to_command(SDLK_DOWN, look_down.get());
+        bind_key_to_command(SDLK_w, look_up.get());
+        bind_key_to_command(SDLK_a, look_left.get());
+        bind_key_to_command(SDLK_d, look_right.get());
+        bind_key_to_command(SDLK_s, look_down.get());
         bind_key_to_command(SDLK_m, wireframe.get());
     }
 

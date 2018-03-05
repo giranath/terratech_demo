@@ -1,5 +1,6 @@
 #include "camera.hpp"
 
+#include <iostream>
 #include <cmath>
 
 constexpr glm::vec3 spherical_space_vec(float theta, float phi) {
@@ -36,7 +37,7 @@ glm::mat4 camera::view() const noexcept {
 }
 
 glm::vec3 camera::right() const noexcept {
-    return up() * target_direction;
+    return glm::cross(up(), forward());
 }
 
 glm::vec3 camera::up() const noexcept {
@@ -44,5 +45,5 @@ glm::vec3 camera::up() const noexcept {
 }
 
 glm::vec3 camera::forward() const noexcept {
-    return spherical_space_vec(0.f, X_ANGLE);
+    return spherical_space_vec(Y_ANGLE, 0.f);
 }
