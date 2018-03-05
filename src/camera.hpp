@@ -31,6 +31,7 @@ public:
     glm::vec3 right() const noexcept;
     glm::vec3 up() const noexcept;
     glm::vec3 forward() const noexcept;
+    glm::vec3 direction() const noexcept;
 };
 
 

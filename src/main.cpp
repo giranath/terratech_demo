@@ -113,8 +113,6 @@ int main(int argc, char* argv[]) {
     chunk_renderer chunk_ren{chunk};
     chunk_renderer chunk2_ren{chunk2};
 
-
-
     camera god_cam(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
 
@@ -171,11 +169,9 @@ int main(int argc, char* argv[]) {
             }
             else if(event.type == SDL_MOUSEMOTION) {
                 if(is_scrolling) {
-                    const glm::vec3 right_translation = god_cam.right() * -1.f * static_cast<float>(event.motion.yrel);
-                    const glm::vec3 forward_translation = god_cam.forward() * static_cast<float>(event.motion.xrel);
+                    const glm::vec3 right_translation = god_cam.right() * static_cast<float>(event.motion.xrel);
+                    const glm::vec3 forward_translation = god_cam.forward() * static_cast<float>(event.motion.yrel);
                     const glm::vec3 cam_translation = right_translation + forward_translation;
-
-                    std::cout << cam_translation.x << ", " << cam_translation.y << ", " << cam_translation.z << std::endl;
 
                     god_cam.translate(cam_translation);
                 }
