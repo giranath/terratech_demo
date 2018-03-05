@@ -8,6 +8,7 @@
 #include "world/world.hpp"
 #include "world/world_generator.hpp"
 #include "chunk_renderer.hpp"
+#include "world_renderer.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -110,8 +111,13 @@ int main(int argc, char* argv[]) {
     auto model_matrix_uniform = prog.find_uniform<glm::mat4>("model_matrix");
     auto camera_matrix_uniform = prog.find_uniform<glm::mat4>("camera_matrix");
 
-    chunk_renderer chunk_ren{chunk};
-    chunk_renderer chunk2_ren{chunk2};
+    world_renderer world_render{game_world};
+
+    for(int x = 0; x < 10; ++x) {
+        for(int z = 0; z < 10; ++z) {
+            world_render.show(x, z);
+        }
+    }
 
     camera god_cam(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
@@ -137,13 +143,7 @@ int main(int argc, char* argv[]) {
 
         game_state.render();
 
-        // Render first chunk
-        chunk_ren.render();
-
-        // Render second chunk
-        model_matrix = glm::translate(model_matrix, {world::CHUNK_WIDTH * chunk_renderer::SQUARE_SIZE, 0.f, 0.f});
-        model_matrix_uniform.set(model_matrix);
-        chunk2_ren.render();
+        world_render.render(prog);
 
         window.gl_swap();
 
@@ -176,7 +176,7 @@ int main(int argc, char* argv[]) {
                     god_cam.translate(cam_translation);
                 }
             }
-            else if (event.type == SDL_KEYDOWN)
+            else if(event.type == SDL_KEYDOWN)
             {
                 input.is_pressed(event.key.keysym.sym);
             }

@@ -81,7 +81,7 @@ std::vector<glm::vec3> chunk_renderer::make_vertices() {
     return vertices;
 }
 
-void chunk_renderer::render() noexcept {
+void chunk_renderer::render() const noexcept {
     // 1rst attribute buffer : vertices
     glEnableVertexAttribArray(0);
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices));

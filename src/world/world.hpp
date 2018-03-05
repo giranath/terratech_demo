@@ -17,6 +17,7 @@ public:
     explicit world(uint32_t seed);
 
     world_chunk& generate_at(int x, int z);
+    world_chunk& chunk_at(int x, int z);
 };
 
 #endif

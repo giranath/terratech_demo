@@ -1,4 +1,6 @@
 #include "world.hpp"
+#include <algorithm>
+#include <iterator>
 
 world::world(uint32_t seed)
 : generator(seed, CHUNK_WIDTH, CHUNK_DEPTH){
@@ -14,4 +16,16 @@ world_chunk& world::generate_at(int x, int z) {
     chunk.load(generated_chunk);
 
     return chunk;
+}
+
+world_chunk& world::chunk_at(int x, int z) {
+    auto it = std::find_if(std::begin(chunks), std::end(chunks), [x, z](const world_chunk& chunk) {
+        return chunk.position() == world_chunk::position_type{x, z};
+    });
+
+    if(it == std::end(chunks)) {
+        return generate_at(x, z);
+    }
+
+    return *it;
 }

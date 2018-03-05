@@ -15,11 +15,11 @@ class chunk_renderer {
     static std::vector<glm::vec3> make_vertices();
     static std::map<int, glm::vec3> make_biome_colors();
 public:
-    static constexpr float SQUARE_SIZE = 10.f;
+    static constexpr float SQUARE_SIZE = 40.f;
 
     explicit chunk_renderer(const world_chunk& chunk) noexcept;
 
-    void render() noexcept;
+    void render() const noexcept;
 };
 
 
