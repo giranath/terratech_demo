@@ -45,7 +45,11 @@ add_executable(mmap_demo
         src/world/world_generator.cpp
         src/world/world_generator.hpp
         src/world/world_chunk.cpp
-        src/world/world_chunk.hpp src/chunk_renderer.cpp src/chunk_renderer.hpp)
+        src/world/world_chunk.hpp
+        src/chunk_renderer.cpp
+        src/chunk_renderer.hpp
+        src/opengl/debug.cpp
+        src/opengl/debug.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
