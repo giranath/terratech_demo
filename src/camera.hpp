@@ -27,6 +27,10 @@ public:
 
     glm::mat4 projection() const noexcept;
     glm::mat4 view() const noexcept;
+
+    glm::vec3 right() const noexcept;
+    glm::vec3 up() const noexcept;
+    glm::vec3 forward() const noexcept;
 };
 
 
