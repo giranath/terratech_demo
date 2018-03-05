@@ -293,7 +293,13 @@ int main() {
             }
             else if(event.type == SDL_MOUSEMOTION) {
                 if(is_scrolling) {
-                    god_cam.translate({event.motion.xrel, 0.f, event.motion.yrel});
+                    const glm::vec3 right_translation = god_cam.right() * -1.f * static_cast<float>(event.motion.yrel);
+                    const glm::vec3 forward_translation = god_cam.forward() * static_cast<float>(event.motion.xrel);
+                    const glm::vec3 cam_translation = right_translation + forward_translation;
+
+                    std::cout << cam_translation.x << ", " << cam_translation.y << ", " << cam_translation.z << std::endl;
+
+                    god_cam.translate(cam_translation);
                 }
             }
             // TODO: Dispatch the game events to the game

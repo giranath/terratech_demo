@@ -32,5 +32,17 @@ glm::mat4 camera::projection() const noexcept {
 }
 
 glm::mat4 camera::view() const noexcept {
-    return glm::lookAt(pos, pos + target_direction, {0.f, 1.f, 0.f});
+    return glm::lookAt(pos, pos + target_direction, up());
+}
+
+glm::vec3 camera::right() const noexcept {
+    return up() * target_direction;
+}
+
+glm::vec3 camera::up() const noexcept {
+    return glm::vec3{0.f, 1.f, 0.f};
+}
+
+glm::vec3 camera::forward() const noexcept {
+    return spherical_space_vec(0.f, X_ANGLE);
 }
