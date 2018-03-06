@@ -2,6 +2,7 @@
 #define MMAP_DEMO_CHUNK_RENDERER_H
 
 #include "../opengl/opengl.hpp"
+#include "mesh.hpp"
 #include "../world/world_chunk.hpp"
 #include <glm/glm.hpp>
 #include <vector>
@@ -9,20 +10,18 @@
 
 // This class will render a chunk on screen
 class chunk_renderer {
-    gl::buffer vertices;
-    gl::buffer colors;
     const world_chunk& chunk;
+    mesh floor_mesh;
 
-    static std::vector<glm::vec3> make_vertices();
-    std::vector<glm::vec3> make_vertice_colors();
     static std::map<int, glm::vec3> make_biome_colors();
+    void build_floor_mesh() noexcept;
 public:
     static constexpr float SQUARE_SIZE = 40.f;
 
     explicit chunk_renderer(const world_chunk& chunk) noexcept;
 
     void build() noexcept;
-    void render() const noexcept;
+    void render(gl::program& program) const noexcept;
 };
 
 

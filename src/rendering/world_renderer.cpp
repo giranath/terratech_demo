@@ -20,12 +20,12 @@ void world_renderer::show(int x, int z) noexcept {
 void world_renderer::render(gl::program& program) noexcept {
     gl::uniform<glm::mat4> model_uniform = program.find_uniform<glm::mat4>("model_matrix");
 
-    std::for_each(std::begin(chunk_renderers), std::end(chunk_renderers), [&model_uniform](const chunk_rendering& renderer) {
+    std::for_each(std::begin(chunk_renderers), std::end(chunk_renderers), [&model_uniform, &program](const chunk_rendering& renderer) {
         glm::mat4 model = glm::translate(glm::mat4{1.f}, glm::vec3{renderer.pos.x * chunk_renderer::SQUARE_SIZE * world::CHUNK_WIDTH,
                                                                    0.f,
                                                                    renderer.pos.y * chunk_renderer::SQUARE_SIZE * world::CHUNK_DEPTH});
         model_uniform.set(model);
 
-        renderer.renderer.render();
+        renderer.renderer.render(program);
     });
 }

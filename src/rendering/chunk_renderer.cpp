@@ -6,9 +6,8 @@
 #include <iterator>
 
 chunk_renderer::chunk_renderer(const world_chunk &chunk) noexcept
-: vertices{ gl::buffer::make() }
-, colors{ gl::buffer::make() }
-, chunk{chunk} {
+: chunk{chunk}
+, floor_mesh{} {
     build();
 }
 
@@ -32,95 +31,38 @@ std::map<int, glm::vec3> chunk_renderer::make_biome_colors() {
     return biome_color;
 }
 
-std::vector<glm::vec3> chunk_renderer::make_vertices() {
-    std::vector<glm::vec3> vertices;
-    vertices.reserve(world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6); // WIDTH * DEPTH squares, each square is composed of 6 vertices
-
-    // Iterate over each square
-    for(std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
-        for(std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
-            const float LEFT = x * SQUARE_SIZE;
-            const float BOTTOM = z * SQUARE_SIZE;
-            const float RIGHT = LEFT + SQUARE_SIZE;
-            const float TOP = BOTTOM + SQUARE_SIZE;
-
-            // First triangle
-            vertices.emplace_back(LEFT, 0.f, BOTTOM);
-            vertices.emplace_back(LEFT, 0.f, TOP);
-            vertices.emplace_back(RIGHT, 0.f, TOP);
-
-            // Second triangle
-            vertices.emplace_back(LEFT, 0.f, BOTTOM);
-            vertices.emplace_back(RIGHT, 0.f, TOP);
-            vertices.emplace_back(RIGHT, 0.f, BOTTOM);
-        }
-    }
-
-    return vertices;
-}
-
-std::vector<glm::vec3> chunk_renderer::make_vertice_colors() {
+void chunk_renderer::build_floor_mesh() noexcept {
     auto biome_colors = make_biome_colors();
-    std::vector<glm::vec3> colors_vec;
+
+    mesh_builder floor_mesh_builder;
     for(std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
         for(std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
+            const int CURRENT_BIOME = chunk.biome_at(x, 0, z);
+
             const float LEFT = x * SQUARE_SIZE;
             const float BOTTOM = z * SQUARE_SIZE;
             const float RIGHT = LEFT + SQUARE_SIZE;
             const float TOP = BOTTOM + SQUARE_SIZE;
+            const glm::vec3 TILE_COLOR = biome_colors[CURRENT_BIOME];
 
-            const glm::vec3 biome_color = biome_colors[chunk.biome_at(x, 0, z)];
-            for(int i = 0; i < 6; ++i) {
-                colors_vec.push_back(biome_color);
-            }
+            floor_mesh_builder.add_vertex({LEFT, 0.f, BOTTOM}, TILE_COLOR);
+            floor_mesh_builder.add_vertex({LEFT, 0.f, TOP},    TILE_COLOR);
+            floor_mesh_builder.add_vertex({RIGHT, 0.f, TOP},   TILE_COLOR);
+            floor_mesh_builder.add_vertex({LEFT, 0.f, BOTTOM}, TILE_COLOR);
+            floor_mesh_builder.add_vertex({RIGHT, 0.f, TOP},    TILE_COLOR);
+            floor_mesh_builder.add_vertex({RIGHT, 0.f, BOTTOM},   TILE_COLOR);
         }
     }
 
-    return colors_vec;
+    floor_mesh = floor_mesh_builder.build();
 }
 
 void chunk_renderer::build() noexcept {
-    // TODO: use mesh instead
-    auto vertice_vec = make_vertices();
-    auto colors_vec = make_vertice_colors();
-
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertice_vec.size(), &vertice_vec.front(), GL_STATIC_DRAW);
-
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(colors));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * colors_vec.size(), &colors_vec.front(), GL_STATIC_DRAW);
+    build_floor_mesh();
 }
 
-void chunk_renderer::render() const noexcept {
-    // 1rst attribute buffer : vertices
-    glEnableVertexAttribArray(0);
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices));
-    glVertexAttribPointer(
-            0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-            3,                  // size
-            GL_FLOAT,           // type
-            GL_FALSE,           // normalized?
-            0,                  // stride
-            nullptr            // array buffer offset
-    );
+void chunk_renderer::render(gl::program& program) const noexcept {
+    floor_mesh.render();
 
-    // 2nd attribute buffer : colors
-    glEnableVertexAttribArray(1);
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(colors));
-    glVertexAttribPointer(
-            1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-            3,                                // size
-            GL_FLOAT,                         // type
-            GL_FALSE,                         // normalized?
-            0,                                // stride
-            nullptr                          // array buffer offset
-    );
-
-    // Draw floor
-    glDrawArrays(GL_TRIANGLES, 0, world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6);
-
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(0);
-
-    // TODO: Draw sites
+    // TODO: Render sites
 }
