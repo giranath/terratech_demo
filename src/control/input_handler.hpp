@@ -1,7 +1,7 @@
 #ifndef DEF_INPUT_HANDLER_HPP
 #define DEF_INPUT_HANDLER_HPP
 
-#include "../camera.hpp"
+#include "../rendering/camera.hpp"
 #include "command.hpp"
 #include "all_commands.hpp"
 #include "../sdl/sdl.hpp"

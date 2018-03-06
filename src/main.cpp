@@ -1,13 +1,15 @@
 #include "opengl/opengl.hpp"
 #include "sdl/sdl.hpp"
 #include "game.hpp"
-#include "camera.hpp"
+#include "rendering/camera.hpp"
 #include "debug/profiler.hpp"
 #include "debug/profiler_administrator.hpp"
 #include "control/input_handler.hpp"
 #include "world/world.hpp"
 #include "world/world_generator.hpp"
-#include "chunk_renderer.hpp"
+#include "rendering/chunk_renderer.hpp"
+#include "rendering/world_renderer.hpp"
+#include "rendering/mesh.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -66,10 +68,7 @@ void set_opengl_version(int major, int minor) {
 }
 
 int main(int argc, char* argv[]) {
-
     world game_world(static_cast<uint32_t>(std::time(nullptr)));
-    auto chunk = game_world.generate_at(0, 0);
-    auto chunk2 = game_world.generate_at(1, 0);
 
     sdl::context<>& sdl = sdl::context<>::instance();
     if(!sdl.good()) {
@@ -110,8 +109,16 @@ int main(int argc, char* argv[]) {
     auto model_matrix_uniform = prog.find_uniform<glm::mat4>("model_matrix");
     auto camera_matrix_uniform = prog.find_uniform<glm::mat4>("camera_matrix");
 
-    chunk_renderer chunk_ren{chunk};
-    chunk_renderer chunk2_ren{chunk2};
+    world_renderer world_render{game_world};
+
+    for(int x = 0; x < 20; ++x) {
+        for(int z = 0; z < 20; ++z) {
+            world_render.show(x, z);
+        }
+    }
+
+    const glm::vec3 cube_color{0.f, 178.f / 255.f, 127.f / 255.f};
+    mesh cube_mesh = make_cube(chunk_renderer::SQUARE_SIZE * 0.65f, cube_color);
 
     camera god_cam(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
@@ -137,13 +144,10 @@ int main(int argc, char* argv[]) {
 
         game_state.render();
 
-        // Render first chunk
-        chunk_ren.render();
+        world_render.render(prog, model_matrix);
 
-        // Render second chunk
-        model_matrix = glm::translate(model_matrix, {world::CHUNK_WIDTH * chunk_renderer::SQUARE_SIZE, 0.f, 0.f});
-        model_matrix_uniform.set(model_matrix);
-        chunk2_ren.render();
+        model_matrix_uniform.set(glm::mat4{1.f});
+        cube_mesh.render();
 
         window.gl_swap();
 
@@ -176,7 +180,7 @@ int main(int argc, char* argv[]) {
                     god_cam.translate(cam_translation);
                 }
             }
-            else if (event.type == SDL_KEYDOWN)
+            else if(event.type == SDL_KEYDOWN)
             {
                 input.is_pressed(event.key.keysym.sym);
             }
