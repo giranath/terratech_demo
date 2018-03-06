@@ -58,6 +58,45 @@ void chunk_renderer::build_floor_mesh() noexcept {
     floor_mesh = floor_mesh_builder.build();
 }
 
+glm::vec3 get_rgb(uint8_t r, uint8_t g, uint8_t b) {
+    return {r / 255.f, g / 255.f, b / 255.f};
+}
+
+glm::vec3 get_site_color(int type) {
+    switch(type) {
+        case SITE_HORSES:
+            return get_rgb(191, 35, 30);
+        case SITE_IRON:
+            return get_rgb(229, 23, 74);
+        case SITE_COAL:
+            return get_rgb(76, 71, 53);
+        case SITE_OIL:
+            return get_rgb(0, 0, 0);
+        case SITE_ALUMINUM:
+            return get_rgb(23, 177, 76);
+        case SITE_URANIUM:
+            return get_rgb(0, 178, 127);
+        case SITE_BANANA:
+            return get_rgb(178, 136, 0);
+        case SITE_CATTLE:
+            return get_rgb(47, 105, 188);
+        case SITE_DEER:
+            return get_rgb(76, 74, 11);
+        case SITE_SHEEP:
+            return get_rgb(229, 228, 195);
+        case SITE_WHEAT:
+            return get_rgb(188, 57, 47);
+        case SITE_STONE:
+            return get_rgb(178, 174, 160);
+        case SITE_PEARLS:
+            return get_rgb(247, 255, 2);
+        case SITE_FISH:
+            return get_rgb(191, 0, 84);
+        default:
+            return get_rgb(0, 0, 0);
+    }
+}
+
 void chunk_renderer::build_site_meshes() noexcept {
     site_meshes.clear();
     site_positions.clear();
@@ -67,7 +106,7 @@ void chunk_renderer::build_site_meshes() noexcept {
             auto sites = chunk.sites_at(x, 0, z);
 
             if(sites.size() > 0 && sites.front()->type() != SITE_NOTHING) {
-                site_meshes.push_back(make_cube(SQUARE_SIZE * 0.75f, {229.f / 255.f, 23.f / 255.f, 74.f / 255.f}));
+                site_meshes.push_back(make_cube(SQUARE_SIZE * 0.5f, get_site_color(sites.front()->type())));
                 site_positions.emplace_back(x, 0.f, z);
             }
         }
@@ -84,7 +123,11 @@ void chunk_renderer::render(gl::program& program, glm::mat4 parent_model) const 
 
     // TODO: Render sites
     for(std::size_t i = 0; i < site_meshes.size(); ++i) {
-        glm::mat4 site_matrix = glm::translate(glm::mat4{1.f}, site_positions[i] * SQUARE_SIZE);
+        glm::vec3 pos = site_positions[i] * SQUARE_SIZE;
+        pos.x += SQUARE_SIZE / 4.f;
+        pos.z += SQUARE_SIZE / 4.f;
+
+        glm::mat4 site_matrix = glm::translate(glm::mat4{1.f}, pos);
         auto model_uniform = program.find_uniform<glm::mat4>("model_matrix");
 
         model_uniform.set(parent_model * site_matrix);

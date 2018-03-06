@@ -19,7 +19,7 @@ class chunk_renderer {
     void build_floor_mesh() noexcept;
     void build_site_meshes() noexcept;
 public:
-    static constexpr float SQUARE_SIZE = 40.f;
+    static constexpr float SQUARE_SIZE = 15.f;
 
     explicit chunk_renderer(const world_chunk& chunk) noexcept;
 
