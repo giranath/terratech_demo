@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cmath>
 
-constexpr glm::vec3 spherical_space_vec(float theta, float phi) {
+glm::vec3 spherical_space_vec(float theta, float phi) {
     return {std::cos(phi) * std::sin(theta),
             std::sin(phi),
             std::cos(phi) * std::cos(theta)};
