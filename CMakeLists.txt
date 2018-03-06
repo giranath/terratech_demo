@@ -57,7 +57,7 @@ add_executable(mmap_demo
         src/debug/profiler.hpp
         src/debug/profiler_administrator.hpp
         src/opengl/debug.cpp
-        src/opengl/debug.hpp src/world_renderer.cpp src/world_renderer.hpp)
+        src/opengl/debug.hpp src/world_renderer.cpp src/world_renderer.hpp src/world/site.cpp src/world/site.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}

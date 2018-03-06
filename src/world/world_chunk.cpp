@@ -1,6 +1,9 @@
 #include "world_chunk.hpp"
 #include "world.hpp"
 
+#include <algorithm>
+#include <iterator>
+
 world_chunk::world_chunk(int x, int z)
 : pos{x, z}{
 
@@ -13,16 +16,56 @@ void world_chunk::load(terra_chunk* chunk) noexcept {
         for(std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
             for(std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
                 biomes.push_back(terra_chunk_biome_at(chunk, x, y, z));
+
+                // Fetch the raw sites
+                std::vector<int> raw_sites;
+                std::size_t site_counts = terra_chunk_sites_count_at(chunk, x, y, z);
+                raw_sites.resize(site_counts);
+                terra_chunk_sites_at(chunk, x, y, z, &raw_sites[0], raw_sites.size());
+
+                // TODO: Initializes the site with a factory
+                std::vector<site> sites;
+                sites.reserve(raw_sites.size());
+                std::transform(std::begin(raw_sites), std::end(raw_sites), std::back_inserter(sites), [](int id) {
+                    return site(static_cast<site::id>(id), 100);
+                });
+
+                this->sites[glm::i32vec3{x, y, z}] = std::move(sites);
             }
         }
     }
-    // TODO: Iterate on chunk
 }
 
 int world_chunk::biome_at(int x, int y, int z) const noexcept {
     const std::size_t Y_OFFSET = world::CHUNK_WIDTH * world::CHUNK_DEPTH;
     const std::size_t Z_OFFSET = world::CHUNK_WIDTH;
     return biomes[y * Y_OFFSET + z * Z_OFFSET + x];
+}
+
+std::vector<site*> world_chunk::sites_at(int x, int y, int z) noexcept {
+    std::vector<site*> ret_sites;
+
+    auto it = sites.find(glm::i32vec3{x, y, z});
+    if(it != sites.end()) {
+        std::transform(std::begin(it->second), std::end(it->second), std::back_inserter(ret_sites), [](site& s) {
+           return &s;
+        });
+    }
+
+    return ret_sites;
+}
+
+std::vector<const site*> world_chunk::sites_at(int x, int y, int z) const noexcept {
+    std::vector<const site*> ret_sites;
+
+    auto it = sites.find(glm::i32vec3{x, y, z});
+    if(it != sites.end()) {
+        std::transform(std::begin(it->second), std::end(it->second), std::back_inserter(ret_sites), [](const site& s) {
+            return &s;
+        });
+    }
+
+    return ret_sites;
 }
 
 world_chunk::position_type world_chunk::position() const noexcept {
