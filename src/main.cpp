@@ -1,14 +1,15 @@
 #include "opengl/opengl.hpp"
 #include "sdl/sdl.hpp"
 #include "game.hpp"
-#include "camera.hpp"
+#include "rendering/camera.hpp"
 #include "debug/profiler.hpp"
 #include "debug/profiler_administrator.hpp"
 #include "control/input_handler.hpp"
 #include "world/world.hpp"
 #include "world/world_generator.hpp"
-#include "chunk_renderer.hpp"
-#include "world_renderer.hpp"
+#include "rendering/chunk_renderer.hpp"
+#include "rendering/world_renderer.hpp"
+#include "rendering/mesh.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -119,6 +120,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    const glm::vec3 cube_color{0.f, 178.f / 255.f, 127.f / 255.f};
+    mesh cube_mesh = make_cube(chunk_renderer::SQUARE_SIZE * 0.65f, cube_color);
+
     camera god_cam(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
 
@@ -144,6 +148,9 @@ int main(int argc, char* argv[]) {
         game_state.render();
 
         world_render.render(prog);
+
+        model_matrix_uniform.set(glm::mat4{1.f});
+        cube_mesh.render();
 
         window.gl_swap();
 

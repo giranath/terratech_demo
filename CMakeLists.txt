@@ -36,8 +36,8 @@ add_executable(mmap_demo
         src/sdl/window.cpp
         src/sdl/window.hpp
         src/sdl/context.hpp
-        src/camera.cpp
-        src/camera.hpp
+        src/rendering/camera.cpp
+        src/rendering/camera.hpp
         src/opengl/uniform.hpp
         src/crypto/rsa.cpp
         src/crypto/rsa.hpp
@@ -47,17 +47,17 @@ add_executable(mmap_demo
         src/world/world_generator.hpp
         src/world/world_chunk.cpp
         src/world/world_chunk.hpp
-        src/chunk_renderer.cpp
-        src/chunk_renderer.hpp
+        src/rendering/chunk_renderer.cpp
+        src/rendering/chunk_renderer.hpp
         src/control/all_commands.hpp
         src/control/command.hpp
         src/control/input_handler.hpp
-        src/chunk_renderer.cpp
-        src/chunk_renderer.hpp
+        src/rendering/chunk_renderer.cpp
+        src/rendering/chunk_renderer.hpp
         src/debug/profiler.hpp
         src/debug/profiler_administrator.hpp
         src/opengl/debug.cpp
-        src/opengl/debug.hpp src/world_renderer.cpp src/world_renderer.hpp src/world/site.cpp src/world/site.hpp)
+        src/opengl/debug.hpp src/rendering/world_renderer.cpp src/rendering/world_renderer.hpp src/world/site.cpp src/world/site.hpp src/rendering/mesh.cpp src/rendering/mesh.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
