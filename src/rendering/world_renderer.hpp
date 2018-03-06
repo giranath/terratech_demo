@@ -21,7 +21,7 @@ public:
 
     void show(int x, int z) noexcept;
 
-    void render(gl::program& program) noexcept;
+    void render(gl::program& program, glm::mat4 parent_model) noexcept;
 };
 
 

@@ -21,12 +21,12 @@ void world_chunk::load(terra_chunk* chunk) noexcept {
                 std::vector<int> raw_sites;
                 std::size_t site_counts = terra_chunk_sites_count_at(chunk, x, y, z);
                 raw_sites.resize(site_counts);
-                terra_chunk_sites_at(chunk, x, y, z, &raw_sites[0], raw_sites.size());
+                terra_chunk_sites_at(chunk, x, y, z, &raw_sites.front(), raw_sites.size());
 
-                // TODO: Initializes the site with a factory
                 std::vector<site> sites;
                 sites.reserve(raw_sites.size());
                 std::transform(std::begin(raw_sites), std::end(raw_sites), std::back_inserter(sites), [](int id) {
+                    // TODO: Initializes the site with a factory
                     return site(static_cast<site::id>(id), 100);
                 });
 

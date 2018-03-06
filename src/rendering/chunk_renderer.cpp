@@ -2,6 +2,7 @@
 #include "../world/world.hpp"
 #include "../world/world_generator.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iterator>
 
@@ -57,12 +58,36 @@ void chunk_renderer::build_floor_mesh() noexcept {
     floor_mesh = floor_mesh_builder.build();
 }
 
-void chunk_renderer::build() noexcept {
-    build_floor_mesh();
+void chunk_renderer::build_site_meshes() noexcept {
+    site_meshes.clear();
+    site_positions.clear();
+
+    for(std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
+        for (std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
+            auto sites = chunk.sites_at(x, 0, z);
+
+            if(sites.size() > 0 && sites.front()->type() != SITE_NOTHING) {
+                site_meshes.push_back(make_cube(SQUARE_SIZE * 0.75f, {229.f / 255.f, 23.f / 255.f, 74.f / 255.f}));
+                site_positions.emplace_back(x, 0.f, z);
+            }
+        }
+    }
 }
 
-void chunk_renderer::render(gl::program& program) const noexcept {
+void chunk_renderer::build() noexcept {
+    build_floor_mesh();
+    build_site_meshes();
+}
+
+void chunk_renderer::render(gl::program& program, glm::mat4 parent_model) const noexcept {
     floor_mesh.render();
 
     // TODO: Render sites
+    for(std::size_t i = 0; i < site_meshes.size(); ++i) {
+        glm::mat4 site_matrix = glm::translate(glm::mat4{1.f}, site_positions[i] * SQUARE_SIZE);
+        auto model_uniform = program.find_uniform<glm::mat4>("model_matrix");
+
+        model_uniform.set(parent_model * site_matrix);
+        site_meshes[i].render();
+    }
 }

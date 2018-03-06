@@ -68,10 +68,7 @@ void set_opengl_version(int major, int minor) {
 }
 
 int main(int argc, char* argv[]) {
-
     world game_world(static_cast<uint32_t>(std::time(nullptr)));
-    auto chunk = game_world.generate_at(0, 0);
-    auto chunk2 = game_world.generate_at(1, 0);
 
     sdl::context<>& sdl = sdl::context<>::instance();
     if(!sdl.good()) {
@@ -114,8 +111,8 @@ int main(int argc, char* argv[]) {
 
     world_renderer world_render{game_world};
 
-    for(int x = 0; x < 10; ++x) {
-        for(int z = 0; z < 10; ++z) {
+    for(int x = 0; x < 20; ++x) {
+        for(int z = 0; z < 20; ++z) {
             world_render.show(x, z);
         }
     }
@@ -147,7 +144,7 @@ int main(int argc, char* argv[]) {
 
         game_state.render();
 
-        world_render.render(prog);
+        world_render.render(prog, model_matrix);
 
         model_matrix_uniform.set(glm::mat4{1.f});
         cube_mesh.render();
