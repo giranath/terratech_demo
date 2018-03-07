@@ -1,7 +1,7 @@
 #ifndef DEF_INPUT_HANDLER_HPP
 #define DEF_INPUT_HANDLER_HPP
 
-#include "../camera.hpp"
+#include "../rendering/camera.hpp"
 #include "command.hpp"
 #include "all_commands.hpp"
 #include "../sdl/sdl.hpp"
@@ -69,7 +69,6 @@ public:
         key_to_command[SDLK_RIGHT].push_back(&arrow_right);
         key_to_command[SDLK_UP].push_back(&arrow_up);
         key_to_command[SDLK_DOWN].push_back(&arrow_down);
-
     }
 
     

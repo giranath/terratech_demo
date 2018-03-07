@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 #include <ctime>
+#include <time.h>
 
 template<class T>
 struct is_time {
@@ -53,38 +54,39 @@ class profiler_administrator
 {
     static_assert(is_time<T>::value, "the type is not a time");
 
-    profiler_administrator() {}
+    profiler_administrator() {
+        std::ofstream out_stream("log_time.csv");
+        write_header(out_stream);
+    }
+
+    void write_header(std::ostream& os) {
+        os << "name, time, elapsed" << std::endl;
+    }
+
+    void write_row(std::ostream& os, std::string name, std::string time, long duration) {
+        os << name << "," << time << "," << duration << std::endl;
+    }
+
+    std::string get_current_time() const noexcept {
+        const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        std::string time(ctime(&now));
+        if(time.back() == '\n') time.pop_back();
+
+        return time;
+    }
+
 public:
     static profiler_administrator<T>& get_instance()
     {
-
         static profiler_administrator<T> instance;
         return instance;
     }
 
-    void log_time(const std::string& name, const std::chrono::steady_clock::time_point& begin, const std::chrono::steady_clock::time_point& end)
+    template<typename TimePoint>
+    void log_time(const std::string& name, const TimePoint& begin, const TimePoint& end)
     {
-        auto elapsed = std::chrono::duration_cast<T>(end - begin).count();
-
-        auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        std::ofstream out_stream;
-
-        out_stream.open("log_time.csv", std::ios_base::app);
-        std::string time;
-        time.resize(26);
-        ctime_s(&(time[0]), time.size(), &now);
-        for (auto it = time.rbegin(); it != time.rend(); ++it)
-        {
-            if (time.back() == '\n' || time.back() == '\0')
-            {
-                time.pop_back();
-            }
-            else
-            {
-                break;
-            }
-        }
-        out_stream << name << "," << time << "," << elapsed << "," << std::endl;
+        std::ofstream out_stream("log_time.csv", std::ios_base::app);
+        write_row(out_stream, name, get_current_time(), std::chrono::duration_cast<T>(end - begin).count());
     }
 
 };
