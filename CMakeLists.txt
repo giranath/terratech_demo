@@ -5,7 +5,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-
 find_package(terratech 0.5 REQUIRED)
 find_package(sdl2 REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -14,6 +13,9 @@ find_package(PythonInterp REQUIRED)
 
 # Generates GL3W files
 execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/thirdparty/gl3w/gl3w_gen.py")
+
+# Download Json.hpp
+file(DOWNLOAD https://github.com/nlohmann/json/releases/download/v3.1.1/json.hpp include/json/json.hpp)
 
 add_executable(mmap_demo
         "${CMAKE_BINARY_DIR}/src/gl3w.c"
