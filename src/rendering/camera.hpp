@@ -1,6 +1,8 @@
 #ifndef MMAP_DEMO_CAMERA_HPP
 #define MMAP_DEMO_CAMERA_HPP
 
+#include "../bounding_box.hpp"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -9,6 +11,7 @@ class camera {
     static constexpr float Y_ANGLE = glm::radians(-45.f);
 
     glm::vec3 pos;
+    float ortho_left, ortho_right, ortho_bottom, ortho_top, ortho_near, ortho_far;
     glm::vec3 target_direction;
     glm::mat4 projection_mat;
 
@@ -27,6 +30,13 @@ public:
 
     glm::mat4 projection() const noexcept;
     glm::mat4 view() const noexcept;
+
+    glm::vec3 right() const noexcept;
+    glm::vec3 up() const noexcept;
+    glm::vec3 forward() const noexcept;
+    glm::vec3 direction() const noexcept;
+
+    bounding_cube<float> view_cube() const noexcept;
 };
 
 

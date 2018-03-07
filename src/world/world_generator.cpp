@@ -1,6 +1,7 @@
 #include "world_generator.hpp"
 
 #include <vector>
+#include <iostream>
 
 world_generator_chunk::world_generator_chunk(terra_chunk* chunk)
 : chunk {chunk} {
@@ -44,8 +45,7 @@ world_generator_chunk world_generator::generate_chunk(int x, int y, int z) const
     return world_generator_chunk{chunk};
 }
 
-void world_generator::setup_biomes() {
-    // The biome table
+terra_biome_table* make_biome_table() {
     terra_biome_table* table = terra_biome_table_create(6, 4);
 
     terra_biome_table_set(table, 0, 0, BIOME_TUNDRA);
@@ -77,7 +77,10 @@ void world_generator::setup_biomes() {
     terra_biome_table_set(table, 4, 3, BIOME_RAIN_FOREST);
     terra_biome_table_set(table, 5, 3, BIOME_RAIN_FOREST);
 
-    // The altitude axis
+    return table;
+}
+
+terra_biome_table* make_altitude_axis() {
     terra_biome_table* altitude_axis = terra_biome_table_create(20, 0);
 
     terra_biome_table_set(altitude_axis, 0,  0, BIOME_DEEP_WATER);
@@ -88,6 +91,16 @@ void world_generator::setup_biomes() {
     terra_biome_table_set(altitude_axis, 5,  0, BIOME_WATER);
     terra_biome_table_set(altitude_axis, 6,  0, BIOME_WATER);
     terra_biome_table_set(altitude_axis, 12, 0, BIOME_WATER);
+
+    return altitude_axis;
+}
+
+void world_generator::setup_biomes() {
+    // The biome table
+    terra_biome_table* table = make_biome_table();
+
+    // The altitude axis
+    terra_biome_table* altitude_axis = make_altitude_axis();
 
     // Here we create the biome generator
     terra_biome_generator* generator = terra_biome_generator_create(TERRA_BIOME_GENERATOR_TABLE);
@@ -108,7 +121,7 @@ void world_generator::setup_biomes() {
     terra_biome_table_destroy(table);
 }
 
-void world_generator::setup_resources() {
+terra_site_distrib_table* make_site_distribution() {
     static const std::vector<int> SITES_DISTRIBUTION_BIOMES = {
             BIOME_RAIN_FOREST,
             BIOME_SWAMP,
@@ -141,18 +154,18 @@ void world_generator::setup_resources() {
     };
 
     static const std::vector<std::vector<double>> SITES_DISTRIBUTION_WEIGHTS = {
-            { 200.0, 2,   1,   1   },
-            { 200.0, 1,   1        },
-            { 200.0, 0.5, 1,   3   },
-            { 200.0, 1,   1,   1   },
-            { 200.0, 1,   1,   1   },
-            { 200.0, 1,   1.5, 0.5 },
-            { 200.0, 1,   1.5, 0.5 },
-            { 200.0, 1,   1.5, 0.5 },
-            { 200.0, 1,   0.5, 0.5 },
-            { 200.0, 2,   1,   1   },
-            { 200.0, 1             },
-            { 200.0, 1,   1        }
+            { 100.0, 2,   1,   1   },
+            { 100.0, 1,   1        },
+            { 100.0, 0.5, 1,   3   },
+            { 100.0, 1,   1,   1   },
+            { 100.0, 1,   1,   1   },
+            { 100.0, 1,   1.5, 0.5 },
+            { 100.0, 1,   1.5, 0.5 },
+            { 100.0, 1,   1.5, 0.5 },
+            { 100.0, 1,   0.5, 0.5 },
+            { 100.0, 2,   1,   1   },
+            { 100.0, 1             },
+            { 100.0, 1,   1        }
     };
 
     terra_site_distrib_table* table = terra_site_distrib_table_create();
@@ -164,11 +177,17 @@ void world_generator::setup_resources() {
                                      &SITES_DISTRIBUTION_WEIGHTS[i][0]);
     }
 
+    return table;
+}
+
+void world_generator::setup_resources() {
+    terra_site_distrib_table* distrib_table = make_site_distribution();
+
     terra_site_generator* site_generator = terra_site_generator_create(TERRA_SITE_GENERATOR_WEIGHT);
-    terra_site_generator_set_distrib_table(site_generator, TERRA_SITEGEN_DISTRIBUTION, table);
+    terra_site_generator_set_distrib_table(site_generator, TERRA_SITEGEN_DISTRIBUTION, distrib_table);
 
     terra_map_set_site_generator(map_generator, site_generator);
 
     terra_site_generator_destroy(site_generator);
-    terra_site_distrib_table_destroy(table);
+    terra_site_distrib_table_destroy(distrib_table);
 }
