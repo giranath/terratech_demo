@@ -30,6 +30,7 @@ public:
     operator GLuint() const noexcept;
 
     void bind() const noexcept;
+    void swap(vertex_array& other) noexcept;
 
     // Factory function to create valid vao
     static vertex_array make() noexcept;

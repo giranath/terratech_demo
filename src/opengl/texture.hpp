@@ -19,7 +19,11 @@ public:
     texture& operator=(texture&& other) noexcept;
     ~texture() noexcept;
 
+    void swap(texture& other) noexcept;
+
     operator GLuint() const noexcept;
+
+    void bind(GLenum target) const noexcept;
 
     static texture make() noexcept;
 };
@@ -34,7 +38,7 @@ public:
     }
 
     void bind() const noexcept {
-        glBindTexture(TARGET, tex);
+        tex.bind(TARGET);
     }
 };
 

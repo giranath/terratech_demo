@@ -29,6 +29,8 @@ public:
 
     void bind(GLenum target) const noexcept;
 
+    void swap(buffer& other) noexcept;
+
     static buffer make() noexcept;
 };
 

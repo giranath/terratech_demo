@@ -29,8 +29,16 @@ texture& texture::operator=(texture&& other) noexcept {
     return *this;
 }
 
+void texture::swap(texture& other) noexcept {
+    std::swap(raw, other.raw);
+}
+
 texture::operator GLuint() const noexcept {
     return raw;
+}
+
+void texture::bind(GLenum target) const noexcept {
+    glBindTexture(target, raw);
 }
 
 texture texture::make() noexcept {
