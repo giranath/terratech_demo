@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
 
     const float CAMERA_SPEED = 250.f; // 250 pixels per seconds
 
-    input_handler input(god_cam);
+    //input_handler input(god_cam);
     // Game loop
     bool is_running = true;
     bool is_scrolling = false;
@@ -182,7 +182,7 @@ int main(int argc, char* argv[]) {
             }
             else if(event.type == SDL_KEYDOWN)
             {
-                input.is_pressed(event.key.keysym.sym);
+                //input.is_pressed(event.key.keysym.sym);
             }
             // TODO: Dispatch the game events to the game
         }

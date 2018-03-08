@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(terratech 0.5 REQUIRED)
 find_package(sdl2 REQUIRED)
+find_package(sdl2_image REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
 find_package(PythonInterp REQUIRED)
@@ -66,17 +67,19 @@ add_executable(mmap_demo
         src/world/site.hpp
         src/rendering/mesh.cpp
         src/rendering/mesh.hpp
-        src/bounding_box.hpp src/opengl/texture.cpp src/opengl/texture.hpp)
+        src/bounding_box.hpp src/opengl/texture.cpp src/opengl/texture.hpp src/sdl/istream_rwops.cpp src/sdl/istream_rwops.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
         ${SDL2_INCLUDE_DIRS}
+        ${sdl2_image_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
         ${GLM_INCLUDE_DIRS}
         "${CMAKE_BINARY_DIR}/include")
 target_link_libraries(mmap_demo
         ${terratech_LIBRARIES}
         ${SDL2_LIBRARIES}
+        ${sdl2_image_LIBRARIES}
         ${OPENGL_gl_LIBRARY}
         ${CMAKE_DL_LIBS})
 
