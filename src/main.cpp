@@ -108,6 +108,7 @@ int main(int argc, char* argv[]) {
 
     auto model_matrix_uniform = prog.find_uniform<glm::mat4>("model_matrix");
     auto camera_matrix_uniform = prog.find_uniform<glm::mat4>("camera_matrix");
+    auto is_textured_uniform = prog.find_uniform<int>("is_textured");
 
     world_renderer world_render{game_world};
 
@@ -120,12 +121,65 @@ int main(int argc, char* argv[]) {
     const glm::vec3 cube_color{0.f, 178.f / 255.f, 127.f / 255.f};
     mesh cube_mesh = make_cube(chunk_renderer::SQUARE_SIZE * 0.65f, cube_color);
 
+    const float size = 40.f; glm::vec3 color{1.f, 1.f, 1.f};
+    mesh_builder textured_cube_builder;
+    textured_cube_builder.add_vertex({0.f,  0.f,  0.f}, {0.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, 0.f,  0.f}, {1.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, size, 0.f}, {1.f, 1.f}, color);
+    textured_cube_builder.add_vertex({0.f,  0.f,  0.f}, {0.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, size, 0.f}, {1.f, 1.f}, color);
+    textured_cube_builder.add_vertex({0.f,  size, 0.f}, {0.f, 1.f}, color);
+
+    // back face
+    textured_cube_builder.add_vertex({0.f,  0.f,  size}, {0.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, 0.f,  size}, {1.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, size, size}, {1.f, 1.f}, color);
+    textured_cube_builder.add_vertex({0.f,  0.f,  size}, {0.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, size, size}, {1.f, 1.f}, color);
+    textured_cube_builder.add_vertex({0.f,  size, size}, {0.f, 1.f}, color);
+
+    // left face
+    textured_cube_builder.add_vertex({0.f,  0.f,  0.f},  {0.f, 0.f}, color);
+    textured_cube_builder.add_vertex({0.f,  0.f,  size}, {1.f, 0.f}, color);
+    textured_cube_builder.add_vertex({0.f,  size, size}, {1.f, 1.f}, color);
+    textured_cube_builder.add_vertex({0.f,  0.f,  0.f},  {0.f, 0.f}, color);
+    textured_cube_builder.add_vertex({0.f,  size, size}, {1.f, 1.f}, color);
+    textured_cube_builder.add_vertex({0.f,  size, 0.f},  {0.f, 1.f}, color);
+
+    // right face
+    textured_cube_builder.add_vertex({size, 0.f,  0.f},  {0.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, 0.f,  size}, {1.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, size, size}, {1.f, 1.f}, color);
+    textured_cube_builder.add_vertex({size, 0.f,  0.f},  {0.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, size, size}, {1.f, 1.f}, color);
+    textured_cube_builder.add_vertex({size, size, 0.f},  {0.f, 1.f}, color);
+
+    // bottom face
+    textured_cube_builder.add_vertex({0.f,  0.f, 0.f},   {0.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, 0.f, 0.f},   {1.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, 0.f, size},  {1.f, 1.f}, color);
+    textured_cube_builder.add_vertex({0.f,  0.f, 0.f},   {0.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, 0.f, size},  {1.f, 1.f}, color);
+    textured_cube_builder.add_vertex({0.f,  0.f, size},  {0.f, 1.f}, color);
+
+    // top face
+    textured_cube_builder.add_vertex({0.f,  size, 0.f},  {0.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, size, 0.f},  {1.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, size, size}, {1.f, 1.f}, color);
+    textured_cube_builder.add_vertex({0.f,  size, 0.f},  {0.f, 0.f}, color);
+    textured_cube_builder.add_vertex({size, size, size}, {1.f, 1.f}, color);
+    textured_cube_builder.add_vertex({0.f,  size, size}, {0.f, 1.f}, color);
+
+    mesh textured_cube = textured_cube_builder.build();
+
+    gl::texture texture = gl::texture::load_from_fstream(std::fstream("asset/texture/comparator.png"));
+
     camera god_cam(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
 
     const float CAMERA_SPEED = 250.f; // 250 pixels per seconds
 
-    input_handler input(god_cam);
+    //input_handler input(god_cam);
     // Game loop
     bool is_running = true;
     bool is_scrolling = false;
@@ -139,6 +193,7 @@ int main(int argc, char* argv[]) {
         gl::bind(prog);
 
         glm::mat4 model_matrix{1.f};
+        is_textured_uniform.set(0);
         model_matrix_uniform.set(model_matrix);
         camera_matrix_uniform.set(god_cam.matrix());
 
@@ -146,11 +201,14 @@ int main(int argc, char* argv[]) {
 
         world_render.render(prog, model_matrix);
 
+        glActiveTexture(GL_TEXTURE0);
+        gl::bind(gl::texture_bind<GL_TEXTURE_2D>(texture));
         model_matrix_uniform.set(glm::mat4{1.f});
-        cube_mesh.render();
+        is_textured_uniform.set(1);
+        //cube_mesh.render();
+        textured_cube.render();
 
         window.gl_swap();
-
 
         constexpr float CAM_SPEED = 10.f;
 
@@ -182,7 +240,7 @@ int main(int argc, char* argv[]) {
             }
             else if(event.type == SDL_KEYDOWN)
             {
-                input.is_pressed(event.key.keysym.sym);
+                //input.is_pressed(event.key.keysym.sym);
             }
             // TODO: Dispatch the game events to the game
         }

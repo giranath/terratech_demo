@@ -10,6 +10,7 @@
 #include "program.hpp"
 #include "buffer.hpp"
 #include "vertex_array.hpp"
+#include "texture.hpp"
 #include "debug.hpp"
 
 #endif

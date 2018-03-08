@@ -36,6 +36,10 @@ void vertex_array::bind() const noexcept {
     glBindVertexArray(vao);
 }
 
+void vertex_array::swap(vertex_array& other) noexcept {
+    std::swap(vao, other.vao);
+}
+
 vertex_array vertex_array::make() noexcept {
     GLuint vao;
     glGenVertexArrays(1, &vao);

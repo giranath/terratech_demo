@@ -35,6 +35,10 @@ void buffer::bind(GLenum target) const noexcept {
     glBindBuffer(target, vbo);
 }
 
+void buffer::swap(buffer& other) noexcept {
+    std::swap(vbo, other.vbo);
+}
+
 buffer buffer::make() noexcept {
     GLuint vbo;
     glGenBuffers(1, &vbo);

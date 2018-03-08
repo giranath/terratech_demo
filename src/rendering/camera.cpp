@@ -91,6 +91,6 @@ bounding_cube<float> camera::view_cube() const noexcept {
         return a.z < b.z;
     });
 
-    return bounding_cube{res_x.first->x, res_y.second->y, res_z.first->z,
-                         res_x.second->x, res_y.first->y, res_z.second->z};
+    return bounding_cube<float>{res_x.first->x, res_y.second->y, res_z.first->z,
+                                res_x.second->x, res_y.first->y, res_z.second->z};
 }

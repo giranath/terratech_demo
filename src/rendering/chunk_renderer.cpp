@@ -46,12 +46,12 @@ void chunk_renderer::build_floor_mesh() noexcept {
             const float TOP = BOTTOM + SQUARE_SIZE;
             const glm::vec3 TILE_COLOR = biome_colors[CURRENT_BIOME];
 
-            floor_mesh_builder.add_vertex({LEFT, 0.f, BOTTOM}, TILE_COLOR);
-            floor_mesh_builder.add_vertex({LEFT, 0.f, TOP},    TILE_COLOR);
-            floor_mesh_builder.add_vertex({RIGHT, 0.f, TOP},   TILE_COLOR);
-            floor_mesh_builder.add_vertex({LEFT, 0.f, BOTTOM}, TILE_COLOR);
-            floor_mesh_builder.add_vertex({RIGHT, 0.f, TOP},    TILE_COLOR);
-            floor_mesh_builder.add_vertex({RIGHT, 0.f, BOTTOM},   TILE_COLOR);
+            floor_mesh_builder.add_vertex({LEFT, 0.f, BOTTOM},  {}, TILE_COLOR);
+            floor_mesh_builder.add_vertex({LEFT, 0.f, TOP},     {}, TILE_COLOR);
+            floor_mesh_builder.add_vertex({RIGHT, 0.f, TOP},    {}, TILE_COLOR);
+            floor_mesh_builder.add_vertex({LEFT, 0.f, BOTTOM},  {}, TILE_COLOR);
+            floor_mesh_builder.add_vertex({RIGHT, 0.f, TOP},    {}, TILE_COLOR);
+            floor_mesh_builder.add_vertex({RIGHT, 0.f, BOTTOM}, {}, TILE_COLOR);
         }
     }
 
