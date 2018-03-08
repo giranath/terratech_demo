@@ -66,7 +66,7 @@ add_executable(mmap_demo
         src/world/site.hpp
         src/rendering/mesh.cpp
         src/rendering/mesh.hpp
-        src/bounding_box.hpp)
+        src/bounding_box.hpp src/opengl/texture.cpp src/opengl/texture.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
