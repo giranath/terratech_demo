@@ -87,7 +87,7 @@ namespace internal {
 
 }
 
-SDL_RWops* make_from_ifstream(std::fstream&& stream) {
+SDL_RWops* make_from_fstream(std::fstream&& stream) {
     internal::fstream_context* ctx = new(std::nothrow) internal::fstream_context{std::move(stream)};
 
     if(!ctx) {

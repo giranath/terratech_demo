@@ -23,6 +23,18 @@ struct uniform_traits {
     static void set(GLuint uniform, const value_type& v) {}
 };
 
+// Integers
+template<>
+struct uniform_traits<int> {
+    using value_type = int;
+    using category = scalar_tag;
+
+    static const bool is_uniform = true;
+    static void set(GLuint uniform, value_type v) {
+        glUniform1i(uniform, v);
+    }
+};
+
 // Floats
 template<>
 struct uniform_traits<float> {

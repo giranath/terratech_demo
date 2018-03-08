@@ -3,6 +3,7 @@
 
 #include <GL/gl3w.h>
 #include <SDL_opengl.h>
+#include <fstream>
 
 #include "bind.hpp"
 
@@ -26,6 +27,7 @@ public:
     void bind(GLenum target) const noexcept;
 
     static texture make() noexcept;
+    static texture load_from_fstream(std::fstream&& stream) noexcept;
 };
 
 template<GLenum TARGET>
