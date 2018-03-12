@@ -107,7 +107,8 @@ int main(int argc, char* argv[]) {
     gl::program prog = load_program("standard");
 
     auto model_matrix_uniform = prog.find_uniform<glm::mat4>("model_matrix");
-    auto camera_matrix_uniform = prog.find_uniform<glm::mat4>("camera_matrix");
+    auto view_matrix_uniform = prog.find_uniform<glm::mat4>("view_matrix");
+    auto projection_matrix_uniform = prog.find_uniform<glm::mat4>("projection_matrix");
     auto is_textured_uniform = prog.find_uniform<int>("is_textured");
 
     gl::texture terrain_texture = gl::texture::load_from_fstream(std::fstream("asset/texture/terrain.png"));
@@ -196,7 +197,8 @@ int main(int argc, char* argv[]) {
         glm::mat4 model_matrix{1.f};
         is_textured_uniform.set(0);
         model_matrix_uniform.set(model_matrix);
-        camera_matrix_uniform.set(god_cam.matrix());
+        view_matrix_uniform.set(god_cam.view());
+        projection_matrix_uniform.set(god_cam.projection());
 
         game_state.render();
 
