@@ -2,16 +2,25 @@
 #define MMAP_DEMO_CONTEXT_HPP
 
 #include <SDL.h>
+#ifdef WIN32
+#include <SDL_image.h>
+#else
+#include <SDL2/SDL_image.h>
+#endif
 
 #include "poll_event_iterator.hpp"
 
 namespace sdl {
 
+static const int SDL_IMG_INIT_FLAGS = IMG_INIT_PNG;
+
 template<uint32_t FLAGS = SDL_INIT_EVERYTHING>
 class context {
     int init_code;
+    int img_init_code;
     context() noexcept
-    : init_code(SDL_Init(FLAGS)){
+    : init_code(SDL_Init(FLAGS))
+    , img_init_code(IMG_Init(SDL_IMG_INIT_FLAGS)){
     }
 
 public:
@@ -37,11 +46,12 @@ public:
     context& operator=(context&&) = delete;
 
     ~context() noexcept {
+        IMG_Quit();
         SDL_Quit();
     }
 
     bool good() const noexcept {
-        return init_code == 0;
+        return init_code == 0 && img_init_code == SDL_IMG_INIT_FLAGS;
     }
 
     events_poller poll_events() const noexcept {

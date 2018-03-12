@@ -5,7 +5,12 @@
 #include <random>
 #include <tuple>
 
+#ifdef WIN32
+#include <numeric>
+#else
 #include <experimental/numeric>
+#endif
+
 #include <algorithm>
 
 namespace crypto {
