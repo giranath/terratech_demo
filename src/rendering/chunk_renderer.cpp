@@ -74,17 +74,17 @@ void chunk_renderer::build_floor_mesh() noexcept {
 glm::vec3 get_site_color(int type) {
     switch(type) {
         case SITE_MAGIC_ESSENCE:
-            return get_rgb(191, 35, 30);
+            return get_rgb(59, 41, 89);
         case SITE_BERRY:
-            return get_rgb(229, 23, 74);
+            return get_rgb(194, 127, 169);
         case SITE_TREE:
-            return get_rgb(76, 71, 53);
+            return get_rgb(97, 58, 21);
         case SITE_DEER:
-            return get_rgb(76, 74, 11);
+            return get_rgb(255, 96, 28);
         case SITE_STONE:
-            return get_rgb(178, 174, 160);
+            return get_rgb(40, 15, 50);
         case SITE_GOLD:
-            return get_rgb(247, 255, 2);
+            return get_rgb(246, 181, 6);
         case SITE_FISH:
             return get_rgb(191, 0, 84);
         default:
@@ -114,7 +114,12 @@ void chunk_renderer::build() noexcept {
 }
 
 void chunk_renderer::render(gl::program& program, glm::mat4 parent_model) const noexcept {
+    gl::uniform<int> is_textured = program.find_uniform<int>("is_textured");
+    is_textured.set(1);
+
     floor_mesh.render();
+
+    is_textured.set(0);
 
     // TODO: Render sites
     for(std::size_t i = 0; i < site_meshes.size(); ++i) {
