@@ -16,8 +16,9 @@ class world_renderer {
         chunk_rendering(const world_chunk& chunk);
     };
     std::vector<chunk_rendering> chunk_renderers;
+    gl::texture& terrain_texture;
 public:
-    world_renderer(world& w) noexcept;
+    world_renderer(world& w, gl::texture& terrain_texture) noexcept;
 
     void show(int x, int z) noexcept;
 

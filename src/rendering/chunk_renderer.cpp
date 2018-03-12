@@ -1,10 +1,15 @@
 #include "chunk_renderer.hpp"
 #include "../world/world.hpp"
 #include "../world/world_generator.hpp"
+#include "../bounding_box.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iterator>
+
+glm::vec3 get_rgb(uint8_t r, uint8_t g, uint8_t b) {
+    return {r / 255.f, g / 255.f, b / 255.f};
+}
 
 chunk_renderer::chunk_renderer(const world_chunk &chunk) noexcept
 : chunk{chunk}
@@ -16,20 +21,19 @@ std::map<int, glm::vec3> chunk_renderer::make_biome_colors() {
     // Here we asign a color to a biome
     // see https://i.stack.imgur.com/vlvQQ.png for color code
     std::map<int, glm::vec3> biome_color;
-    biome_color[BIOME_RAIN_FOREST] = glm::vec3(0, 0, 255.f / 255.f);
-    biome_color[BIOME_SWAMP] = glm::vec3(63 / 255.f, 64 / 255.f, 255 / 255.f);
-    biome_color[BIOME_SEASONAL_FOREST] = glm::vec3(170.f / 255.f, 0, 255 / 255.f);
-    biome_color[BIOME_FOREST] = glm::vec3(191 / 255.f, 64 / 255.f, 255 / 255.f);
-    biome_color[BIOME_TAIGA] = glm::vec3(255 / 255.f, 128 / 255.f, 255 / 255.f);
-    biome_color[BIOME_WOODS] = glm::vec3(255 / 255.f, 64 / 255.f, 191 / 255.f);
-    biome_color[BIOME_SAVANNA] = glm::vec3(255 / 255.f, 0, 170 / 255.f);
-    biome_color[BIOME_DESERT] = glm::vec3(255 / 255.f, 0, 0);
-    biome_color[BIOME_GRASS_DESERT] = glm::vec3(255 / 255.f, 97 / 255.f, 97 / 255.f);
-    biome_color[BIOME_TUNDRA] = glm::vec3(255 / 255.f, 191 / 255.f, 212 / 255.f);
-    biome_color[BIOME_WATER] = glm::vec3(0, 255 / 255.f, 230 / 255.f);
-    biome_color[BIOME_DEEP_WATER] = glm::vec3(0, 0, 255 / 255.f);
+    biome_color[BIOME_SNOW] = get_rgb(255, 255, 255);
+    biome_color[BIOME_ROCK] = get_rgb(6, 232, 182);
+    biome_color[BIOME_GRASS] = get_rgb(153, 255, 20);
+    biome_color[BIOME_DESERT] = get_rgb(232, 161, 6);
+    biome_color[BIOME_WATER] = get_rgb(19, 33, 255);
 
     return biome_color;
+}
+
+std::map<int, bounding_box<float>> make_biome_textures() {
+    std::map<int, bounding_box<float>> texture_rects;
+
+    return texture_rects;
 }
 
 void chunk_renderer::build_floor_mesh() noexcept {
@@ -58,37 +62,19 @@ void chunk_renderer::build_floor_mesh() noexcept {
     floor_mesh = floor_mesh_builder.build();
 }
 
-glm::vec3 get_rgb(uint8_t r, uint8_t g, uint8_t b) {
-    return {r / 255.f, g / 255.f, b / 255.f};
-}
-
 glm::vec3 get_site_color(int type) {
     switch(type) {
-        case SITE_HORSES:
+        case SITE_MAGIC_ESSENCE:
             return get_rgb(191, 35, 30);
-        case SITE_IRON:
+        case SITE_BERRY:
             return get_rgb(229, 23, 74);
-        case SITE_COAL:
+        case SITE_TREE:
             return get_rgb(76, 71, 53);
-        case SITE_OIL:
-            return get_rgb(0, 0, 0);
-        case SITE_ALUMINUM:
-            return get_rgb(23, 177, 76);
-        case SITE_URANIUM:
-            return get_rgb(0, 178, 127);
-        case SITE_BANANA:
-            return get_rgb(178, 136, 0);
-        case SITE_CATTLE:
-            return get_rgb(47, 105, 188);
         case SITE_DEER:
             return get_rgb(76, 74, 11);
-        case SITE_SHEEP:
-            return get_rgb(229, 228, 195);
-        case SITE_WHEAT:
-            return get_rgb(188, 57, 47);
         case SITE_STONE:
             return get_rgb(178, 174, 160);
-        case SITE_PEARLS:
+        case SITE_GOLD:
             return get_rgb(247, 255, 2);
         case SITE_FISH:
             return get_rgb(191, 0, 84);

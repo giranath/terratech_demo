@@ -110,7 +110,8 @@ int main(int argc, char* argv[]) {
     auto camera_matrix_uniform = prog.find_uniform<glm::mat4>("camera_matrix");
     auto is_textured_uniform = prog.find_uniform<int>("is_textured");
 
-    world_renderer world_render{game_world};
+    gl::texture terrain_texture = gl::texture::load_from_fstream(std::fstream("asset/texture/terrain.png"));
+    world_renderer world_render{game_world, terrain_texture};
 
     for(int x = 0; x < 20; ++x) {
         for(int z = 0; z < 20; ++z) {
