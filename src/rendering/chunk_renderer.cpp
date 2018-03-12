@@ -1,10 +1,15 @@
 #include "chunk_renderer.hpp"
 #include "../world/world.hpp"
 #include "../world/world_generator.hpp"
+#include "../bounding_box.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iterator>
+
+glm::vec3 get_rgb(uint8_t r, uint8_t g, uint8_t b) {
+    return {r / 255.f, g / 255.f, b / 255.f};
+}
 
 chunk_renderer::chunk_renderer(const world_chunk &chunk) noexcept
 : chunk{chunk}
@@ -16,24 +21,31 @@ std::map<int, glm::vec3> chunk_renderer::make_biome_colors() {
     // Here we asign a color to a biome
     // see https://i.stack.imgur.com/vlvQQ.png for color code
     std::map<int, glm::vec3> biome_color;
-    biome_color[BIOME_RAIN_FOREST] = glm::vec3(0, 0, 255.f / 255.f);
-    biome_color[BIOME_SWAMP] = glm::vec3(63 / 255.f, 64 / 255.f, 255 / 255.f);
-    biome_color[BIOME_SEASONAL_FOREST] = glm::vec3(170.f / 255.f, 0, 255 / 255.f);
-    biome_color[BIOME_FOREST] = glm::vec3(191 / 255.f, 64 / 255.f, 255 / 255.f);
-    biome_color[BIOME_TAIGA] = glm::vec3(255 / 255.f, 128 / 255.f, 255 / 255.f);
-    biome_color[BIOME_WOODS] = glm::vec3(255 / 255.f, 64 / 255.f, 191 / 255.f);
-    biome_color[BIOME_SAVANNA] = glm::vec3(255 / 255.f, 0, 170 / 255.f);
-    biome_color[BIOME_DESERT] = glm::vec3(255 / 255.f, 0, 0);
-    biome_color[BIOME_GRASS_DESERT] = glm::vec3(255 / 255.f, 97 / 255.f, 97 / 255.f);
-    biome_color[BIOME_TUNDRA] = glm::vec3(255 / 255.f, 191 / 255.f, 212 / 255.f);
-    biome_color[BIOME_WATER] = glm::vec3(0, 255 / 255.f, 230 / 255.f);
-    biome_color[BIOME_DEEP_WATER] = glm::vec3(0, 0, 255 / 255.f);
+    biome_color[BIOME_SNOW] = get_rgb(255, 255, 255);
+    biome_color[BIOME_ROCK] = get_rgb(255, 255, 255);
+    biome_color[BIOME_GRASS] = get_rgb(255, 255, 255);
+    biome_color[BIOME_DESERT] = get_rgb(255, 255, 255);
+    biome_color[BIOME_WATER] = get_rgb(255, 255, 255);
 
     return biome_color;
 }
 
+std::map<int, bounding_box<float>> make_biome_textures() {
+    std::map<int, bounding_box<float>> texture_rects;
+
+    // left, bottom, right, up
+    texture_rects[BIOME_SNOW] =   { 0.50f, 0.00f, 0.75f, 0.25f };
+    texture_rects[BIOME_ROCK] =   { 0.25f, 0.00f, 0.50f, 0.25f };
+    texture_rects[BIOME_GRASS] =  { 0.00f, 0.00f, 0.25f, 0.25f };
+    texture_rects[BIOME_DESERT] = { 0.75f, 0.00f, 1.00f, 0.25f };
+    texture_rects[BIOME_WATER] =  { 0.00f, 0.25f, 0.25f, 0.50f };
+
+    return texture_rects;
+}
+
 void chunk_renderer::build_floor_mesh() noexcept {
     auto biome_colors = make_biome_colors();
+    auto biome_textures = make_biome_textures();
 
     mesh_builder floor_mesh_builder;
     for(std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
@@ -45,51 +57,34 @@ void chunk_renderer::build_floor_mesh() noexcept {
             const float RIGHT = LEFT + SQUARE_SIZE;
             const float TOP = BOTTOM + SQUARE_SIZE;
             const glm::vec3 TILE_COLOR = biome_colors[CURRENT_BIOME];
+            const bounding_box<float> TILE_TEXTURE = biome_textures[CURRENT_BIOME];
 
-            floor_mesh_builder.add_vertex({LEFT, 0.f, BOTTOM},  {}, TILE_COLOR);
-            floor_mesh_builder.add_vertex({LEFT, 0.f, TOP},     {}, TILE_COLOR);
-            floor_mesh_builder.add_vertex({RIGHT, 0.f, TOP},    {}, TILE_COLOR);
-            floor_mesh_builder.add_vertex({LEFT, 0.f, BOTTOM},  {}, TILE_COLOR);
-            floor_mesh_builder.add_vertex({RIGHT, 0.f, TOP},    {}, TILE_COLOR);
-            floor_mesh_builder.add_vertex({RIGHT, 0.f, BOTTOM}, {}, TILE_COLOR);
+            floor_mesh_builder.add_vertex({LEFT, 0.f, BOTTOM},  { TILE_TEXTURE.left(),  TILE_TEXTURE.bottom() },  TILE_COLOR);
+            floor_mesh_builder.add_vertex({LEFT, 0.f, TOP},     { TILE_TEXTURE.left(),  TILE_TEXTURE.top() },     TILE_COLOR);
+            floor_mesh_builder.add_vertex({RIGHT, 0.f, TOP},    { TILE_TEXTURE.right(), TILE_TEXTURE.top() },     TILE_COLOR);
+            floor_mesh_builder.add_vertex({LEFT, 0.f, BOTTOM},  { TILE_TEXTURE.left(),  TILE_TEXTURE.bottom() },  TILE_COLOR);
+            floor_mesh_builder.add_vertex({RIGHT, 0.f, TOP},    { TILE_TEXTURE.right(), TILE_TEXTURE.top() },     TILE_COLOR);
+            floor_mesh_builder.add_vertex({RIGHT, 0.f, BOTTOM}, { TILE_TEXTURE.right(), TILE_TEXTURE.bottom() },  TILE_COLOR);
         }
     }
 
     floor_mesh = floor_mesh_builder.build();
 }
 
-glm::vec3 get_rgb(uint8_t r, uint8_t g, uint8_t b) {
-    return {r / 255.f, g / 255.f, b / 255.f};
-}
-
 glm::vec3 get_site_color(int type) {
     switch(type) {
-        case SITE_HORSES:
-            return get_rgb(191, 35, 30);
-        case SITE_IRON:
-            return get_rgb(229, 23, 74);
-        case SITE_COAL:
-            return get_rgb(76, 71, 53);
-        case SITE_OIL:
-            return get_rgb(0, 0, 0);
-        case SITE_ALUMINUM:
-            return get_rgb(23, 177, 76);
-        case SITE_URANIUM:
-            return get_rgb(0, 178, 127);
-        case SITE_BANANA:
-            return get_rgb(178, 136, 0);
-        case SITE_CATTLE:
-            return get_rgb(47, 105, 188);
+        case SITE_MAGIC_ESSENCE:
+            return get_rgb(59, 41, 89);
+        case SITE_BERRY:
+            return get_rgb(194, 127, 169);
+        case SITE_TREE:
+            return get_rgb(97, 58, 21);
         case SITE_DEER:
-            return get_rgb(76, 74, 11);
-        case SITE_SHEEP:
-            return get_rgb(229, 228, 195);
-        case SITE_WHEAT:
-            return get_rgb(188, 57, 47);
+            return get_rgb(255, 96, 28);
         case SITE_STONE:
-            return get_rgb(178, 174, 160);
-        case SITE_PEARLS:
-            return get_rgb(247, 255, 2);
+            return get_rgb(40, 15, 50);
+        case SITE_GOLD:
+            return get_rgb(246, 181, 6);
         case SITE_FISH:
             return get_rgb(191, 0, 84);
         default:
@@ -119,7 +114,12 @@ void chunk_renderer::build() noexcept {
 }
 
 void chunk_renderer::render(gl::program& program, glm::mat4 parent_model) const noexcept {
+    gl::uniform<int> is_textured = program.find_uniform<int>("is_textured");
+    is_textured.set(1);
+
     floor_mesh.render();
+
+    is_textured.set(0);
 
     // TODO: Render sites
     for(std::size_t i = 0; i < site_meshes.size(); ++i) {

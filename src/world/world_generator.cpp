@@ -46,51 +46,42 @@ world_generator_chunk world_generator::generate_chunk(int x, int y, int z) const
 }
 
 terra_biome_table* make_biome_table() {
-    terra_biome_table* table = terra_biome_table_create(6, 4);
+    terra_biome_table* table = terra_biome_table_create(5, 4);
 
-    terra_biome_table_set(table, 0, 0, BIOME_TUNDRA);
-    terra_biome_table_set(table, 0, 0, BIOME_TUNDRA);
-    terra_biome_table_set(table, 1, 0, BIOME_TUNDRA);
-    terra_biome_table_set(table, 2, 0, BIOME_GRASS_DESERT);
-    terra_biome_table_set(table, 3, 0, BIOME_GRASS_DESERT);
+    terra_biome_table_set(table, 0, 0, BIOME_SNOW);
+    terra_biome_table_set(table, 1, 0, BIOME_ROCK);
+    terra_biome_table_set(table, 2, 0, BIOME_ROCK);
+    terra_biome_table_set(table, 3, 0, BIOME_DESERT);
     terra_biome_table_set(table, 4, 0, BIOME_DESERT);
-    terra_biome_table_set(table, 5, 0, BIOME_DESERT);
 
-    terra_biome_table_set(table, 0, 1, BIOME_TUNDRA);
-    terra_biome_table_set(table, 1, 1, BIOME_TAIGA);
-    terra_biome_table_set(table, 2, 1, BIOME_WOODS);
-    terra_biome_table_set(table, 3, 1, BIOME_WOODS);
-    terra_biome_table_set(table, 4, 1, BIOME_SAVANNA);
-    terra_biome_table_set(table, 5, 1, BIOME_SAVANNA);
+    terra_biome_table_set(table, 0, 1, BIOME_SNOW);
+    terra_biome_table_set(table, 1, 1, BIOME_ROCK);
+    terra_biome_table_set(table, 2, 1, BIOME_GRASS);
+    terra_biome_table_set(table, 3, 1, BIOME_ROCK);
+    terra_biome_table_set(table, 4, 1, BIOME_DESERT);
 
-    terra_biome_table_set(table, 0, 2, BIOME_TAIGA);
-    terra_biome_table_set(table, 1, 2, BIOME_TAIGA);
-    terra_biome_table_set(table, 2, 2, BIOME_FOREST);
-    terra_biome_table_set(table, 3, 2, BIOME_FOREST);
-    terra_biome_table_set(table, 4, 2, BIOME_SEASONAL_FOREST);
-    terra_biome_table_set(table, 5, 2, BIOME_SEASONAL_FOREST);
+    terra_biome_table_set(table, 0, 2, BIOME_GRASS);
+    terra_biome_table_set(table, 1, 2, BIOME_GRASS);
+    terra_biome_table_set(table, 2, 2, BIOME_GRASS);
+    terra_biome_table_set(table, 3, 2, BIOME_ROCK);
+    terra_biome_table_set(table, 4, 2, BIOME_DESERT);
 
-    terra_biome_table_set(table, 0, 3, BIOME_FOREST);
-    terra_biome_table_set(table, 1, 3, BIOME_FOREST);
-    terra_biome_table_set(table, 2, 3, BIOME_FOREST);
-    terra_biome_table_set(table, 3, 3, BIOME_SWAMP);
-    terra_biome_table_set(table, 4, 3, BIOME_RAIN_FOREST);
-    terra_biome_table_set(table, 5, 3, BIOME_RAIN_FOREST);
+    terra_biome_table_set(table, 0, 3, BIOME_GRASS);
+    terra_biome_table_set(table, 1, 3, BIOME_GRASS);
+    terra_biome_table_set(table, 2, 3, BIOME_GRASS);
+    terra_biome_table_set(table, 3, 3, BIOME_GRASS);
+    terra_biome_table_set(table, 4, 3, BIOME_GRASS);
 
     return table;
 }
 
 terra_biome_table* make_altitude_axis() {
-    terra_biome_table* altitude_axis = terra_biome_table_create(20, 0);
+    terra_biome_table* altitude_axis = terra_biome_table_create(10, 0);
 
-    terra_biome_table_set(altitude_axis, 0,  0, BIOME_DEEP_WATER);
-    terra_biome_table_set(altitude_axis, 1,  0, BIOME_DEEP_WATER);
+    terra_biome_table_set(altitude_axis, 0,  0, BIOME_WATER);
+    terra_biome_table_set(altitude_axis, 1,  0, BIOME_WATER);
     terra_biome_table_set(altitude_axis, 2,  0, BIOME_WATER);
-    terra_biome_table_set(altitude_axis, 3,  0, BIOME_WATER);
-    terra_biome_table_set(altitude_axis, 4,  0, BIOME_WATER);
-    terra_biome_table_set(altitude_axis, 5,  0, BIOME_WATER);
-    terra_biome_table_set(altitude_axis, 6,  0, BIOME_WATER);
-    terra_biome_table_set(altitude_axis, 12, 0, BIOME_WATER);
+    terra_biome_table_set(altitude_axis, 9, 0, BIOME_WATER);
 
     return altitude_axis;
 }
@@ -123,49 +114,27 @@ void world_generator::setup_biomes() {
 
 terra_site_distrib_table* make_site_distribution() {
     static const std::vector<int> SITES_DISTRIBUTION_BIOMES = {
-            BIOME_RAIN_FOREST,
-            BIOME_SWAMP,
-            BIOME_SEASONAL_FOREST,
-            BIOME_FOREST,
-            BIOME_TAIGA,
-            BIOME_WOODS,
-            BIOME_SAVANNA,
+            BIOME_GRASS,
+            BIOME_SNOW,
+            BIOME_ROCK,
             BIOME_DESERT,
-            BIOME_GRASS_DESERT,
-            BIOME_TUNDRA,
             BIOME_WATER,
-            BIOME_DEEP_WATER
     };
 
     static const std::vector<std::vector<int>> SITES_DISTRIBUTION_SITES = {
-            { SITE_NOTHING, SITE_DEER,    SITE_COAL,   SITE_OIL   },
-            { SITE_NOTHING, SITE_HORSES,  SITE_STONE              },
-            { SITE_NOTHING, SITE_URANIUM, SITE_IRON,   SITE_OIL   },
-            { SITE_NOTHING, SITE_DEER,    SITE_CATTLE, SITE_IRON  },
-            { SITE_NOTHING, SITE_DEER,    SITE_CATTLE, SITE_IRON  },
-            { SITE_NOTHING, SITE_CATTLE,  SITE_WHEAT,  SITE_STONE },
-            { SITE_NOTHING, SITE_DEER,    SITE_BANANA, SITE_SHEEP },
-            { SITE_NOTHING, SITE_DEER,    SITE_BANANA, SITE_SHEEP },
-            { SITE_NOTHING, SITE_BANANA,  SITE_FISH,   SITE_COAL  },
-            { SITE_NOTHING, SITE_DEER,    SITE_SHEEP,  SITE_WHEAT },
-            { SITE_NOTHING, SITE_FISH                             },
-            { SITE_NOTHING, SITE_FISH,    SITE_PEARLS             }
-
+            { SITE_NOTHING, SITE_DEER,    SITE_GOLD,   SITE_STONE, SITE_TREE, SITE_BERRY, SITE_MAGIC_ESSENCE }, // GRASS
+            { SITE_NOTHING, SITE_DEER,    SITE_GOLD,   SITE_STONE, SITE_TREE, SITE_BERRY, SITE_MAGIC_ESSENCE }, // SNOW
+            { SITE_NOTHING, SITE_DEER,    SITE_GOLD,   SITE_STONE, SITE_TREE, SITE_BERRY, SITE_MAGIC_ESSENCE }, // ROCK
+            { SITE_NOTHING, SITE_DEER,    SITE_GOLD,   SITE_STONE, SITE_TREE, SITE_BERRY, SITE_MAGIC_ESSENCE }, // DESERT
+            { SITE_NOTHING, SITE_FISH }                                                                         // WATER
     };
 
     static const std::vector<std::vector<double>> SITES_DISTRIBUTION_WEIGHTS = {
-            { 100.0, 2,   1,   1   },
-            { 100.0, 1,   1        },
-            { 100.0, 0.5, 1,   3   },
-            { 100.0, 1,   1,   1   },
-            { 100.0, 1,   1,   1   },
-            { 100.0, 1,   1.5, 0.5 },
-            { 100.0, 1,   1.5, 0.5 },
-            { 100.0, 1,   1.5, 0.5 },
-            { 100.0, 1,   0.5, 0.5 },
-            { 100.0, 2,   1,   1   },
-            { 100.0, 1             },
-            { 100.0, 1,   1        }
+            { 88.150, 0.50, 0.25, 0.30, 10.000, 0.750, 0.05 },
+            { 95.600, 0.10, 0.50, 0.75,  2.000, 0.050, 1.00 },
+            { 82.965, 0.02, 5.0,  10.0,  0.010, 0.005, 2.00 },
+            { 87.487, 0.01, 2.5,   5.0,  0.002, 0.001, 5.00 },
+            { 99.0,   1.0 }
     };
 
     terra_site_distrib_table* table = terra_site_distrib_table_create();
