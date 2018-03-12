@@ -32,6 +32,7 @@ public:
     void render() const noexcept;
 };
 
-mesh make_cube(float size, glm::vec3 color);
+void make_cube(mesh_builder& builder, float size, glm::vec3 color, glm::vec3 position = {});
+mesh make_cube(float size, glm::vec3 color, glm::vec3 position = {});
 
 #endif
