@@ -10,7 +10,9 @@
 #include "rendering/chunk_renderer.hpp"
 #include "rendering/world_renderer.hpp"
 #include "rendering/mesh.hpp"
+#include "task/thread_pool.hpp"
 
+#include <memory>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -71,6 +73,8 @@ void set_opengl_version(int major, int minor) {
 }
 
 int main(int argc, char* argv[]) {
+    thread_pool tasks_pool(std::thread::hardware_concurrency() - 1);
+
     world game_world(static_cast<uint32_t>(std::time(nullptr)));
 
     sdl::context<>& sdl = sdl::context<>::instance();
@@ -145,6 +149,7 @@ int main(int argc, char* argv[]) {
     // Game loop
     bool is_running = true;
     bool is_scrolling = false;
+    bool future_read = false;
     while(is_running) {
         const float LAST_FRAME_DURATION = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration).count() / 1000.f;
 
