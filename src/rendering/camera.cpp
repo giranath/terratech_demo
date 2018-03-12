@@ -46,7 +46,7 @@ glm::mat4 camera::view() const noexcept {
 }
 
 glm::vec3 camera::right() const noexcept {
-    return glm::cross(up(), forward());
+    return glm::cross(forward(), up());
 }
 
 glm::vec3 camera::up() const noexcept {

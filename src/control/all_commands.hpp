@@ -10,7 +10,7 @@ public:
     look_left_command(camera* cam) : cam{ cam } {}
     virtual void execute()
     {
-        cam->translate({ -1.f, 0.f, 0.f });
+        cam->translate(cam->right() * -10.f);
     }
     bool is_repeatable()
     {
@@ -25,7 +25,7 @@ public:
     look_right_command(camera* cam) : cam{ cam } {}
     virtual void execute()
     {
-        cam->translate({ 1.f, 0.f, 0.f });
+        cam->translate(cam->right() * 10.f);
     }
     bool is_repeatable()
     {
@@ -40,7 +40,7 @@ public:
     look_up_command(camera* cam) : cam{ cam } {}
     virtual void execute()
     {
-        cam->translate({ 0.f, 1.f, 0.f });
+        cam->translate(cam->forward() * 10.f);
     }
     bool is_repeatable()
     {
@@ -55,7 +55,7 @@ public:
     look_down_command(camera* cam) : cam{ cam } {}
     virtual void execute()
     {
-        cam->translate({ 0.f, -1.f, 0.f });
+        cam->translate(cam->forward() * -10.f);
     }
     bool is_repeatable()
     {

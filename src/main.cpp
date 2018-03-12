@@ -181,7 +181,7 @@ int main(int argc, char* argv[]) {
 
     const float CAMERA_SPEED = 250.f; // 250 pixels per seconds
 
-    //input_handler input(god_cam);
+    input_handler input(god_cam);
     // Game loop
     bool is_running = true;
     bool is_scrolling = false;
@@ -234,18 +234,16 @@ int main(int argc, char* argv[]) {
             }
             else if(event.type == SDL_MOUSEMOTION) {
                 if(is_scrolling) {
-                    const glm::vec3 right_translation = god_cam.right() * static_cast<float>(event.motion.xrel);
+                    const glm::vec3 right_translation = god_cam.right() * static_cast<float>(event.motion.xrel) * -1.f;
                     const glm::vec3 forward_translation = god_cam.forward() * static_cast<float>(event.motion.yrel);
                     const glm::vec3 cam_translation = right_translation + forward_translation;
 
                     god_cam.translate(cam_translation);
                 }
             }
-            else if(event.type == SDL_KEYDOWN)
-            {
-                //input.is_pressed(event.key.keysym.sym);
+            else {
+                input.handle_input(event);
             }
-            // TODO: Dispatch the game events to the game
         }
         
         // Update state here
