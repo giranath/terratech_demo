@@ -1,6 +1,9 @@
 #ifndef MMAP_DEMO_BOUNDING_BOX_HPP
 #define MMAP_DEMO_BOUNDING_BOX_HPP
 
+#undef near
+#undef far
+
 template<typename T>
 class bounding_box {
     T _left {};

@@ -6,6 +6,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#undef near
+#undef far
+
 class camera {
     static constexpr float X_ANGLE = glm::radians(-35.264f);
     static constexpr float Y_ANGLE = glm::radians(-45.f);

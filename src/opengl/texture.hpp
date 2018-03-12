@@ -27,7 +27,7 @@ public:
     void bind(GLenum target) const noexcept;
 
     static texture make() noexcept;
-    static texture load_from_fstream(std::fstream&& stream) noexcept;
+    static texture load_from_path(const char* path) noexcept;
 };
 
 template<GLenum TARGET>

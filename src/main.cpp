@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
     gl::program prog = load_program("standard");
     gl::program billboard_prog = load_program("billboard");
 
-    gl::texture terrain_texture = gl::texture::load_from_fstream(std::fstream("asset/texture/terrain.png"));
+    gl::texture terrain_texture = gl::texture::load_from_path("asset/texture/terrain.png");
     world_renderer world_render{game_world, terrain_texture};
 
     for(int x = 0; x < 20; ++x) {
@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
 
     mesh textured_cube = textured_cube_builder.build();
 
-    gl::texture texture = gl::texture::load_from_fstream(std::fstream("asset/texture/comparator.png"));
+    gl::texture texture = gl::texture::load_from_path("asset/texture/comparator.png");
 
     const float CAMERA_RATIO = 600.f / 800.f;
     camera god_cam(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f);

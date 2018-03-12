@@ -50,8 +50,8 @@ texture texture::make() noexcept {
     return texture{text};
 }
 
-texture texture::load_from_fstream(std::fstream&& stream) noexcept {
-    SDL_Surface* surface = IMG_Load_RW(sdl::make_from_fstream(std::move(stream)), 1);
+texture texture::load_from_path(const char* path) noexcept {
+    SDL_Surface* surface = IMG_Load(path);
     if(surface) {
         texture tex = make();
 
@@ -62,8 +62,8 @@ texture texture::load_from_fstream(std::fstream&& stream) noexcept {
 
         tex.bind(GL_TEXTURE_2D);
         glTexImage2D(GL_TEXTURE_2D, 0, mode, surface->w, surface->h, 0, mode, GL_UNSIGNED_BYTE, surface->pixels);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         return tex;
     }
