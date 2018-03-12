@@ -176,6 +176,7 @@ int main(int argc, char* argv[]) {
 
     gl::texture texture = gl::texture::load_from_fstream(std::fstream("asset/texture/comparator.png"));
 
+    const float CAMERA_RATIO = 600.f / 800.f;
     camera god_cam(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f);
     god_cam.reset({200.f, 200.f, 200.f});
 
@@ -241,6 +242,15 @@ int main(int argc, char* argv[]) {
                     god_cam.translate(cam_translation);
                 }
             }
+            else if(event.type == SDL_WINDOWEVENT) {
+                if(event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                    const int new_width = event.window.data1;
+                    const int new_height = event.window.data2;
+
+                    glViewport(0, 0, new_width, new_height);
+                }
+            }
+
             else {
                 input.handle_input(event);
             }

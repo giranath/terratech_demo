@@ -24,6 +24,8 @@ public:
 
     void translate(glm::vec3 translation) noexcept;
 
+    void adjust(float left, float right, float bottom, float top, float near, float far);
+
     /// \brief Returns the view matrix
     /// \return The view matrix
     glm::mat4 matrix() const noexcept;
