@@ -1,4 +1,4 @@
-#version 120
+#version 330 core
 
 layout(location = 0) in vec3 vertex_position_modelspace;
 layout(location = 1) in vec3 vertex_color;
@@ -16,6 +16,7 @@ uniform mat4 projection_matrix;
 void main() {
     mat4 model_view_matrix = view_matrix * model_matrix;
 
+    // Cancels rotation
     model_view_matrix[0][0] = 1.0;
     model_view_matrix[0][1] = 0.0;
     model_view_matrix[0][2] = 0.0;
@@ -33,6 +34,6 @@ void main() {
     gl_Position = projection_matrix * p;
 
     // Setup UV and color
-    UV = vertex_uv;
     fragment_color = vertex_color;
+    UV = vertex_uv;
 }

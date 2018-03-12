@@ -52,6 +52,9 @@ gl::program load_program(const std::string& name) {
 }
 
 void setup_opengl() {
+    std::cout << "available extensions: " << std::endl;
+    gl::get_extensions(std::ostream_iterator<const char*>(std::cout, "\n"));
+
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
 
@@ -105,11 +108,7 @@ int main(int argc, char* argv[]) {
     gl::bind(vao);
 
     gl::program prog = load_program("standard");
-
-    auto model_matrix_uniform = prog.find_uniform<glm::mat4>("model_matrix");
-    auto view_matrix_uniform = prog.find_uniform<glm::mat4>("view_matrix");
-    auto projection_matrix_uniform = prog.find_uniform<glm::mat4>("projection_matrix");
-    auto is_textured_uniform = prog.find_uniform<int>("is_textured");
+    gl::program billboard_prog = load_program("billboard");
 
     gl::texture terrain_texture = gl::texture::load_from_fstream(std::fstream("asset/texture/terrain.png"));
     world_renderer world_render{game_world, terrain_texture};
@@ -123,7 +122,7 @@ int main(int argc, char* argv[]) {
     const glm::vec3 cube_color{0.f, 178.f / 255.f, 127.f / 255.f};
     mesh cube_mesh = make_cube(chunk_renderer::SQUARE_SIZE * 0.65f, cube_color);
 
-    const float size = 40.f; glm::vec3 color{1.f, 1.f, 1.f};
+    const float size = 25.f; glm::vec3 color{1.f, 1.f, 1.f};
     mesh_builder textured_cube_builder;
     textured_cube_builder.add_vertex({0.f,  0.f,  0.f}, {0.f, 0.f}, color);
     textured_cube_builder.add_vertex({size, 0.f,  0.f}, {1.f, 0.f}, color);
@@ -131,46 +130,6 @@ int main(int argc, char* argv[]) {
     textured_cube_builder.add_vertex({0.f,  0.f,  0.f}, {0.f, 0.f}, color);
     textured_cube_builder.add_vertex({size, size, 0.f}, {1.f, 1.f}, color);
     textured_cube_builder.add_vertex({0.f,  size, 0.f}, {0.f, 1.f}, color);
-
-    // back face
-    textured_cube_builder.add_vertex({0.f,  0.f,  size}, {0.f, 0.f}, color);
-    textured_cube_builder.add_vertex({size, 0.f,  size}, {1.f, 0.f}, color);
-    textured_cube_builder.add_vertex({size, size, size}, {1.f, 1.f}, color);
-    textured_cube_builder.add_vertex({0.f,  0.f,  size}, {0.f, 0.f}, color);
-    textured_cube_builder.add_vertex({size, size, size}, {1.f, 1.f}, color);
-    textured_cube_builder.add_vertex({0.f,  size, size}, {0.f, 1.f}, color);
-
-    // left face
-    textured_cube_builder.add_vertex({0.f,  0.f,  0.f},  {0.f, 0.f}, color);
-    textured_cube_builder.add_vertex({0.f,  0.f,  size}, {1.f, 0.f}, color);
-    textured_cube_builder.add_vertex({0.f,  size, size}, {1.f, 1.f}, color);
-    textured_cube_builder.add_vertex({0.f,  0.f,  0.f},  {0.f, 0.f}, color);
-    textured_cube_builder.add_vertex({0.f,  size, size}, {1.f, 1.f}, color);
-    textured_cube_builder.add_vertex({0.f,  size, 0.f},  {0.f, 1.f}, color);
-
-    // right face
-    textured_cube_builder.add_vertex({size, 0.f,  0.f},  {0.f, 0.f}, color);
-    textured_cube_builder.add_vertex({size, 0.f,  size}, {1.f, 0.f}, color);
-    textured_cube_builder.add_vertex({size, size, size}, {1.f, 1.f}, color);
-    textured_cube_builder.add_vertex({size, 0.f,  0.f},  {0.f, 0.f}, color);
-    textured_cube_builder.add_vertex({size, size, size}, {1.f, 1.f}, color);
-    textured_cube_builder.add_vertex({size, size, 0.f},  {0.f, 1.f}, color);
-
-    // bottom face
-    textured_cube_builder.add_vertex({0.f,  0.f, 0.f},   {0.f, 0.f}, color);
-    textured_cube_builder.add_vertex({size, 0.f, 0.f},   {1.f, 0.f}, color);
-    textured_cube_builder.add_vertex({size, 0.f, size},  {1.f, 1.f}, color);
-    textured_cube_builder.add_vertex({0.f,  0.f, 0.f},   {0.f, 0.f}, color);
-    textured_cube_builder.add_vertex({size, 0.f, size},  {1.f, 1.f}, color);
-    textured_cube_builder.add_vertex({0.f,  0.f, size},  {0.f, 1.f}, color);
-
-    // top face
-    textured_cube_builder.add_vertex({0.f,  size, 0.f},  {0.f, 0.f}, color);
-    textured_cube_builder.add_vertex({size, size, 0.f},  {1.f, 0.f}, color);
-    textured_cube_builder.add_vertex({size, size, size}, {1.f, 1.f}, color);
-    textured_cube_builder.add_vertex({0.f,  size, 0.f},  {0.f, 0.f}, color);
-    textured_cube_builder.add_vertex({size, size, size}, {1.f, 1.f}, color);
-    textured_cube_builder.add_vertex({0.f,  size, size}, {0.f, 1.f}, color);
 
     mesh textured_cube = textured_cube_builder.build();
 
@@ -195,6 +154,11 @@ int main(int argc, char* argv[]) {
 
         gl::bind(prog);
 
+        auto model_matrix_uniform = prog.find_uniform<glm::mat4>("model_matrix");
+        auto view_matrix_uniform = prog.find_uniform<glm::mat4>("view_matrix");
+        auto projection_matrix_uniform = prog.find_uniform<glm::mat4>("projection_matrix");
+        auto is_textured_uniform = prog.find_uniform<int>("is_textured");
+
         glm::mat4 model_matrix{1.f};
         is_textured_uniform.set(0);
         model_matrix_uniform.set(model_matrix);
@@ -205,11 +169,20 @@ int main(int argc, char* argv[]) {
 
         world_render.render(prog, model_matrix);
 
+        gl::bind(billboard_prog);
+        model_matrix_uniform = billboard_prog.find_uniform<glm::mat4>("model_matrix");
+        view_matrix_uniform = billboard_prog.find_uniform<glm::mat4>("view_matrix");
+        projection_matrix_uniform = billboard_prog.find_uniform<glm::mat4>("projection_matrix");
+        is_textured_uniform = billboard_prog.find_uniform<int>("is_textured");
+
+        is_textured_uniform.set(1);
+        model_matrix_uniform.set(model_matrix);
+        view_matrix_uniform.set(god_cam.view());
+        projection_matrix_uniform.set(god_cam.projection());
+
         glActiveTexture(GL_TEXTURE0);
         gl::bind(gl::texture_bind<GL_TEXTURE_2D>(texture));
         model_matrix_uniform.set(glm::mat4{1.f});
-        is_textured_uniform.set(1);
-        //cube_mesh.render();
         textured_cube.render();
 
         window.gl_swap();

@@ -1,6 +1,9 @@
 #include "debug.hpp"
 
 #include <iostream>
+#include <vector>
+#include <iterator>
+#include <algorithm>
 
 namespace gl {
 
@@ -109,21 +112,36 @@ void opengl_message_cb(GLenum source, GLenum type, GLuint id, GLenum severity,
 }
 
 bool enable_debug_messages() noexcept {
+    bool is_ok = true;
     // We check if glDebugMessageCallback exists
     GL3WglProc debug_msg_callback_extension = gl3wGetProcAddress("glDebugMessageCallbackARB");
     if(debug_msg_callback_extension) {
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
 
-        typedef GLvoid (APIENTRYP DebugMessageCallbackARBPROC )(GLDEBUGPROCARB callback, GLvoid* userParam);
-        DebugMessageCallbackARBPROC glDebugMessageCallbackARB = reinterpret_cast<DebugMessageCallbackARBPROC>(debug_msg_callback_extension);
+        typedef GLvoid (APIENTRYP DebugMessageCallbackARBPROC)(GLDEBUGPROCARB, GLvoid*);
+        auto glDebugMessageCallbackARB = reinterpret_cast<DebugMessageCallbackARBPROC>(debug_msg_callback_extension);
 
         glDebugMessageCallbackARB((GLDEBUGPROCARB) opengl_message_cb, nullptr);
-
-        return true;
+    }
+    else {
+        is_ok = false;
     }
 
-    return false;
+    GL3WglProc debug_msg_control_extension = gl3wGetProcAddress("glDebugMessageControl");
+    if(debug_msg_control_extension) {
+        typedef GLvoid (APIENTRYP DebugMessageControlARBPROC)(GLenum, GLenum, GLenum, GLsizei, const GLuint*, GLboolean);
+        auto glDebugMessageControlARB = reinterpret_cast<DebugMessageControlARBPROC>(debug_msg_control_extension);
+
+        // Disable nvidia
+        GLuint ids_to_disable[] = { 131185 };
+        glDebugMessageControlARB(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_OTHER, GL_DONT_CARE, sizeof(ids_to_disable), &ids_to_disable[0], GL_FALSE);
+    }
+    else {
+        is_ok = false;
+    }
+
+    return is_ok;
 }
 
 }
