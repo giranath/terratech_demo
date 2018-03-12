@@ -16,7 +16,6 @@ class input_handler
     std::map<int, bool> key_pressed;
     std::map<int, std::vector<std::pair<std::unique_ptr<command>, bool>*>> key_to_command;
     camera* cam;
-    sdl::context<>* sdl;
     std::pair<std::unique_ptr<command>, bool> ctrl_m;
     std::pair<std::unique_ptr<command>, bool> arrow_left;
     std::pair<std::unique_ptr<command>, bool> arrow_right;
@@ -37,24 +36,9 @@ class input_handler
         }
     }
 
-    void current_input()
-    {
-        for (auto event : sdl->poll_events()) {
-            if (event.type == SDL_KEYDOWN)
-            {
-                pressed(event.key.keysym.sym);
-            }
-            else if (event.type == SDL_KEYUP)
-            {
-                released(event.key.keysym.sym);
-            }
-        }
-    }
-
 public:
-    input_handler(camera& cam, sdl::context<>& sdl) : 
+    input_handler(camera& cam) :
         cam{ &cam },
-        sdl{&sdl},
         arrow_left(std::make_unique<look_left_command>(&cam), true),
         arrow_right(std::make_unique<look_right_command>(&cam), true),
         arrow_up(std::make_unique<look_up_command>(&cam), true),
@@ -66,15 +50,26 @@ public:
         key_to_command[SDLK_LCTRL].push_back(&ctrl_m);
 
         key_to_command[SDLK_LEFT].push_back(&arrow_left);
+        key_to_command[SDLK_a].push_back(&arrow_left);
         key_to_command[SDLK_RIGHT].push_back(&arrow_right);
+        key_to_command[SDLK_d].push_back(&arrow_right);
         key_to_command[SDLK_UP].push_back(&arrow_up);
+        key_to_command[SDLK_w].push_back(&arrow_up);
         key_to_command[SDLK_DOWN].push_back(&arrow_down);
+        key_to_command[SDLK_s].push_back(&arrow_down);
     }
 
     
-    void handle_input()
+    void handle_input(SDL_Event event)
     {
-        current_input();
+        if (event.type == SDL_KEYDOWN)
+        {
+            pressed(event.key.keysym.sym);
+        }
+        else if (event.type == SDL_KEYUP)
+        {
+            released(event.key.keysym.sym);
+        }
 
         if (key_pressed[SDLK_LCTRL] && key_pressed[SDLK_m])
         {
@@ -92,7 +87,6 @@ public:
             int i = 0;
         }
 
-
         if (key_pressed[SDLK_LEFT])
         {
             arrow_left.first->execute();
@@ -102,10 +96,12 @@ public:
         {
             arrow_right.first->execute();
         }
+
         if (key_pressed[SDLK_UP])
         {
             arrow_up.first->execute();
         }
+
         if (key_pressed[SDLK_DOWN])
         {
             arrow_down.first->execute();

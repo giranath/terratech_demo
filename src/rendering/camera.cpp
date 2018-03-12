@@ -29,6 +29,17 @@ void camera::reset(glm::vec3 new_pos) noexcept {
     pos = new_pos;
 }
 
+void camera::adjust(float left, float right, float bottom, float top, float near, float far) {
+    ortho_left = left;
+    ortho_right = right;
+    ortho_bottom = bottom;
+    ortho_top = top;
+    ortho_near = near;
+    ortho_far = far;
+
+    projection_mat = glm::ortho(left, right, bottom, top, near, far);
+}
+
 void camera::translate(glm::vec3 translation) noexcept {
     pos += translation;
 }
@@ -46,7 +57,7 @@ glm::mat4 camera::view() const noexcept {
 }
 
 glm::vec3 camera::right() const noexcept {
-    return glm::cross(up(), forward());
+    return glm::cross(forward(), up());
 }
 
 glm::vec3 camera::up() const noexcept {

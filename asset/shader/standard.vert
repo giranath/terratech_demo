@@ -11,10 +11,11 @@ out vec2 UV;
 
 // Values that stay constant for the whole mesh.
 uniform mat4 model_matrix;
-uniform mat4 camera_matrix;
+uniform mat4 view_matrix;
+uniform mat4 projection_matrix;
 
 void main(){
-    mat4 mvp = camera_matrix * model_matrix;
+    mat4 mvp = projection_matrix * view_matrix * model_matrix;
 
     gl_Position =  mvp * vec4(vertex_position_modelspace, 1);
     fragment_color = vertex_color;
