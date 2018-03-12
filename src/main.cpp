@@ -73,17 +73,7 @@ void set_opengl_version(int major, int minor) {
 }
 
 int main(int argc, char* argv[]) {
-    thread_pool tasks_pool(std::thread::hardware_concurrency());
-
-    std::vector<thread_pool::task_ptr> tasks;
-    for(int i = 0; i < 100; ++i) {
-        tasks.push_back(make_task([i]() {
-            std::cout << "task #" << i << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }));
-    }
-
-    tasks_pool.push(tasks.begin(), tasks.end());
+    thread_pool tasks_pool(std::thread::hardware_concurrency() - 1);
 
     world game_world(static_cast<uint32_t>(std::time(nullptr)));
 
@@ -159,6 +149,7 @@ int main(int argc, char* argv[]) {
     // Game loop
     bool is_running = true;
     bool is_scrolling = false;
+    bool future_read = false;
     while(is_running) {
         const float LAST_FRAME_DURATION = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration).count() / 1000.f;
 

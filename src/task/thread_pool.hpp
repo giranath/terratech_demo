@@ -8,6 +8,7 @@
 #include <condition_variable>
 #include <memory>
 #include <atomic>
+#include <future>
 
 class base_task {
 public:
@@ -24,14 +25,45 @@ public:
 
     }
 
-    virtual void execute() {
+    void execute() override {
         fn();
     }
 };
 
+template<typename Ret, typename Fn>
+class processing_task : public base_task {
+    Fn fn;
+    std::promise<Ret> promise;
+public:
+    explicit processing_task(Fn&& fn)
+    : fn{std::forward<Fn>(fn)} {
+
+    }
+
+    void execute() override {
+        try {
+            Ret result = fn();
+
+            promise.set_value(std::move(result));
+        }
+        catch(...) {
+            promise.set_exception(std::current_exception());
+        }
+    }
+
+    std::future<Ret> get_future() {
+        return promise.get_future();
+    }
+};
+
 template<typename Fn>
-std::unique_ptr<base_task> make_task(Fn&& fn) {
-    return std::unique_ptr<base_task>(new task(std::forward<Fn>(fn)));
+std::unique_ptr<task<Fn>> make_task(Fn&& fn) {
+    return std::unique_ptr<task<Fn>>(new task(std::forward<Fn>(fn)));
+}
+
+template<typename Ret, typename Fn>
+std::unique_ptr<processing_task<Ret, Fn>> make_processing_task(Fn&& fn) {
+    return std::unique_ptr<processing_task<Ret, Fn>>(new processing_task<Ret, Fn>(std::forward<Fn>(fn)));
 }
 
 class thread_pool {
