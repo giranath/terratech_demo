@@ -1,6 +1,8 @@
 #ifndef MMAP_DEMO_THREAD_POOL_HPP
 #define MMAP_DEMO_THREAD_POOL_HPP
 
+#include "task.hpp"
+
 #include <vector>
 #include <queue>
 #include <thread>
@@ -11,26 +13,6 @@
 
 namespace async {
 
-class base_task {
-public:
-    virtual ~base_task() = default;
-    virtual void execute() = 0;
-};
-
-template<typename Fn>
-class task : public base_task {
-    Fn fn;
-public:
-    explicit task(Fn&& fn)
-    : fn{fn} {
-
-    }
-
-    void execute() override {
-        fn();
-    }
-};
-
 class task_executor {
 public:
     using task_handle = uint32_t;
@@ -40,7 +22,7 @@ private:
         task_ptr value;
         bool store_when_finished;
 
-        task_value()
+        task_value() noexcept
         : value{}
         , store_when_finished(false) {
 
@@ -52,13 +34,13 @@ private:
 
         }
 
-        explicit task_value(task_value&& other)
+        task_value(task_value&& other) noexcept
         : value(std::move(other.value))
         , store_when_finished(other.store_when_finished) {
 
         }
 
-        task_value& operator=(task_value&& other) {
+        task_value& operator=(task_value&& other) noexcept {
             value = std::move(other.value);
             store_when_finished = other.store_when_finished;
 

@@ -74,7 +74,7 @@ add_executable(mmap_demo
         src/sdl/istream_rwops.cpp
         src/sdl/istream_rwops.hpp
         src/task/thread_pool.cpp
-        src/task/thread_pool.hpp)
+        src/task/thread_pool.hpp src/task/task.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
