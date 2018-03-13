@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iterator>
 #include <numeric>
+#include <memory>
 
 template<typename Shader>
 Shader load_shader(const std::string& name) {
@@ -38,6 +39,11 @@ gl::program load_program(const std::string& name) {
     return prog;
 }
 
+template<typename T>
+async::task_executor::task_ptr make_task(T&& t) {
+    return std::make_unique<async::task<T>>(std::forward<T>(t));
+}
+
 game::game()
 : tasks(std::thread::hardware_concurrency() - 1)
 , game_world(static_cast<uint32_t>(std::time(nullptr)))
@@ -58,6 +64,19 @@ game::game()
             world_rendering.show(x, z);
         }
     }
+
+    auto i = tasks.push(make_task([](){
+        std::cout << "last" << std::endl;
+    }), true);
+
+    for(int i = 0; i < 100; ++i) {
+        tasks.push(make_task([=]() {
+            std::cout << "yeah!" << i << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }));
+    }
+
+    auto task = tasks.wait(i);
 }
 
 void game::update(frame_duration last_frame_duration) {
@@ -80,8 +99,8 @@ void game::render() {
 
     world_rendering.render(default_program, model_matrix);
 
+    // Calculates FPS
     ++frame_count;
-
     const clock::time_point now = clock::now();
     if(std::chrono::duration_cast<std::chrono::seconds>(now - last_fps_timepoint).count() >= 1) {
         last_fps_timepoint = now;

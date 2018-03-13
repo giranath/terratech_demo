@@ -16,7 +16,7 @@ public:
     using clock = std::chrono::high_resolution_clock;
     using frame_duration = clock::duration;
 private:
-    thread_pool tasks;
+    async::task_executor tasks;
     world game_world;
     gl::vertex_array vao;
     gl::program default_program;

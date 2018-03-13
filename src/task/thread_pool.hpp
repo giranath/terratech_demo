@@ -4,11 +4,12 @@
 #include <vector>
 #include <queue>
 #include <thread>
+#include <atomic>
+#include <memory>
 #include <mutex>
 #include <condition_variable>
-#include <memory>
-#include <atomic>
-#include <future>
+
+namespace async {
 
 class base_task {
 public:
@@ -21,7 +22,7 @@ class task : public base_task {
     Fn fn;
 public:
     explicit task(Fn&& fn)
-    : fn{std::forward<Fn>(fn)} {
+    : fn{fn} {
 
     }
 
@@ -30,69 +31,70 @@ public:
     }
 };
 
-template<typename Ret, typename Fn>
-class processing_task : public base_task {
-    Fn fn;
-    std::promise<Ret> promise;
+class task_executor {
 public:
-    explicit processing_task(Fn&& fn)
-    : fn{std::forward<Fn>(fn)} {
-
-    }
-
-    void execute() override {
-        try {
-            Ret result = fn();
-
-            promise.set_value(std::move(result));
-        }
-        catch(...) {
-            promise.set_exception(std::current_exception());
-        }
-    }
-
-    std::future<Ret> get_future() {
-        return promise.get_future();
-    }
-};
-
-template<typename Fn>
-std::unique_ptr<task<Fn>> make_task(Fn&& fn) {
-    return std::unique_ptr<task<Fn>>(new task(std::forward<Fn>(fn)));
-}
-
-template<typename Ret, typename Fn>
-std::unique_ptr<processing_task<Ret, Fn>> make_processing_task(Fn&& fn) {
-    return std::unique_ptr<processing_task<Ret, Fn>>(new processing_task<Ret, Fn>(std::forward<Fn>(fn)));
-}
-
-class thread_pool {
-public:
+    using task_handle = uint32_t;
     using task_ptr = std::unique_ptr<base_task>;
 private:
-    std::vector<std::thread> threads;
-    std::queue<task_ptr> tasks;
-    std::mutex tasks_mutex;
-    std::atomic<bool> is_running;
-    std::condition_variable tasks_cv;
+    struct task_value {
+        task_ptr value;
+        bool store_when_finished;
 
-    static void worker_thread(thread_pool* pool);
-public:
-    thread_pool(std::size_t n);
-    ~thread_pool() noexcept;
+        task_value()
+        : value{}
+        , store_when_finished(false) {
 
-    void push(task_ptr task);
-
-    template<typename It>
-    void push(It begin, It end) {
-        std::lock_guard<std::mutex> lock(tasks_mutex);
-
-        for(; begin != end; ++begin) {
-            tasks.push(std::move(*begin));
-            tasks_cv.notify_one();
         }
-    }
-};
 
+        task_value(task_ptr t, bool b)
+        : value{std::move(t)}
+        , store_when_finished(b) {
+
+        }
+
+        explicit task_value(task_value&& other)
+        : value(std::move(other.value))
+        , store_when_finished(other.store_when_finished) {
+
+        }
+
+        task_value& operator=(task_value&& other) {
+            value = std::move(other.value);
+            store_when_finished = other.store_when_finished;
+
+            return *this;
+        }
+    };
+
+    using queue_element = std::pair<task_handle, task_value>;
+
+    std::atomic<bool> is_running;
+    std::vector<std::thread> workers;
+
+    // Store the task waiting to be processed
+    std::queue<queue_element> waiting_queue;
+    std::mutex waiting_mutex;
+
+    // Store the processed tasks
+    std::vector<queue_element> finished_queue;
+    std::mutex finished_mutex;
+
+    task_handle last_handle;
+    std::condition_variable wait_cv;
+    std::condition_variable finish_cv;
+
+    static void worker_thread(task_executor* executor);
+
+    queue_element wait_for_next();
+    void finish_task(queue_element task);
+
+public:
+    explicit task_executor(std::size_t worker_count);
+    ~task_executor();
+
+    task_handle push(task_ptr new_task, bool store = false);
+    task_ptr wait(task_handle handle);
+};
+}
 
 #endif //MMAP_DEMO_THREAD_POOL_HPP
