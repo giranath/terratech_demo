@@ -58,7 +58,7 @@ public:
 
 template<typename Fn>
 std::unique_ptr<task<Fn>> make_task(Fn&& fn) {
-    return std::unique_ptr<task<Fn>>(new task(std::forward<Fn>(fn)));
+    return std::unique_ptr<task<Fn>>(new task<Fn>(std::forward<Fn>(fn)));
 }
 
 template<typename Ret, typename Fn>
