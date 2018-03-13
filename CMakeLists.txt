@@ -73,8 +73,9 @@ add_executable(mmap_demo
         src/opengl/texture.hpp
         src/sdl/istream_rwops.cpp
         src/sdl/istream_rwops.hpp
-        src/task/thread_pool.cpp
-        src/task/thread_pool.hpp src/task/task.hpp)
+        src/async/task_executor.cpp
+        src/async/task_executor.hpp
+        src/async/task.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}

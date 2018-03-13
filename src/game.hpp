@@ -1,7 +1,7 @@
 #ifndef MMAP_DEMO_GAME_HPP
 #define MMAP_DEMO_GAME_HPP
 
-#include "task/thread_pool.hpp"
+#include "async/task_executor.hpp"
 #include "opengl/opengl.hpp"
 #include "world/world.hpp"
 #include "rendering/world_renderer.hpp"
