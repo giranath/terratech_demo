@@ -55,7 +55,7 @@ add_executable(mmap_demo
         src/rendering/chunk_renderer.hpp
         src/control/all_commands.hpp
         src/control/command.hpp
-        src/control/input_handler.hpp
+        src/control/key_input_handler.hpp
         src/rendering/chunk_renderer.cpp
         src/rendering/chunk_renderer.hpp
         src/debug/profiler.hpp
@@ -76,7 +76,7 @@ add_executable(mmap_demo
         src/task/thread_pool.cpp
         src/task/thread_pool.hpp
         src/rendering/rendering_manager.cpp
-        src/rendering/rendering_manager.hpp)
+        src/rendering/rendering_manager.hpp src/control/key_input_handler.cpp src/control/camera_commands.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}

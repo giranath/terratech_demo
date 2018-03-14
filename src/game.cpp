@@ -1,4 +1,5 @@
 #include "game.hpp"
+#include "control/all_commands.hpp"
 
 #include <algorithm>
 #include <iterator>
@@ -50,14 +51,31 @@ game::game()
 , last_fps_timepoint(clock::now()) {
     std::fill(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
 
+    // Setup controls
+    // Camera movements
+    key_inputs.register_state(SDLK_LEFT, std::make_unique<input::look_left_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_RIGHT, std::make_unique<input::look_right_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_UP, std::make_unique<input::look_up_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_DOWN, std::make_unique<input::look_down_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_a, std::make_unique<input::look_left_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_d, std::make_unique<input::look_right_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_w, std::make_unique<input::look_up_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
+
+    // Wireframe
+    key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
+
+    // Setup world rendering
     for(int x = 0; x < 20; ++x) {
         for(int z = 0; z < 20; ++z) {
             world_rendering.show(x, z);
         }
     }
 
+    // Setup camera
     game_camera.reset({-100.f, 10.f, -200.f});
 
+    // Setup mesh rendering
     mesh_rendering.set_camera(&game_camera);
     mesh_rendering.set_program(0, load_program("standard"));
     mesh_rendering.set_texture(0, gl::texture::load_from_path("asset/texture/terrain.png"));
@@ -65,6 +83,7 @@ game::game()
 }
 
 void game::update(frame_duration last_frame_duration) {
+    key_inputs.dispatch();
 }
 
 void game::render() {
@@ -102,6 +121,9 @@ void game::handle_event(SDL_Event event) {
 
             game_camera.translate(cam_translation);
         }
+    }
+    else if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+        key_inputs.handle(event);
     }
 }
 
