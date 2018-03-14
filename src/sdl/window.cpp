@@ -24,8 +24,7 @@ window& window::operator=(window&& other) noexcept {
 }
 
 window::~window() noexcept {
-    SDL_GL_DeleteContext(gl_ctx);
-    SDL_DestroyWindow(sdl_window);
+    close();
 }
 
 void window::gl_swap() const noexcept {
@@ -38,6 +37,14 @@ bool window::good() const noexcept {
 
 bool window::gl_good() const noexcept {
     return gl_ctx != 0;
+}
+
+void window::close() noexcept {
+    SDL_GL_DeleteContext(gl_ctx);
+    gl_ctx = 0;
+
+    SDL_DestroyWindow(sdl_window);
+    sdl_window = nullptr;
 }
 
 window::operator SDL_Window*() {

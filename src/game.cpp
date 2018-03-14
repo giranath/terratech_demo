@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iterator>
 #include <numeric>
+#include <memory>
 
 template<typename Shader>
 Shader load_shader(const std::string& name) {
@@ -90,8 +91,8 @@ void game::render() {
     world_rendering.render(mesh_rendering);
     mesh_rendering.render();
 
+    // Calculates FPS
     ++frame_count;
-
     const clock::time_point now = clock::now();
     if(std::chrono::duration_cast<std::chrono::seconds>(now - last_fps_timepoint).count() >= 1) {
         last_fps_timepoint = now;

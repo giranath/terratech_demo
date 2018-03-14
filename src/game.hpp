@@ -1,7 +1,7 @@
 #ifndef MMAP_DEMO_GAME_HPP
 #define MMAP_DEMO_GAME_HPP
 
-#include "task/thread_pool.hpp"
+#include "async/task_executor.hpp"
 #include "opengl/opengl.hpp"
 #include "world/world.hpp"
 #include "rendering/world_renderer.hpp"
@@ -18,7 +18,7 @@ public:
     using clock = std::chrono::high_resolution_clock;
     using frame_duration = clock::duration;
 private:
-    thread_pool tasks;
+    async::task_executor tasks;
     input::key_input_handler key_inputs;
     world game_world;
     world_renderer world_rendering;
