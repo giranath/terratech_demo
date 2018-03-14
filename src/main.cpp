@@ -1,5 +1,6 @@
 #include "game.hpp"
 #include "sdl/sdl.hpp"
+#include "debug/profiler.hpp"
 
 #include <iostream>
 #include <iterator>
@@ -65,31 +66,37 @@ int main(int argc, char* argv[]) {
         //std::cout << "FPS: " << game_state.fps() << std::endl;
 
         // Render last frame on screen
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        game_state.render();
-        window.gl_swap();
+        {
+            profiler_us p("rendering");
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            game_state.render();
+            window.gl_swap();
+        }
 
         // Handle events from user here
-        for(auto event : sdl.poll_events()) {
-            if(event.type == SDL_QUIT) {
-                game_state.kill();
-            }
-            else if(event.type == SDL_WINDOWEVENT) {
-                if(event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                    const int new_width = event.window.data1;
-                    const int new_height = event.window.data2;
+        {
+            profiler_us p("events");
+            for (auto event : sdl.poll_events()) {
+                if (event.type == SDL_QUIT) {
+                    game_state.kill();
+                } else if (event.type == SDL_WINDOWEVENT) {
+                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                        const int new_width = event.window.data1;
+                        const int new_height = event.window.data2;
 
-                    game_state.resize(new_width, new_height);
+                        game_state.resize(new_width, new_height);
+                    }
+                } else {
+                    game_state.handle_event(event);
                 }
-            }
-            else {
-                game_state.handle_event(event);
             }
         }
         
         // Update state here
-        game_state.update(last_frame_duration);
-
+        {
+            profiler_us p("update");
+            game_state.update(last_frame_duration);
+        }
         const auto end_of_frame = game::clock::now();
         last_frame_duration = end_of_frame - start_of_frame;
     }

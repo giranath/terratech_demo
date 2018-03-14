@@ -1,5 +1,6 @@
 #include "game.hpp"
 #include "control/all_commands.hpp"
+#include "debug/profiler.hpp"
 
 #include <algorithm>
 #include <iterator>
@@ -124,6 +125,7 @@ void game::handle_event(SDL_Event event) {
         }
     }
     else if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+        profiler_us p("key events");
         key_inputs.handle(event);
     }
 }
