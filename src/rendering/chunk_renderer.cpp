@@ -113,24 +113,15 @@ void chunk_renderer::build() noexcept {
     build_site_meshes();
 }
 
-void chunk_renderer::render(gl::program& program, glm::mat4 parent_model) const noexcept {
-    gl::uniform<int> is_textured = program.find_uniform<int>("is_textured");
-    is_textured.set(1);
+void chunk_renderer::render(mesh_rendering_system& renderer, glm::mat4 parent_model) const noexcept {
+    renderer.emplace(&floor_mesh, parent_model, 0, 0);
 
-    floor_mesh.render();
-
-    is_textured.set(0);
-
-    // TODO: Render sites
     for(std::size_t i = 0; i < site_meshes.size(); ++i) {
         glm::vec3 pos = site_positions[i] * SQUARE_SIZE;
         pos.x += SQUARE_SIZE / 4.f;
         pos.z += SQUARE_SIZE / 4.f;
 
         glm::mat4 site_matrix = glm::translate(glm::mat4{1.f}, pos);
-        auto model_uniform = program.find_uniform<glm::mat4>("model_matrix");
-
-        model_uniform.set(parent_model * site_matrix);
-        site_meshes[i].render();
+        renderer.emplace(&site_meshes[i], parent_model * site_matrix, 1, 0);
     }
 }

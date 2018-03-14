@@ -19,7 +19,13 @@ bool mesh_renderer::operator<(const mesh_renderer& other) const noexcept {
     return key() < other.key();
 }
 
-void mesh_rendering_system::set_texture(mesh_renderer::texture_handle handle, gl::texture texture) {
+mesh_rendering_system::mesh_rendering_system()
+: vao{gl::vertex_array::make()}
+, current_camera{} {
+
+}
+
+void mesh_rendering_system::set_texture(mesh_renderer::texture_handle handle, gl::texture&& texture) {
     textures[handle] = std::move(texture);
 }
 
@@ -27,7 +33,7 @@ void mesh_rendering_system::set_camera(camera* cam) noexcept {
     current_camera = cam;
 }
 
-void mesh_rendering_system::set_program(mesh_renderer::program_handle handle, gl::program program) {
+void mesh_rendering_system::set_program(mesh_renderer::program_handle handle, gl::program&& program) {
     programs[handle] = std::move(program);
 }
 
@@ -45,6 +51,7 @@ void mesh_rendering_system::emplace(const mesh* m, glm::mat4 model, mesh_rendere
 
 void mesh_rendering_system::render() {
     if(meshes.size() > 0) {
+        gl::bind(vao);
 
         // First we sort meshes by program than texture
         std::sort(std::begin(meshes), std::end(meshes));
@@ -74,19 +81,30 @@ void mesh_rendering_system::render() {
             if(renderer.texture != last_texture) {
                 current_texture = &textures[renderer.texture];
 
+                auto is_textured_uniform = current_program->find_uniform<int>("is_textured");
+
                 glActiveTexture(GL_TEXTURE0);
                 gl::bind(gl::texture_bind<GL_TEXTURE_2D>(*current_texture));
+
+                if(current_texture->good()) {
+                    is_textured_uniform.set(1);
+                }
+                else {
+                    is_textured_uniform.set(0);
+                }
             }
 
             auto model_uniform = current_program->find_uniform<glm::mat4>("model_matrix");
             model_uniform.set(renderer.model);
 
-            // TODO: Setup is textured
+            // TODO: Setup is_textured
 
             renderer.rendering_mesh->render();
 
             last_program = renderer.program;
             last_texture = renderer.texture;
         }
+
+        meshes.clear();
     }
 }

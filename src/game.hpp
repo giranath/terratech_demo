@@ -6,6 +6,7 @@
 #include "world/world.hpp"
 #include "rendering/world_renderer.hpp"
 #include "rendering/camera.hpp"
+#include "rendering/rendering_manager.hpp"
 #include "sdl/sdl.hpp"
 
 #include <chrono>
@@ -18,10 +19,11 @@ public:
 private:
     thread_pool tasks;
     world game_world;
-    gl::vertex_array vao;
-    gl::program default_program;
-    gl::texture terrain_texture;
+    //gl::vertex_array vao;
+    //gl::program default_program;
+    //gl::texture terrain_texture;
     world_renderer world_rendering;
+    mesh_rendering_system mesh_rendering;
     camera game_camera;
     bool is_scrolling;
     bool is_running;

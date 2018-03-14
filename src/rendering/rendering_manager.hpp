@@ -25,19 +25,26 @@ struct mesh_renderer {
 };
 
 class mesh_rendering_system {
+    gl::vertex_array vao;
     std::vector<mesh_renderer> meshes;
     std::unordered_map<mesh_renderer::texture_handle, gl::texture> textures;
     std::unordered_map<mesh_renderer::program_handle, gl::program> programs;
     camera* current_camera {};
 public:
-    mesh_rendering_system() = default;
+    mesh_rendering_system();
 
     void set_camera(camera* camera) noexcept;
-    void set_texture(mesh_renderer::texture_handle handle, gl::texture texture);
-    void set_program(mesh_renderer::program_handle handle, gl::program program);
+    void set_texture(mesh_renderer::texture_handle handle, gl::texture&& texture);
+    void set_program(mesh_renderer::program_handle handle, gl::program&& program);
 
     void push(const mesh_renderer& renderer);
     void push(mesh_renderer&& renderer);
+
+    template<typename It>
+    void push(It begin, It end) {
+        meshes.insert(meshes.end(), begin, end);
+    }
+
     void emplace(const mesh* m, glm::mat4 model, mesh_renderer::texture_handle texture, mesh_renderer::program_handle prog);
     void render();
 };

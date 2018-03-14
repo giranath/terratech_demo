@@ -41,10 +41,7 @@ gl::program load_program(const std::string& name) {
 game::game()
 : tasks(std::thread::hardware_concurrency() - 1)
 , game_world(static_cast<uint32_t>(std::time(nullptr)))
-, vao(gl::vertex_array::make())
-, default_program(load_program("standard"))
-, terrain_texture(gl::texture::load_from_path("asset/texture/terrain.png"))
-, world_rendering{game_world, terrain_texture}
+, world_rendering(game_world)
 , game_camera(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f)
 , is_scrolling(false)
 , is_running(true)
@@ -58,27 +55,19 @@ game::game()
             world_rendering.show(x, z);
         }
     }
+
+    mesh_rendering.set_camera(&game_camera);
+    mesh_rendering.set_program(0, load_program("standard"));
+    mesh_rendering.set_texture(0, gl::texture::load_from_path("asset/texture/terrain.png"));
+    mesh_rendering.set_texture(1, gl::texture{});
 }
 
 void game::update(frame_duration last_frame_duration) {
 }
 
 void game::render() {
-    gl::bind(vao);
-    gl::bind(default_program);
-
-    auto model_matrix_uniform = default_program.find_uniform<glm::mat4>("model_matrix");
-    auto view_matrix_uniform = default_program.find_uniform<glm::mat4>("view_matrix");
-    auto projection_matrix_uniform = default_program.find_uniform<glm::mat4>("projection_matrix");
-    auto is_textured_uniform = default_program.find_uniform<int>("is_textured");
-
-    glm::mat4 model_matrix{1.f};
-    is_textured_uniform.set(0);
-    model_matrix_uniform.set(model_matrix);
-    view_matrix_uniform.set(game_camera.view());
-    projection_matrix_uniform.set(game_camera.projection());
-
-    world_rendering.render(default_program, model_matrix);
+    world_rendering.render(mesh_rendering);
+    mesh_rendering.render();
 
     ++frame_count;
 

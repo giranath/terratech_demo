@@ -4,6 +4,7 @@
 #include "../opengl/opengl.hpp"
 #include "mesh.hpp"
 #include "../world/world_chunk.hpp"
+#include "rendering_manager.hpp"
 #include <glm/glm.hpp>
 #include <vector>
 #include <map>
@@ -24,7 +25,7 @@ public:
     explicit chunk_renderer(const world_chunk& chunk) noexcept;
 
     void build() noexcept;
-    void render(gl::program& program, glm::mat4 parent_model) const noexcept;
+    void render(mesh_rendering_system& renderer, glm::mat4 parent_model) const noexcept;
 };
 
 

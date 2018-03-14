@@ -43,6 +43,10 @@ void texture::bind(GLenum target) const noexcept {
     glBindTexture(target, raw);
 }
 
+bool texture::good() const noexcept {
+    return raw != 0;
+}
+
 texture texture::make() noexcept {
     GLuint text;
     glGenTextures(1, &text);
