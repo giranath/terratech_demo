@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(DISABLE_PROFILER "Disable profiling when ON" OFF)
+
 find_package(terratech 0.5 REQUIRED)
 find_package(sdl2 REQUIRED)
 find_package(sdl2_image REQUIRED)
@@ -97,3 +99,7 @@ target_link_libraries(mmap_demo
         ${CMAKE_DL_LIBS})
 
 target_compile_definitions(mmap_demo PRIVATE -DGAME_VERSION="${PROJECT_VERSION}")
+
+if(DISABLE_PROFILER)
+    target_compile_definitions(mmap_demo PRIVATE -DNPROFILER)
+endif()

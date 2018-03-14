@@ -7,6 +7,10 @@
 #include <string>
 #include <ctime>
 #include <time.h>
+#include <vector>
+#include <mutex>
+#include <thread>
+#include <atomic>
 
 template<class T>
 struct is_time {
@@ -54,9 +58,55 @@ class profiler_administrator
 {
     static_assert(is_time<T>::value, "the type is not a time");
 
-    profiler_administrator() {
+#ifndef NPROFILER
+    struct log_record {
+        std::string name;
+        std::string time;
+        long duration;
+
+    public:
+        log_record(const std::string& name, std::string time, long duration)
+        : name(name)
+        , time(std::move(time))
+        , duration(duration) {
+
+        }
+    };
+
+    std::vector<log_record> records;
+    std::mutex records_mutex;
+    std::thread background_thread;
+    std::atomic<bool> is_running;
+
+    static void background_thread_function(profiler_administrator* admin) {
         std::ofstream out_stream("log_time.csv");
-        write_header(out_stream);
+        admin->write_header(out_stream);
+
+        while(admin->is_running) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+
+            // Swap records from admin
+            std::vector<log_record> temp_records;
+            {
+                std::lock_guard<std::mutex> lock(admin->records_mutex);
+                temp_records.swap(admin->records);
+            }
+
+            for(const log_record& record : temp_records) {
+                admin->write_row(out_stream, record.name, record.time, record.duration);
+            }
+        }
+    }
+
+    profiler_administrator()
+    : background_thread(background_thread_function, this)
+    , is_running{true} {
+
+    }
+
+    ~profiler_administrator() {
+        is_running = false;
+        background_thread.join();
     }
 
     void write_header(std::ostream& os) {
@@ -74,7 +124,7 @@ class profiler_administrator
 
         return time;
     }
-
+#endif
 public:
     static profiler_administrator<T>& get_instance()
     {
@@ -85,8 +135,10 @@ public:
     template<typename TimePoint>
     void log_time(const std::string& name, const TimePoint& begin, const TimePoint& end)
     {
-        std::ofstream out_stream("log_time.csv", std::ios_base::app);
-        write_row(out_stream, name, get_current_time(), std::chrono::duration_cast<T>(end - begin).count());
+#ifndef NPROFILER
+        std::lock_guard<std::mutex> lock(records_mutex);
+        records.emplace_back(name, get_current_time(), std::chrono::duration_cast<T>(end - begin).count());
+#endif
     }
 
 };

@@ -2,6 +2,7 @@
 #include "../world/world.hpp"
 #include "../world/world_generator.hpp"
 #include "../bounding_box.hpp"
+#include "../debug/profiler.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -115,6 +116,7 @@ void chunk_renderer::build() noexcept {
 }
 
 void chunk_renderer::render(mesh_rendering_system& renderer, glm::mat4 parent_model) const noexcept {
+    profiler_us p("chunk_renderer");
     renderer.emplace(&floor_mesh, parent_model, 0, 0);
     renderer.emplace(&sites_mesh, parent_model, 1, 0);
 }
