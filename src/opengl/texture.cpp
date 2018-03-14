@@ -2,7 +2,12 @@
 #include "../sdl/istream_rwops.hpp"
 
 #include <algorithm>
+
+#ifdef WIN32
+#include <SDL_image.h>
+#else
 #include <SDL2/SDL_image.h>
+#endif
 
 namespace gl {
 
@@ -41,6 +46,10 @@ texture::operator GLuint() const noexcept {
 
 void texture::bind(GLenum target) const noexcept {
     glBindTexture(target, raw);
+}
+
+bool texture::good() const noexcept {
+    return raw != 0;
 }
 
 texture texture::make() noexcept {

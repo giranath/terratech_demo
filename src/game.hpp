@@ -6,7 +6,9 @@
 #include "world/world.hpp"
 #include "rendering/world_renderer.hpp"
 #include "rendering/camera.hpp"
+#include "rendering/rendering_manager.hpp"
 #include "sdl/sdl.hpp"
+#include "control/key_input_handler.hpp"
 
 #include <chrono>
 #include <array>
@@ -17,11 +19,10 @@ public:
     using frame_duration = clock::duration;
 private:
     async::task_executor tasks;
+    input::key_input_handler key_inputs;
     world game_world;
-    gl::vertex_array vao;
-    gl::program default_program;
-    gl::texture terrain_texture;
     world_renderer world_rendering;
+    mesh_rendering_system mesh_rendering;
     camera game_camera;
     bool is_scrolling;
     bool is_running;
@@ -44,6 +45,7 @@ public:
     void render();
 
     void handle_event(SDL_Event event);
+    void resize(int new_width, int new_height);
 
     bool wants_to_die() const noexcept;
     void kill() noexcept;

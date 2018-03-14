@@ -41,6 +41,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    SDL_SetWindowMinimumSize(window, 800, 600);
+
     // Initializes gl3w with context created in window
     if(gl3wInit() != 0) {
         std::cerr << "cannot initialize gl3w" << std::endl;
@@ -52,6 +54,7 @@ int main(int argc, char* argv[]) {
     game::frame_duration last_frame_duration = TARGET_FRAME_DURATION;
 
     game game_state;
+    game_state.resize(800, 600);
 
     setup_opengl();
 
@@ -70,6 +73,14 @@ int main(int argc, char* argv[]) {
         for(auto event : sdl.poll_events()) {
             if(event.type == SDL_QUIT) {
                 game_state.kill();
+            }
+            else if(event.type == SDL_WINDOWEVENT) {
+                if(event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                    const int new_width = event.window.data1;
+                    const int new_height = event.window.data2;
+
+                    game_state.resize(new_width, new_height);
+                }
             }
             else {
                 game_state.handle_event(event);

@@ -1,4 +1,5 @@
 #include "game.hpp"
+#include "control/all_commands.hpp"
 
 #include <algorithm>
 #include <iterator>
@@ -42,10 +43,7 @@ gl::program load_program(const std::string& name) {
 game::game()
 : tasks(std::thread::hardware_concurrency() - 1)
 , game_world(static_cast<uint32_t>(std::time(nullptr)))
-, vao(gl::vertex_array::make())
-, default_program(load_program("standard"))
-, terrain_texture(gl::texture::load_from_path("asset/texture/terrain.png"))
-, world_rendering{game_world, terrain_texture}
+, world_rendering(game_world)
 , game_camera(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f)
 , is_scrolling(false)
 , is_running(true)
@@ -54,32 +52,44 @@ game::game()
 , last_fps_timepoint(clock::now()) {
     std::fill(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
 
+    // Setup controls
+    // Camera movements
+    key_inputs.register_state(SDLK_LEFT, std::make_unique<input::look_left_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_RIGHT, std::make_unique<input::look_right_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_UP, std::make_unique<input::look_up_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_DOWN, std::make_unique<input::look_down_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_a, std::make_unique<input::look_left_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_d, std::make_unique<input::look_right_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_w, std::make_unique<input::look_up_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
+
+    // Wireframe
+    key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
+
+    // Setup world rendering
     for(int x = 0; x < 20; ++x) {
         for(int z = 0; z < 20; ++z) {
             world_rendering.show(x, z);
         }
     }
+
+    // Setup camera
+    game_camera.reset({-100.f, 10.f, -200.f});
+
+    // Setup mesh rendering
+    mesh_rendering.set_camera(&game_camera);
+    mesh_rendering.set_program(0, load_program("standard"));
+    mesh_rendering.set_texture(0, gl::texture::load_from_path("asset/texture/terrain.png"));
+    mesh_rendering.set_texture(1, gl::texture{});
 }
 
 void game::update(frame_duration last_frame_duration) {
+    key_inputs.dispatch();
 }
 
 void game::render() {
-    gl::bind(vao);
-    gl::bind(default_program);
-
-    auto model_matrix_uniform = default_program.find_uniform<glm::mat4>("model_matrix");
-    auto view_matrix_uniform = default_program.find_uniform<glm::mat4>("view_matrix");
-    auto projection_matrix_uniform = default_program.find_uniform<glm::mat4>("projection_matrix");
-    auto is_textured_uniform = default_program.find_uniform<int>("is_textured");
-
-    glm::mat4 model_matrix{1.f};
-    is_textured_uniform.set(0);
-    model_matrix_uniform.set(model_matrix);
-    view_matrix_uniform.set(game_camera.view());
-    projection_matrix_uniform.set(game_camera.projection());
-
-    world_rendering.render(default_program, model_matrix);
+    world_rendering.render(mesh_rendering);
+    mesh_rendering.render();
 
     // Calculates FPS
     ++frame_count;
@@ -113,13 +123,20 @@ void game::handle_event(SDL_Event event) {
             game_camera.translate(cam_translation);
         }
     }
-    else if(event.type == SDL_WINDOWEVENT) {
-        if(event.window.event == SDL_WINDOWEVENT_RESIZED) {
-            const int new_width = event.window.data1;
-            const int new_height = event.window.data2;
+    else if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+        key_inputs.handle(event);
+    }
+}
 
-            glViewport(0, 0, new_width, new_height);
-        }
+void game::resize(int new_width, int new_height) {
+    glViewport(0, 0, new_width, new_height);
+
+    const float aspect = static_cast<float>(new_width) / new_height;
+    if(aspect >= 1.0f) {
+        game_camera.adjust(-400.f * aspect, 400.f * aspect, -300.f, 300.f, -1000.f, 1000.f);
+    }
+    else {
+        game_camera.adjust(-400.f, 400.f, -300.f / aspect, 300.f / aspect, -1000.f, 1000.f);
     }
 }
 
