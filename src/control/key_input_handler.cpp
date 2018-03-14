@@ -1,8 +1,57 @@
 #include "key_input_handler.hpp"
 
-#include <iostream>
+#include <algorithm>
 
 namespace input {
+
+bool key_input_handler::multiple_key_handler::add(std::unique_ptr<base_key_handler>&& handler) {
+    return add(0, std::move(handler));
+}
+
+bool key_input_handler::multiple_key_handler::add(uint16_t mod, std::unique_ptr<base_key_handler>&& handler) {
+    auto it = handlers.find(mod);
+
+    if(it == handlers.end()) {
+        handlers[mod] = std::move(handler);
+        return true;
+    }
+
+    return false;
+}
+
+key_input_handler::multiple_key_handler::iterator key_input_handler::multiple_key_handler::find_modifier(uint16_t mod) {
+    auto it = std::find_if(handlers.begin(), handlers.end(), [mod](const auto& key) {
+        return mod & key.first;
+    });
+
+    if(it == handlers.end()) {
+        return handlers.find(0);
+    }
+
+    return it;
+}
+
+void key_input_handler::multiple_key_handler::press(uint16_t mod) {
+    auto it = find_modifier(mod);
+
+    if(it != handlers.end()) {
+        it->second->on_pressed();
+    }
+}
+
+void key_input_handler::multiple_key_handler::release(uint16_t mod) {
+    auto it = find_modifier(mod);
+
+    if(it != handlers.end()) {
+        it->second->on_released();
+    }
+}
+
+void key_input_handler::multiple_key_handler::execute() {
+    for(auto it = handlers.begin(); it != handlers.end(); ++it) {
+        it->second->execute();
+    }
+}
 
 key_input_handler::state_key_handler::state_key_handler(std::unique_ptr<command>&& c)
 : command_to_execute{std::move(c)}
@@ -48,17 +97,16 @@ void key_input_handler::action_key_handler::execute() {
     }
 }
 
-void key_input_handler::register_state(int key, std::unique_ptr<command> c) {
-    handlers[key] = std::make_unique<state_key_handler>(std::move(c));
+bool key_input_handler::register_state(int key, std::unique_ptr<command> c) {
+    return handlers[key].add(std::make_unique<state_key_handler>(std::move(c)));
 }
 
-void key_input_handler::register_action(int key, std::unique_ptr<command> c) {
-    handlers[key] = std::make_unique<action_key_handler>(std::move(c));
+bool key_input_handler::register_action(int key, std::unique_ptr<command> c) {
+    return handlers[key].add(std::make_unique<action_key_handler>(std::move(c)));
 }
 
-void key_input_handler::register_action(int key, int modifiers, std::unique_ptr<command> c) {
-    // TODO: Register key with modifiers
-    register_action(key, std::move(c));
+bool key_input_handler::register_action(int key, int modifiers, std::unique_ptr<command> c) {
+    return handlers[key].add(modifiers, std::make_unique<action_key_handler>(std::move(c)));
 }
 
 void key_input_handler::unregister(int key) {
@@ -76,17 +124,17 @@ void key_input_handler::handle(SDL_Event event) {
 
     if(it != handlers.end()) {
         if(event.key.state == SDL_PRESSED) {
-            it->second->on_pressed();
+            it->second.press(event.key.keysym.mod);
         }
         else if(event.key.state == SDL_RELEASED) {
-            it->second->on_released();
+            it->second.release(event.key.keysym.mod);
         }
     }
 }
 
 void key_input_handler::dispatch() {
     for(auto it = handlers.begin(); it != handlers.end(); ++it) {
-        it->second->execute();
+        it->second.execute();
     }
 }
 

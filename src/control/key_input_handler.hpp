@@ -5,6 +5,7 @@
 #include "../sdl/sdl.hpp"
 
 #include <map>
+#include <unordered_map>
 #include <memory>
 
 // Two types of inputs:
@@ -44,11 +45,27 @@ class key_input_handler {
         void execute() override;
     };
 
-    std::map<int, std::unique_ptr<base_key_handler>> handlers;
+    class multiple_key_handler {
+        using iterator = std::unordered_map<uint16_t, std::unique_ptr<base_key_handler>>::iterator;
+        std::unordered_map<uint16_t, std::unique_ptr<base_key_handler>> handlers;
+
+        iterator find_modifier(uint16_t mod);
+
+    public:
+        bool add(std::unique_ptr<base_key_handler>&& handler);
+        bool add(uint16_t mod, std::unique_ptr<base_key_handler>&& handler);
+
+        void press(uint16_t mod);
+        void release(uint16_t mod);
+
+        void execute();
+    };
+
+    std::unordered_map<int, multiple_key_handler> handlers;
 public:
-    void register_state(int key, std::unique_ptr<command> c);
-    void register_action(int key, std::unique_ptr<command> c);
-    void register_action(int key, int modifiers, std::unique_ptr<command> c);
+    bool register_state(int key, std::unique_ptr<command> c);
+    bool register_action(int key, std::unique_ptr<command> c);
+    bool register_action(int key, int modifiers, std::unique_ptr<command> c);
     void unregister(int key);
     bool is_registered(int key) const noexcept;
 
