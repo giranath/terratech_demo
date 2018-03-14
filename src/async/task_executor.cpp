@@ -10,10 +10,12 @@ void task_executor::worker_thread(task_executor* executor) {
         auto next = executor->wait_for_next();
 
         if(next.second.value) {
-            next.second.value->execute();
-
-            if(next.second.store_when_finished) {
-                executor->finish_task(std::move(next));
+            try {
+                next.second.value->execute();
+                next.second.promise.set_value(std::move(next.second.value));
+            }
+            catch(...) {
+                next.second.promise.set_exception(std::current_exception());
             }
         }
     }
@@ -34,18 +36,6 @@ task_executor::queue_element task_executor::wait_for_next() {
     return queue_element(0, task_value{});
 }
 
-void task_executor::finish_task(queue_element task) {
-    {
-        std::lock_guard<std::mutex> lock(finished_mutex);
-
-        // finished_queue is always sorted
-        auto it = std::lower_bound(std::begin(finished_queue), std::end(finished_queue), task,
-                                   [](const queue_element &a, const queue_element &b) { return a.first < b.first; });
-        finished_queue.insert(it, std::move(task));
-    }
-    finish_cv.notify_one();
-}
-
 task_executor::task_executor(std::size_t worker_count)
 : is_running(true)
 , last_handle(0) {
@@ -63,41 +53,21 @@ task_executor::~task_executor() {
     }
 }
 
-task_executor::task_handle task_executor::push(task_ptr new_task, bool store) {
+std::future<task_executor::task_ptr> task_executor::push(task_ptr new_task) {
     task_handle handle = last_handle + 1;
+    std::future<task_ptr> future;
     {
         ++last_handle;
 
         std::lock_guard<std::mutex> lock(waiting_mutex);
-        waiting_queue.emplace(handle, task_value(std::move(new_task), store));
+
+        task_value val(std::move(new_task));
+        future = val.promise.get_future();
+        waiting_queue.emplace(handle, std::move(val));
     }
     wait_cv.notify_one();
 
-    return handle;
-}
-
-task_executor::task_ptr task_executor::wait(task_handle handle) {
-    std::unique_lock<std::mutex> lock(finished_mutex);
-    finish_cv.wait(lock, [this, handle]() {
-        return std::binary_search(std::begin(finished_queue),
-                                  std::end(finished_queue),
-                                  queue_element(handle, task_value{}),
-                                  [](const queue_element& a, const queue_element& b) { return a.first < b.first; });
-    });
-
-    auto it = std::lower_bound(std::begin(finished_queue),
-                               std::end(finished_queue),
-                               queue_element(handle, task_value{}),
-                               [](const queue_element& a, const queue_element& b) { return a.first < b.first; });
-
-    if(it != std::end(finished_queue)) {
-        task_ptr task = std::move(it->second.value);
-        finished_queue.erase(it);
-
-        return task;
-    }
-
-    return nullptr;
+    return future;
 }
 
 }

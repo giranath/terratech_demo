@@ -10,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <condition_variable>
+#include <future>
 
 namespace async {
 
@@ -20,29 +21,27 @@ public:
 private:
     struct task_value {
         task_ptr value;
-        bool store_when_finished;
+        std::promise<task_ptr> promise;
 
         task_value() noexcept
-        : value{}
-        , store_when_finished(false) {
+        : value{} {
 
         }
 
-        task_value(task_ptr t, bool b)
-        : value{std::move(t)}
-        , store_when_finished(b) {
+        explicit task_value(task_ptr t)
+        : value{std::move(t)} {
 
         }
 
         task_value(task_value&& other) noexcept
         : value(std::move(other.value))
-        , store_when_finished(other.store_when_finished) {
+        , promise(std::move(other.promise)) {
 
         }
 
         task_value& operator=(task_value&& other) noexcept {
             value = std::move(other.value);
-            store_when_finished = other.store_when_finished;
+            promise = std::move(other.promise);
 
             return *this;
         }
@@ -57,25 +56,18 @@ private:
     std::queue<queue_element> waiting_queue;
     std::mutex waiting_mutex;
 
-    // Store the processed tasks
-    std::vector<queue_element> finished_queue;
-    std::mutex finished_mutex;
-
     task_handle last_handle;
     std::condition_variable wait_cv;
-    std::condition_variable finish_cv;
 
     static void worker_thread(task_executor* executor);
 
     queue_element wait_for_next();
-    void finish_task(queue_element task);
 
 public:
     explicit task_executor(std::size_t worker_count);
     ~task_executor();
 
-    task_handle push(task_ptr new_task, bool store = false);
-    task_ptr wait(task_handle handle);
+    std::future<task_ptr> push(task_ptr new_task);
 };
 }
 
