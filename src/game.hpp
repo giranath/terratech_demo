@@ -19,9 +19,6 @@ public:
 private:
     thread_pool tasks;
     world game_world;
-    //gl::vertex_array vao;
-    //gl::program default_program;
-    //gl::texture terrain_texture;
     world_renderer world_rendering;
     mesh_rendering_system mesh_rendering;
     camera game_camera;
@@ -46,6 +43,7 @@ public:
     void render();
 
     void handle_event(SDL_Event event);
+    void resize(int new_width, int new_height);
 
     bool wants_to_die() const noexcept;
     void kill() noexcept;

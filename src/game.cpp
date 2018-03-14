@@ -103,25 +103,17 @@ void game::handle_event(SDL_Event event) {
             game_camera.translate(cam_translation);
         }
     }
-    else if(event.type == SDL_WINDOWEVENT) {
-        if(event.window.event == SDL_WINDOWEVENT_RESIZED) {
-            const int new_width = event.window.data1;
-            const int new_height = event.window.data2;
+}
 
-            //const float aspect = new_width / new_height;
-            const float target_ratio = 800.f / 600.f;
-            const float new_ratio = static_cast<float>(new_width) / new_height;
+void game::resize(int new_width, int new_height) {
+    glViewport(0, 0, new_width, new_height);
 
-            glViewport(0, 0, new_width, new_height);
-
-            float aspect = static_cast<float>(new_width) / new_height;
-            if(aspect >= 1.0f) {
-                game_camera.adjust(-400.f * aspect, 400.f * aspect, -300.f, 300.f, -1000.f, 1000.f);
-            }
-            else {
-                game_camera.adjust(-400.f, 400.f, -300.f / aspect, 300.f / aspect, -1000.f, 1000.f);
-            }
-        }
+    const float aspect = static_cast<float>(new_width) / new_height;
+    if(aspect >= 1.0f) {
+        game_camera.adjust(-400.f * aspect, 400.f * aspect, -300.f, 300.f, -1000.f, 1000.f);
+    }
+    else {
+        game_camera.adjust(-400.f, 400.f, -300.f / aspect, 300.f / aspect, -1000.f, 1000.f);
     }
 }
 
