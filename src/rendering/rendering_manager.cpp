@@ -19,6 +19,18 @@ bool mesh_renderer::operator<(const mesh_renderer& other) const noexcept {
     return key() < other.key();
 }
 
+void mesh_rendering_system::set_texture(mesh_renderer::texture_handle handle, gl::texture texture) {
+    textures[handle] = std::move(texture);
+}
+
+void mesh_rendering_system::set_camera(camera* cam) noexcept {
+    current_camera = cam;
+}
+
+void mesh_rendering_system::set_program(mesh_renderer::program_handle handle, gl::program program) {
+    programs[handle] = std::move(program);
+}
+
 void mesh_rendering_system::push(const mesh_renderer& renderer) {
     meshes.push_back(renderer);
 }
@@ -40,23 +52,41 @@ void mesh_rendering_system::render() {
         mesh_renderer::program_handle last_program = -1;
         mesh_renderer::texture_handle last_texture = -1;
 
-        // TODO: Setup camera related uniform
+        gl::program* current_program = nullptr;
+        gl::texture* current_texture = nullptr;
 
         for (const mesh_renderer &renderer : meshes) {
             if(renderer.program != last_program) {
-                // TODO: Bind new program
+                current_program = &programs[renderer.program];
+                gl::bind(*current_program);
+
+                // Setup camera related uniforms
+                if(current_camera) {
+                    auto projection_uniform = current_program->find_uniform<glm::mat4>("projection_matrix");
+                    auto view_uniform = current_program->find_uniform<glm::mat4>("view_matrix");
+
+                    projection_uniform.set(current_camera->projection());
+                    view_uniform.set(current_camera->view());
+                }
             }
 
+            // Bind new texture
             if(renderer.texture != last_texture) {
-                // TODO: Bind new texture
+                current_texture = &textures[renderer.texture];
+
+                glActiveTexture(GL_TEXTURE0);
+                gl::bind(gl::texture_bind<GL_TEXTURE_2D>(*current_texture));
             }
 
-            // TODO: Setup model uniform
+            auto model_uniform = current_program->find_uniform<glm::mat4>("model_matrix");
+            model_uniform.set(renderer.model);
+
+            // TODO: Setup is textured
+
             renderer.rendering_mesh->render();
 
             last_program = renderer.program;
             last_texture = renderer.texture;
         }
     }
-    // TODO: Iterate on every meshes
 }

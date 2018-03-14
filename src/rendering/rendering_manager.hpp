@@ -1,13 +1,13 @@
 #ifndef MMAP_DEMO_RENDERING_MANAGER_HPP
 #define MMAP_DEMO_RENDERING_MANAGER_HPP
 
+#include "camera.hpp"
 #include "mesh.hpp"
+#include "../opengl/opengl.hpp"
 
+#include <unordered_map>
 #include <glm/glm.hpp>
 #include <cstdint>
-
-// TODO: Render meshes
-// Sort meshes by program, texture
 
 struct mesh_renderer {
     using texture_handle = uint8_t;
@@ -26,7 +26,16 @@ struct mesh_renderer {
 
 class mesh_rendering_system {
     std::vector<mesh_renderer> meshes;
+    std::unordered_map<mesh_renderer::texture_handle, gl::texture> textures;
+    std::unordered_map<mesh_renderer::program_handle, gl::program> programs;
+    camera* current_camera {};
 public:
+    mesh_rendering_system() = default;
+
+    void set_camera(camera* camera) noexcept;
+    void set_texture(mesh_renderer::texture_handle handle, gl::texture texture);
+    void set_program(mesh_renderer::program_handle handle, gl::program program);
+
     void push(const mesh_renderer& renderer);
     void push(mesh_renderer&& renderer);
     void emplace(const mesh* m, glm::mat4 model, mesh_renderer::texture_handle texture, mesh_renderer::program_handle prog);
