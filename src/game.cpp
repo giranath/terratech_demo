@@ -52,15 +52,18 @@ game::game()
     std::fill(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
 
     // Setup controls
-    key_inputs.register_state(SDLK_LEFT, std::make_unique<look_left_command>(&game_camera));
-    key_inputs.register_state(SDLK_RIGHT, std::make_unique<look_right_command>(&game_camera));
-    key_inputs.register_state(SDLK_UP, std::make_unique<look_up_command>(&game_camera));
-    key_inputs.register_state(SDLK_DOWN, std::make_unique<look_down_command>(&game_camera));
-    key_inputs.register_state(SDLK_a, std::make_unique<look_left_command>(&game_camera));
-    key_inputs.register_state(SDLK_d, std::make_unique<look_right_command>(&game_camera));
-    key_inputs.register_state(SDLK_w, std::make_unique<look_up_command>(&game_camera));
-    key_inputs.register_state(SDLK_s, std::make_unique<look_down_command>(&game_camera));
-    key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<wireframe_command>());
+    // Camera movements
+    key_inputs.register_state(SDLK_LEFT, std::make_unique<input::look_left_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_RIGHT, std::make_unique<input::look_right_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_UP, std::make_unique<input::look_up_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_DOWN, std::make_unique<input::look_down_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_a, std::make_unique<input::look_left_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_d, std::make_unique<input::look_right_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_w, std::make_unique<input::look_up_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
+
+    // Wireframe
+    key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
 
     // Setup world rendering
     for(int x = 0; x < 20; ++x) {
