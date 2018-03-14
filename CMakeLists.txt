@@ -76,7 +76,7 @@ add_executable(mmap_demo
         src/task/thread_pool.cpp
         src/task/thread_pool.hpp
         src/rendering/rendering_manager.cpp
-        src/rendering/rendering_manager.hpp)
+        src/rendering/rendering_manager.hpp src/control/key_input_handler.cpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}

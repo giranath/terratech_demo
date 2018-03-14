@@ -8,6 +8,7 @@
 #include "rendering/camera.hpp"
 #include "rendering/rendering_manager.hpp"
 #include "sdl/sdl.hpp"
+#include "control/input_handler.hpp"
 
 #include <chrono>
 #include <array>
@@ -18,6 +19,7 @@ public:
     using frame_duration = clock::duration;
 private:
     thread_pool tasks;
+    input::key_input_handler key_inputs;
     world game_world;
     world_renderer world_rendering;
     mesh_rendering_system mesh_rendering;

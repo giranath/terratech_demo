@@ -1,7 +1,9 @@
 #ifndef DEF_ALL_COMMANDS_HPP
 #define DEF_ALL_COMMANDS_HPP
+
 #include "command.hpp"
 #include "../rendering/camera.hpp"
+#include "../opengl/opengl.hpp"
 
 class look_left_command : public command
 {
