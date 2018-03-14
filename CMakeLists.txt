@@ -11,6 +11,7 @@ find_package(sdl2_image REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
 find_package(PythonInterp REQUIRED)
+find_package(Threads REQUIRED)
 
 # Generates GL3W files
 execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/thirdparty/gl3w/gl3w_gen.py")
@@ -71,7 +72,11 @@ add_executable(mmap_demo
         src/opengl/texture.cpp
         src/opengl/texture.hpp
         src/sdl/istream_rwops.cpp
-        src/sdl/istream_rwops.hpp)
+        src/sdl/istream_rwops.hpp
+        src/task/thread_pool.cpp
+        src/task/thread_pool.hpp
+        src/rendering/rendering_manager.cpp
+        src/rendering/rendering_manager.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
@@ -85,6 +90,7 @@ target_link_libraries(mmap_demo
         ${SDL2_LIBRARIES}
         ${sdl2_image_LIBRARIES}
         ${OPENGL_gl_LIBRARY}
+        ${CMAKE_THREAD_LIBS_INIT}
         ${CMAKE_DL_LIBS})
 
 target_compile_definitions(mmap_demo PRIVATE -DGAME_VERSION="${PROJECT_VERSION}")

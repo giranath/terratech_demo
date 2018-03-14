@@ -114,12 +114,7 @@ void chunk_renderer::build() noexcept {
     build_site_meshes();
 }
 
-void chunk_renderer::render(gl::program& program, glm::mat4 parent_model) const noexcept {
-    gl::uniform<int> is_textured = program.find_uniform<int>("is_textured");
-    is_textured.set(1);
-    floor_mesh.render();
-
-    is_textured.set(0);
-
-    sites_mesh.render();
+void chunk_renderer::render(mesh_rendering_system& renderer, glm::mat4 parent_model) const noexcept {
+    renderer.emplace(&floor_mesh, parent_model, 0, 0);
+    renderer.emplace(&sites_mesh, parent_model, 1, 0);
 }
