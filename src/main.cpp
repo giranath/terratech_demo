@@ -41,6 +41,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    SDL_SetWindowMinimumSize(window, 800, 600);
+
     // Initializes gl3w with context created in window
     if(gl3wInit() != 0) {
         std::cerr << "cannot initialize gl3w" << std::endl;
@@ -59,7 +61,7 @@ int main(int argc, char* argv[]) {
     while(!game_state.wants_to_die()) {
         const auto start_of_frame = game::clock::now();
 
-        std::cout << "FPS: " << game_state.fps() << std::endl;
+        //std::cout << "FPS: " << game_state.fps() << std::endl;
 
         // Render last frame on screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
