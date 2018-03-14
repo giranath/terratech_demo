@@ -2,30 +2,33 @@
 #define DEF_UNIT_MANAGER_HPP
 
 #include "base_unit.hpp"
-#include "actor.hpp"
+#include "target_handle.hpp"
 
 #include <vector>
 #include <cstdint>
+#include <algorithm>
+#include <unordered_map>
 
 class unit_manager
 {
-    std::vector<std::vector<base_unit*>> units_pointer;
-    std::vector<uint32_t> unit_id;
+private:
+    uint32_t unit_counter;
 
-    void get(uint32_t id)
-    {
+    std::vector<std::unordered_map<uint32_t, base_unit*>> units;
 
-    }
+public:
+    uint32_t get_unit_type(uint32_t id);
 
-    //return handle
-    void add(base_unit* unit)
-    {
-        unit_type t = unit->get_type();
+    uint32_t actor_type_to_uint32_t(base_unit* unit);
+    unit_manager();
 
+    base_unit* get(uint32_t id);
 
+    uint32_t get_next_id();
 
-    }
+    target_handle add(base_unit* unit);
 
+    void remove(uint32_t id);
 
 };
 #endif

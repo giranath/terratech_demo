@@ -2,7 +2,7 @@
 #define DEF_UNIT_FLY_WEIGHT_HPP
 
 #include "ressource_value.hpp"
-
+#include "ressource_type.hpp"
 #include <vector>
 #include <string>
 #include <cstdint>
@@ -15,7 +15,7 @@ class unit_fly_weight
     uint16_t speed;
     int16_t armor;
     int16_t range;
-    int8_t tranport_unit_capacity;
+    uint8_t tranport_unit_capacity;
     float attack_speed;
     uint16_t damage;
     std::vector<ressource_type> ressource_gathering_type;
@@ -28,6 +28,17 @@ class unit_fly_weight
     int width;
     int construction_time;
 
+public:
+
+    int get_max_health()
+    {
+        return max_health;
+    }
+    uint8_t get_tranport_unit_capacity()
+    {
+        return tranport_unit_capacity;
+    }
+    
     void load_unit_from_json(std::string json_file)
     {
         //todo load from json
