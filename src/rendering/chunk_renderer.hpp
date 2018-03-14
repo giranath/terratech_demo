@@ -13,8 +13,7 @@
 class chunk_renderer {
     const world_chunk& chunk;
     mesh floor_mesh;
-    std::vector<mesh> site_meshes;
-    std::vector<glm::vec3> site_positions;
+    mesh sites_mesh;
 
     static std::map<int, glm::vec3> make_biome_colors();
     void build_floor_mesh() noexcept;

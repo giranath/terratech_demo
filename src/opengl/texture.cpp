@@ -2,7 +2,12 @@
 #include "../sdl/istream_rwops.hpp"
 
 #include <algorithm>
+
+#ifdef WIN32
+#include <SDL_image.h>
+#else
 #include <SDL2/SDL_image.h>
+#endif
 
 namespace gl {
 

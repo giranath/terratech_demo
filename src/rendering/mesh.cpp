@@ -73,56 +73,60 @@ void mesh::render() const noexcept {
     glDisableVertexAttribArray(0);
 }
 
-mesh make_cube(float size, glm::vec3 color) {
-    mesh_builder cube_builder;
-
+void make_cube(mesh_builder& cube_builder, float size, glm::vec3 color, glm::vec3 position) {
     // Front face
-    cube_builder.add_vertex({0.f,  0.f,  0.f}, {}, color);
-    cube_builder.add_vertex({size, 0.f,  0.f}, {}, color);
-    cube_builder.add_vertex({size, size, 0.f}, {}, color);
-    cube_builder.add_vertex({0.f,  0.f,  0.f}, {}, color);
-    cube_builder.add_vertex({size, size, 0.f}, {}, color);
-    cube_builder.add_vertex({0.f,  size, 0.f}, {}, color);
+    cube_builder.add_vertex({position.x,        position.y,        position.z}, {}, color);
+    cube_builder.add_vertex({position.x + size, position.y,        position.z}, {}, color);
+    cube_builder.add_vertex({position.x + size, position.y + size, position.z}, {}, color);
+    cube_builder.add_vertex({position.x,        position.y,        position.z}, {}, color);
+    cube_builder.add_vertex({position.x + size, position.y + size, position.z}, {}, color);
+    cube_builder.add_vertex({position.x,        position.y + size, position.z}, {}, color);
 
     // back face
-    cube_builder.add_vertex({0.f,  0.f,  size}, {}, color);
-    cube_builder.add_vertex({size, 0.f,  size}, {}, color);
-    cube_builder.add_vertex({size, size, size}, {}, color);
-    cube_builder.add_vertex({0.f,  0.f,  size}, {}, color);
-    cube_builder.add_vertex({size, size, size}, {}, color);
-    cube_builder.add_vertex({0.f,  size, size}, {}, color);
+    cube_builder.add_vertex({position.x,        position.y,        position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x + size, position.y,        position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x + size, position.y + size, position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x,        position.y,        position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x + size, position.y + size, position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x,        position.y + size, position.z + size}, {}, color);
 
     // left face
-    cube_builder.add_vertex({0.f,  0.f,  0.f},  {}, color);
-    cube_builder.add_vertex({0.f,  0.f,  size}, {}, color);
-    cube_builder.add_vertex({0.f,  size, size}, {}, color);
-    cube_builder.add_vertex({0.f,  0.f,  0.f},  {}, color);
-    cube_builder.add_vertex({0.f,  size, size}, {}, color);
-    cube_builder.add_vertex({0.f,  size, 0.f},  {}, color);
+    cube_builder.add_vertex({position.x,  position.y,        position.z},        {}, color);
+    cube_builder.add_vertex({position.x,  position.y,        position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x,  position.y + size, position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x,  position.y,        position.z},        {}, color);
+    cube_builder.add_vertex({position.x,  position.y + size, position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x,  position.y + size, position.z},        {}, color);
 
     // right face
-    cube_builder.add_vertex({size, 0.f,  0.f},  {}, color);
-    cube_builder.add_vertex({size, 0.f,  size}, {}, color);
-    cube_builder.add_vertex({size, size, size}, {}, color);
-    cube_builder.add_vertex({size, 0.f,  0.f},  {}, color);
-    cube_builder.add_vertex({size, size, size}, {}, color);
-    cube_builder.add_vertex({size, size, 0.f},  {}, color);
+    cube_builder.add_vertex({position.x + size, position.y,        position.z},        {}, color);
+    cube_builder.add_vertex({position.x + size, position.y,        position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x + size, position.y + size, position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x + size, position.y,        position.z},        {}, color);
+    cube_builder.add_vertex({position.x + size, position.y + size, position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x + size, position.y + size, position.z},        {}, color);
 
     // bottom face
-    cube_builder.add_vertex({0.f,  0.f, 0.f},   {}, color);
-    cube_builder.add_vertex({size, 0.f, 0.f},   {}, color);
-    cube_builder.add_vertex({size, 0.f, size},  {}, color);
-    cube_builder.add_vertex({0.f,  0.f, 0.f},   {}, color);
-    cube_builder.add_vertex({size, 0.f, size},  {}, color);
-    cube_builder.add_vertex({0.f,  0.f, size},  {}, color);
+    cube_builder.add_vertex({position.x,        position.y, position.z},         {}, color);
+    cube_builder.add_vertex({position.x + size, position.y, position.z},         {}, color);
+    cube_builder.add_vertex({position.x + size, position.y, position.z + size},  {}, color);
+    cube_builder.add_vertex({position.x,        position.y, position.z},         {}, color);
+    cube_builder.add_vertex({position.x + size, position.y, position.z + size},  {}, color);
+    cube_builder.add_vertex({position.x,        position.y, position.z + size},  {}, color);
 
     // top face
-    cube_builder.add_vertex({0.f,  size, 0.f},  {}, color);
-    cube_builder.add_vertex({size, size, 0.f},  {}, color);
-    cube_builder.add_vertex({size, size, size}, {}, color);
-    cube_builder.add_vertex({0.f,  size, 0.f},  {}, color);
-    cube_builder.add_vertex({size, size, size}, {}, color);
-    cube_builder.add_vertex({0.f,  size, size}, {}, color);
+    cube_builder.add_vertex({position.x,        position.y + size, position.z},        {}, color);
+    cube_builder.add_vertex({position.x + size, position.y + size, position.z},        {}, color);
+    cube_builder.add_vertex({position.x + size, position.y + size, position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x,        position.y + size, position.z},        {}, color);
+    cube_builder.add_vertex({position.x + size, position.y + size, position.z + size}, {}, color);
+    cube_builder.add_vertex({position.x,        position.y + size, position.z + size}, {}, color);
+}
 
-    return cube_builder.build();
+mesh make_cube(float size, glm::vec3 color, glm::vec3 position) {
+    mesh_builder builder;
+
+    make_cube(builder, size, color, position);
+
+    return builder.build();
 }
