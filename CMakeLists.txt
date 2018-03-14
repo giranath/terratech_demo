@@ -55,7 +55,7 @@ add_executable(mmap_demo
         src/rendering/chunk_renderer.hpp
         src/control/all_commands.hpp
         src/control/command.hpp
-        src/control/input_handler.hpp
+        src/control/key_input_handler.hpp
         src/rendering/chunk_renderer.cpp
         src/rendering/chunk_renderer.hpp
         src/debug/profiler.hpp

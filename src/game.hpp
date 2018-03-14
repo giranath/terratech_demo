@@ -8,7 +8,7 @@
 #include "rendering/camera.hpp"
 #include "rendering/rendering_manager.hpp"
 #include "sdl/sdl.hpp"
-#include "control/input_handler.hpp"
+#include "control/key_input_handler.hpp"
 
 #include <chrono>
 #include <array>
