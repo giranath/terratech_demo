@@ -48,6 +48,7 @@ class key_input_handler {
 public:
     void register_state(int key, std::unique_ptr<command> c);
     void register_action(int key, std::unique_ptr<command> c);
+    void register_action(int key, int modifiers, std::unique_ptr<command> c);
     void unregister(int key);
     bool is_registered(int key) const noexcept;
 

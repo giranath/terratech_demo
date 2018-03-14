@@ -60,7 +60,7 @@ game::game()
     key_inputs.register_state(SDLK_d, std::make_unique<look_right_command>(&game_camera));
     key_inputs.register_state(SDLK_w, std::make_unique<look_up_command>(&game_camera));
     key_inputs.register_state(SDLK_s, std::make_unique<look_down_command>(&game_camera));
-    key_inputs.register_action(SDLK_m, std::make_unique<wireframe_command>());
+    key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<wireframe_command>());
 
     // Setup world rendering
     for(int x = 0; x < 20; ++x) {

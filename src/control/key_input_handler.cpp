@@ -56,6 +56,11 @@ void key_input_handler::register_action(int key, std::unique_ptr<command> c) {
     handlers[key] = std::make_unique<action_key_handler>(std::move(c));
 }
 
+void key_input_handler::register_action(int key, int modifiers, std::unique_ptr<command> c) {
+    // TODO: Register key with modifiers
+    register_action(key, std::move(c));
+}
+
 void key_input_handler::unregister(int key) {
     handlers.erase(key);
 }
