@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <iterator>
 
-mesh_renderer::mesh_renderer(const mesh* m, glm::mat4 model, texture_handle texture, program_handle prog)
+mesh_renderer::mesh_renderer(const rendering::mesh* m, glm::mat4 model, texture_handle texture, program_handle prog)
 : rendering_mesh{m}
 , model{model}
 , texture{texture}
@@ -45,7 +45,7 @@ void mesh_rendering_system::push(mesh_renderer&& renderer) {
     meshes.push_back(std::move(renderer));
 }
 
-void mesh_rendering_system::emplace(const mesh* m, glm::mat4 model, mesh_renderer::texture_handle texture, mesh_renderer::program_handle prog) {
+void mesh_rendering_system::emplace(const rendering::mesh* m, glm::mat4 model, mesh_renderer::texture_handle texture, mesh_renderer::program_handle prog) {
     meshes.emplace_back(m, model, texture, prog);
 }
 

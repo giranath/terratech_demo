@@ -4,7 +4,6 @@
 #include "ressource_value.hpp"
 #include "ressource_type.hpp"
 
-#include <experimental/string_view>
 #include <json/json.hpp>
 #include <vector>
 #include <string>

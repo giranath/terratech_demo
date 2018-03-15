@@ -55,7 +55,7 @@ void game::load_flyweights() {
 }
 
 // TODO: REMOVE THIS !!!!!!
-mesh g_TO_REMOVE_GOLEM_MESH;
+rendering::mesh g_TO_REMOVE_GOLEM_MESH;
 target_handle G_TO_REMOVE_GOLEM_HANDLE;
 
 game::game()
@@ -70,7 +70,7 @@ game::game()
 , last_fps_timepoint(clock::now()) {
     std::fill(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
 
-    g_TO_REMOVE_GOLEM_MESH = make_cube(300.f, glm::vec3{1.f, 0.f, 0.f});
+    g_TO_REMOVE_GOLEM_MESH = rendering::make_cube(300.f, glm::vec3{1.f, 0.f, 0.f});
 
     // Setup controls
     // Camera movements

@@ -51,7 +51,7 @@ void chunk_renderer::build_floor_mesh() noexcept {
 
     std::default_random_engine engine(std::time(NULL));
 
-    mesh_builder floor_mesh_builder;
+    rendering::mesh_builder floor_mesh_builder;
     for(std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
         for(std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
             const int CURRENT_BIOME = chunk.biome_at(x, 0, z);
@@ -100,14 +100,14 @@ glm::vec3 get_site_color(int type) {
 
 void chunk_renderer::build_site_meshes() noexcept {
     const float SITE_SIZE = SQUARE_SIZE * 0.5f;
-    mesh_builder sites_builder;
+    rendering::mesh_builder sites_builder;
     for(std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
         for (std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
             auto sites = chunk.sites_at(x, 0, z);
 
             if(sites.size() > 0 && sites.front()->type() != SITE_NOTHING) {
                 const glm::vec3 SITE_COLOR = get_site_color(sites.front()->type());
-                make_cube(sites_builder, SITE_SIZE, SITE_COLOR, glm::vec3{x * SQUARE_SIZE + (SQUARE_SIZE / 4.f), 0.f, z * SQUARE_SIZE + (SQUARE_SIZE / 4.f)});
+                rendering::make_cube(sites_builder, SITE_SIZE, SITE_COLOR, glm::vec3{x * SQUARE_SIZE + (SQUARE_SIZE / 4.f), 0.f, z * SQUARE_SIZE + (SQUARE_SIZE / 4.f)});
             }
         }
     }

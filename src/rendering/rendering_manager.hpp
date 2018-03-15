@@ -14,12 +14,12 @@ struct mesh_renderer {
     using program_handle = uint8_t;
     using sort_key = uint16_t;
 
-    const mesh* rendering_mesh;
+    const rendering::mesh* rendering_mesh;
     texture_handle texture;
     program_handle program;
     glm::mat4 model;
 
-    mesh_renderer(const mesh* m, glm::mat4 model, texture_handle texture, program_handle prog);
+    mesh_renderer(const rendering::mesh* m, glm::mat4 model, texture_handle texture, program_handle prog);
     sort_key key() const noexcept;
     bool operator<(const mesh_renderer& other) const noexcept;
 };
@@ -45,7 +45,7 @@ public:
         meshes.insert(meshes.end(), begin, end);
     }
 
-    void emplace(const mesh* m, glm::mat4 model, mesh_renderer::texture_handle texture, mesh_renderer::program_handle prog);
+    void emplace(const rendering::mesh* m, glm::mat4 model, mesh_renderer::texture_handle texture, mesh_renderer::program_handle prog);
     void render();
 };
 
