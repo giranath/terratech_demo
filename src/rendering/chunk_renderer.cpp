@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iterator>
+#include <random>
 
 glm::vec3 get_rgb(uint8_t r, uint8_t g, uint8_t b) {
     return {r / 255.f, g / 255.f, b / 255.f};
@@ -31,15 +32,15 @@ std::map<int, glm::vec3> chunk_renderer::make_biome_colors() {
     return biome_color;
 }
 
-std::map<int, bounding_box<float>> make_biome_textures() {
-    std::map<int, bounding_box<float>> texture_rects;
+std::map<int, std::vector<bounding_box<float>>> make_biome_textures() {
+    std::map<int, std::vector<bounding_box<float>>> texture_rects;
 
     // left, bottom, right, up
-    texture_rects[BIOME_SNOW] =   { 0.50f, 0.00f, 0.75f, 0.25f };
-    texture_rects[BIOME_ROCK] =   { 0.25f, 0.00f, 0.50f, 0.25f };
-    texture_rects[BIOME_GRASS] =  { 0.00f, 0.00f, 0.25f, 0.25f };
-    texture_rects[BIOME_DESERT] = { 0.75f, 0.00f, 1.00f, 0.25f };
-    texture_rects[BIOME_WATER] =  { 0.00f, 0.25f, 0.25f, 0.50f };
+    texture_rects[BIOME_SNOW] =   {bounding_box<float>{ 0.50f, 0.00f, 0.75f, 0.25f }};
+    texture_rects[BIOME_ROCK] =   {bounding_box<float>{ 0.25f, 0.00f, 0.50f, 0.25f }, bounding_box<float>{ 0.25f, 0.25f, 0.50f, 0.50f}};
+    texture_rects[BIOME_GRASS] =  {bounding_box<float>{ 0.00f, 0.00f, 0.25f, 0.25f }};
+    texture_rects[BIOME_DESERT] = {bounding_box<float>{ 0.75f, 0.00f, 1.00f, 0.25f }};
+    texture_rects[BIOME_WATER] =  {bounding_box<float>{ 0.00f, 0.25f, 0.25f, 0.50f }};
 
     return texture_rects;
 }
@@ -47,6 +48,8 @@ std::map<int, bounding_box<float>> make_biome_textures() {
 void chunk_renderer::build_floor_mesh() noexcept {
     auto biome_colors = make_biome_colors();
     auto biome_textures = make_biome_textures();
+
+    std::default_random_engine engine(std::time(NULL));
 
     mesh_builder floor_mesh_builder;
     for(std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
@@ -58,7 +61,9 @@ void chunk_renderer::build_floor_mesh() noexcept {
             const float RIGHT = LEFT + SQUARE_SIZE;
             const float TOP = BOTTOM + SQUARE_SIZE;
             const glm::vec3 TILE_COLOR = biome_colors[CURRENT_BIOME];
-            const bounding_box<float> TILE_TEXTURE = biome_textures[CURRENT_BIOME];
+
+            std::uniform_int_distribution<std::size_t> texture_index_distrib(0, biome_textures[CURRENT_BIOME].size() - 1);
+            const bounding_box<float> TILE_TEXTURE = biome_textures[CURRENT_BIOME][texture_index_distrib(engine)];
 
             floor_mesh_builder.add_vertex({LEFT, 0.f, BOTTOM},  { TILE_TEXTURE.left(),  TILE_TEXTURE.bottom() },  TILE_COLOR);
             floor_mesh_builder.add_vertex({LEFT, 0.f, TOP},     { TILE_TEXTURE.left(),  TILE_TEXTURE.top() },     TILE_COLOR);
