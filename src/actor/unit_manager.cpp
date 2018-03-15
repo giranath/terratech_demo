@@ -22,7 +22,7 @@
         auto it = units[type].find(id);
         if (it != units[type].end())
         {
-            return it->second;
+            return it->second.get();
         }
 
         return nullptr;
@@ -33,13 +33,13 @@
         return unit_counter;
     }
 
-    target_handle unit_manager::add(base_unit* unit)
+    target_handle unit_manager::add(unit_ptr unit)
     {
-        uint32_t type = actor_type_to_uint32_t(unit);
-        units[type >> 24][type + unit_counter] = unit;
+        uint32_t type = actor_type_to_uint32_t(unit.get());
+        units[type >> 24][type + unit_counter] = std::move(unit);
         unit->set_id(type + unit_counter);
         ++unit_counter;
-        return target_handle{this, unit};
+        return target_handle{this, unit.get()};
     }
 
     void unit_manager::remove(uint32_t id)

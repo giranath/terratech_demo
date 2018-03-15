@@ -11,7 +11,7 @@
 
 class camera {
     static constexpr float X_ANGLE = glm::radians(-35.264f);
-    static constexpr float Y_ANGLE = glm::radians(-45.f);
+    static constexpr float Y_ANGLE = glm::radians(45.f);
 
     glm::vec3 pos;
     float ortho_left, ortho_right, ortho_bottom, ortho_top, ortho_near, ortho_far;
