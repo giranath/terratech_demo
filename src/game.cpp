@@ -90,6 +90,10 @@ void game::update(frame_duration last_frame_duration) {
 
 void game::render() {
     world_rendering.render(mesh_rendering);
+
+    // TODO: Render every units
+
+    // Render every meshes
     mesh_rendering.render();
 
     // Calculates FPS
