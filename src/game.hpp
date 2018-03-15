@@ -35,6 +35,9 @@ private:
     std::size_t last_fps_duration_index;
     int frame_count;
     clock::time_point last_fps_timepoint;
+
+    void load_flyweights();
+
 public:
     game();
 

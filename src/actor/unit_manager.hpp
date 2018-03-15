@@ -14,6 +14,7 @@ class unit_manager
 {
 public:
     using unit_ptr = std::unique_ptr<base_unit>;
+    using iterator = std::unordered_map<uint32_t, unit_ptr>::iterator;
 private:
     uint32_t unit_counter;
 
@@ -33,6 +34,9 @@ public:
     target_handle add(unit_ptr unit);
 
     void remove(uint32_t id);
+
+    iterator begin_of_units();
+    iterator end_of_units();
 
 };
 #endif

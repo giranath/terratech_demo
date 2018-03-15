@@ -36,10 +36,11 @@
     target_handle unit_manager::add(unit_ptr unit)
     {
         uint32_t type = actor_type_to_uint32_t(unit.get());
+        base_unit* temp_ptr = unit.get();
         units[type >> 24][type + unit_counter] = std::move(unit);
-        unit->set_id(type + unit_counter);
+        temp_ptr->set_id(type + unit_counter);
         ++unit_counter;
-        return target_handle{this, unit.get()};
+        return target_handle{this, temp_ptr};
     }
 
     void unit_manager::remove(uint32_t id)
@@ -47,3 +48,11 @@
         uint32_t type = get_unit_type(id);
         units[type].erase(id);
     }
+
+unit_manager::iterator unit_manager::begin_of_units() {
+    return units[static_cast<std::size_t>(actor_type::unit)].begin();
+}
+
+unit_manager::iterator unit_manager::end_of_units() {
+    return units[static_cast<std::size_t>(actor_type::unit)].end();
+}

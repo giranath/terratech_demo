@@ -31,6 +31,10 @@ private:
     bool transportable;
 
 public:
+    unit_fly_weight() = default;
+    explicit unit_fly_weight(const nlohmann::json& data) {
+        load_unit_from_json(data);
+    }
 
     int get_max_health()
     {
@@ -42,7 +46,7 @@ public:
         return tranport_unit_capacity;
     }
     
-    void load_unit_from_json(nlohmann::json json)
+    void load_unit_from_json(const nlohmann::json& json)
     {
         unit_id = json["id"];
         name = json["Name"].get<std::string>();
@@ -50,12 +54,12 @@ public:
         unit_cost.wood = json["Wood"];
         unit_cost.stone = json["Stone"];
         unit_cost.gold = json["Gold"];
-        unit_cost .magic_essence = json["Essence"];
+        unit_cost.magic_essence = json["Essence"];
         max_health = json["Life"];
         armor = json["Armor"];
         attack_speed = json["AttackSpeed"];
         speed = json["WalkSpeed"];
-        range = json["range"];
+        range = json["Range"];
         damage = json["Damage"];
         tranport_unit_capacity = json["TransportCapacity"];
         buildable_unit_id_list = json["BuildableUnit"].get<std::vector<int>>();

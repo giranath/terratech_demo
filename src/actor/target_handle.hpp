@@ -12,7 +12,7 @@ class target_handle
 
 public:
     
-    target_handle() = delete;
+    target_handle();
     target_handle(unit_manager* manager);
 
     target_handle(unit_manager* manager, base_unit* unit);

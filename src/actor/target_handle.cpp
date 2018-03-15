@@ -2,6 +2,12 @@
 #include "target_handle.hpp"
 #include "base_unit.hpp"
 
+target_handle::target_handle() :
+    id{},
+    manager{nullptr} {
+
+}
+
 target_handle::target_handle(unit_manager* manager) :
     id{},
     manager{manager}

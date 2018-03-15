@@ -17,7 +17,7 @@ class unit : public base_unit
 public:
 
     unit(glm::vec3 position, glm::vec2 target_position, unit_fly_weight* unit_fly, unit_manager* manager) :
-        base_unit{position, actor_type::unit, unit_fly, manager},
+        base_unit(position, unit_fly, actor_type::unit),
         transported_ressource{},
         target{manager},
         target_position{target_position}
@@ -48,7 +48,7 @@ public:
         base_unit* targ = target.get();
         if (targ)
         {
-            targ->load_unit(this);
+            //targ->load_unit(this);
         }
     }
 
