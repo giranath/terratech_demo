@@ -20,6 +20,10 @@ class actor
     actor_type type;
 public:
 
+    explicit actor(actor_type type) : actor({}, true, true, type) {
+
+    }
+
     actor(glm::vec3 position, bool is_visible, bool is_active, actor_type type) :
         position{ position },
         is_visible{ is_visible },
