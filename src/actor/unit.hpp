@@ -4,7 +4,7 @@
 #include "base_unit.hpp"
 #include "ressource_value.hpp"
 #include "target_handle.hpp"
-#include "unit_fly_weight.hpp"
+#include "unit_flyweight.hpp"
 #include "actor.hpp"
 
 #include <vector>
@@ -16,7 +16,7 @@ class unit : public base_unit
     glm::vec2 target_position;
 public:
 
-    unit(glm::vec3 position, glm::vec2 target_position, unit_fly_weight* unit_fly, unit_manager* manager) :
+    unit(glm::vec3 position, glm::vec2 target_position, unit_flyweight* unit_fly, unit_manager* manager) :
         base_unit(position, unit_fly, actor_type::unit),
         transported_ressource{},
         target{manager},

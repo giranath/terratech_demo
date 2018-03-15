@@ -4,12 +4,13 @@
 #include "ressource_value.hpp"
 #include "ressource_type.hpp"
 
+#include <experimental/string_view>
 #include <json/json.hpp>
 #include <vector>
 #include <string>
 #include <cstdint>
 
-class unit_fly_weight
+class unit_flyweight
 {
 private:
     std::vector<ressource_type> ressource_gathering_type;
@@ -31,8 +32,8 @@ private:
     bool transportable;
 
 public:
-    unit_fly_weight() = default;
-    explicit unit_fly_weight(const nlohmann::json& data) {
+    unit_flyweight() = default;
+    explicit unit_flyweight(const nlohmann::json& data) {
         load_unit_from_json(data);
     }
 

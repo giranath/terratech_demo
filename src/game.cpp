@@ -51,7 +51,7 @@ void game::load_flyweights() {
 
     int id = j["id"];
 
-    unit_flyweights[id] = unit_fly_weight(j);
+    unit_flyweights[id] = unit_flyweight(j);
 }
 
 // TODO: REMOVE THIS !!!!!!

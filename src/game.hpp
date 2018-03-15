@@ -19,7 +19,7 @@ class game {
 public:
     using clock = std::chrono::high_resolution_clock;
     using frame_duration = clock::duration;
-    using unit_flyweight_manager = std::unordered_map<int, unit_fly_weight>;
+    using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>;
 private:
     async::task_executor tasks;
     input::key_input_handler key_inputs;

@@ -2,16 +2,16 @@
 #define DEF_BASE_UNIT_HPP
 
 #include "actor.hpp"
-#include "unit_fly_weight.hpp"
+#include "unit_flyweight.hpp"
 
 class base_unit : public actor
 {
-    unit_fly_weight* flyweight;
+    unit_flyweight* flyweight;
     int current_health;
     uint32_t id;
 
 public:
-    base_unit(glm::vec3 position, unit_fly_weight* definition, actor_type type)
+    base_unit(glm::vec3 position, unit_flyweight* definition, actor_type type)
     : actor(position, true, true, type)
     , flyweight(definition)
     , current_health(flyweight->get_max_health()) {
