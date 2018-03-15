@@ -9,18 +9,23 @@
 #include "rendering/rendering_manager.hpp"
 #include "sdl/sdl.hpp"
 #include "control/key_input_handler.hpp"
+#include "actor/unit_manager.hpp"
 
 #include <chrono>
 #include <array>
+#include <unordered_map>
 
 class game {
 public:
     using clock = std::chrono::high_resolution_clock;
     using frame_duration = clock::duration;
+    using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>;
 private:
     async::task_executor tasks;
     input::key_input_handler key_inputs;
     world game_world;
+    unit_manager units;
+    unit_flyweight_manager unit_flyweights;
     world_renderer world_rendering;
     mesh_rendering_system mesh_rendering;
     camera game_camera;
@@ -30,6 +35,9 @@ private:
     std::size_t last_fps_duration_index;
     int frame_count;
     clock::time_point last_fps_timepoint;
+
+    void load_flyweights();
+
 public:
     game();
 

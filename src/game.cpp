@@ -2,6 +2,9 @@
 #include "control/all_commands.hpp"
 #include "debug/profiler.hpp"
 
+#include "actor/unit.hpp"
+
+#include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iterator>
 #include <numeric>
@@ -41,6 +44,20 @@ gl::program load_program(const std::string& name) {
     return prog;
 }
 
+void game::load_flyweights() {
+    // TODO: Lire le reste
+    using json = nlohmann::json;
+    json j = json::parse(std::ifstream("asset/data/meat_golem.json"));
+
+    int id = j["id"];
+
+    unit_flyweights[id] = unit_flyweight(j);
+}
+
+// TODO: REMOVE THIS !!!!!!
+mesh g_TO_REMOVE_GOLEM_MESH;
+target_handle G_TO_REMOVE_GOLEM_HANDLE;
+
 game::game()
 : tasks(std::thread::hardware_concurrency() - 1)
 , game_world(static_cast<uint32_t>(std::time(nullptr)))
@@ -53,6 +70,8 @@ game::game()
 , last_fps_timepoint(clock::now()) {
     std::fill(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
 
+    g_TO_REMOVE_GOLEM_MESH = make_cube(300.f, glm::vec3{1.f, 0.f, 0.f});
+
     // Setup controls
     // Camera movements
     key_inputs.register_state(SDLK_LEFT, std::make_unique<input::look_left_command>(game_camera, 10.f));
@@ -63,6 +82,10 @@ game::game()
     key_inputs.register_state(SDLK_d, std::make_unique<input::look_right_command>(game_camera, 10.f));
     key_inputs.register_state(SDLK_w, std::make_unique<input::look_up_command>(game_camera, 10.f));
     key_inputs.register_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
+
+    // Setup units flyweights
+    load_flyweights();
+    G_TO_REMOVE_GOLEM_HANDLE = units.add(std::make_unique<unit>(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
 
     // Wireframe
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
@@ -80,16 +103,33 @@ game::game()
     // Setup mesh rendering
     mesh_rendering.set_camera(&game_camera);
     mesh_rendering.set_program(0, load_program("standard"));
+    mesh_rendering.set_program(1, load_program("billboard"));
+
     mesh_rendering.set_texture(0, gl::texture::load_from_path("asset/texture/terrain.png"));
     mesh_rendering.set_texture(1, gl::texture{});
+    mesh_rendering.set_texture(2, gl::texture::load_from_path("asset/texture/comparator.png"));
 }
 
 void game::update(frame_duration last_frame_duration) {
     key_inputs.dispatch();
+
+    unit* my_golem = static_cast<unit*>(G_TO_REMOVE_GOLEM_HANDLE.get());
+    glm::vec3& golem_pos = my_golem->get_position();
+
+    golem_pos.x += 0.1f;// * last_frame_duration.count();
+    golem_pos.z += 0.1f;
 }
 
 void game::render() {
     world_rendering.render(mesh_rendering);
+
+    // TODO: Render every units
+    for(auto unit = units.begin_of_units(); unit != units.end_of_units(); ++unit) {
+        mesh_renderer renderer(&g_TO_REMOVE_GOLEM_MESH, glm::translate(glm::mat4{1.f}, unit->second->get_position()), 2, 0);
+        mesh_rendering.push(std::move(renderer));
+    }
+
+    // Render every meshes
     mesh_rendering.render();
 
     // Calculates FPS
