@@ -47,7 +47,7 @@ gl::program load_program(const std::string& name) {
 void game::load_flyweights() {
     // TODO: Lire le reste
     using json = nlohmann::json;
-    json j = json::parse(std::ifstream("asset/data/meat_golem.json"));
+    json j = json::parse(std::ifstream("asset/data/unit/meat_golem.json"));
 
     int id = j["id"];
 
