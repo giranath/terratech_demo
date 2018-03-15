@@ -81,9 +81,11 @@ add_executable(mmap_demo
 		src/actor/ressource.hpp
 		src/actor/ressource_type.hpp
 		src/actor/target_handle.hpp
+		src/actor/target_handle.cpp
 		src/actor/unit.hpp
 		src/actor/unit_fly_weight.hpp
 		src/actor/unit_manager.hpp
+		src/actor/unit_manager.cpp
 		)
 
 target_include_directories(mmap_demo PUBLIC

@@ -28,10 +28,21 @@ public:
     {
     }
 
+    void set_position(glm::vec3 _position)
+    {
+        position = _position;
+    }
+
+    glm::vec3& get_position()
+    {
+        return position;
+    }
+
     void set_visibility(bool _is_visible)
     {
         is_visible = _is_visible;
     }
+
     void set_active(bool _is_active)
     {
         is_active = _is_active;
@@ -41,6 +52,5 @@ public:
     {
         return type;
     }
-
 };
 #endif

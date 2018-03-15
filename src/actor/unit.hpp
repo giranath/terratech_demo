@@ -13,13 +13,35 @@ class unit : public base_unit
 {
     ressource_value transported_ressource;
     target_handle target;
+    glm::vec2 target_position;
 public:
 
-    unit(glm::vec3 position, unit_fly_weight* unit_fly, unit_manager* manager) :
+    unit(glm::vec3 position, glm::vec2 target_position, unit_fly_weight* unit_fly, unit_manager* manager) :
         base_unit{position, actor_type::unit, unit_fly, manager},
         transported_ressource{},
-        target{manager}
+        target{manager},
+        target_position{target_position}
     {}
+
+    void set_target(target_handle _target)
+    {
+        target = _target;
+    }
+
+    target_handle& get_target()
+    {
+        return target;
+    }
+
+    void set_target_position(glm::vec2 _target_position)
+    {
+        target_position = _target_position;
+    }
+
+    glm::vec2& get_target_position()
+    {
+        return target_position;
+    }
 
     void embark_in_target()
     {
