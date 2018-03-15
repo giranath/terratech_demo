@@ -38,7 +38,7 @@
         uint32_t type = actor_type_to_uint32_t(unit);
         units[type >> 24][type + unit_counter] = unit;
         unit->set_id(type + unit_counter);
-
+        ++unit_counter;
         return target_handle{this, unit};
     }
 
