@@ -9,6 +9,8 @@
 #include <iterator>
 #include <random>
 
+#include "../constant/rendering.hpp"
+
 namespace rendering {
 
 glm::vec3 get_rgb(uint8_t r, uint8_t g, uint8_t b) {
@@ -130,8 +132,8 @@ void chunk_renderer::build() noexcept {
 
 void chunk_renderer::render(mesh_rendering_system &renderer, glm::mat4 parent_model) const noexcept {
     profiler_us p("chunk_renderer");
-    renderer.emplace(&floor_mesh, parent_model, 0, 0);
-    renderer.emplace(&sites_mesh, parent_model, 1, 0);
+    renderer.emplace(&floor_mesh, parent_model, TEXTURE_TERRAIN, PROGRAM_STANDARD);
+    renderer.emplace(&sites_mesh, parent_model, TEXTURE_NONE, PROGRAM_STANDARD);
 }
 
 }

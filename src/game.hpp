@@ -37,19 +37,14 @@ private:
     clock::time_point last_fps_timepoint;
 
     void load_flyweights();
+    void setup_inputs();
+    void setup_renderer();
 
 public:
     game();
 
-    /**
-     * Updates the game state
-     * @param last_frame_duration As the name implies, it's the duration of the last processed frame
-     */
     void update(frame_duration last_frame_duration);
 
-    /**
-     * Render the current state on screen
-     */
     void render();
 
     void handle_event(SDL_Event event);

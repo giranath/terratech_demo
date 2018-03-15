@@ -3,6 +3,7 @@
 #include "debug/profiler.hpp"
 
 #include "actor/unit.hpp"
+#include "constant/rendering.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -54,6 +55,30 @@ void game::load_flyweights() {
     unit_flyweights[id] = unit_flyweight(j);
 }
 
+void game::setup_inputs() {
+    // Camera movements
+    key_inputs.register_state(SDLK_LEFT, std::make_unique<input::look_left_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_RIGHT, std::make_unique<input::look_right_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_UP, std::make_unique<input::look_up_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_DOWN, std::make_unique<input::look_down_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_a, std::make_unique<input::look_left_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_d, std::make_unique<input::look_right_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_w, std::make_unique<input::look_up_command>(game_camera, 10.f));
+    key_inputs.register_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
+    // Wireframe
+    key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
+}
+
+void game::setup_renderer() {
+    mesh_rendering.set_camera(&game_camera);
+    mesh_rendering.set_program(PROGRAM_STANDARD, load_program("standard"));
+    mesh_rendering.set_program(PROGRAM_BILLBOARD, load_program("billboard"));
+
+    mesh_rendering.set_texture(TEXTURE_TERRAIN, gl::texture::load_from_path("asset/texture/terrain.png"));
+    mesh_rendering.set_texture(TEXTURE_NONE, gl::texture{});
+    mesh_rendering.set_texture(TEXTURE_COMPARATOR, gl::texture::load_from_path("asset/texture/comparator.png"));
+}
+
 // TODO: REMOVE THIS !!!!!!
 rendering::mesh g_TO_REMOVE_GOLEM_MESH;
 target_handle G_TO_REMOVE_GOLEM_HANDLE;
@@ -73,22 +98,14 @@ game::game()
     g_TO_REMOVE_GOLEM_MESH = rendering::make_cube(300.f, glm::vec3{1.f, 0.f, 0.f});
 
     // Setup controls
-    // Camera movements
-    key_inputs.register_state(SDLK_LEFT, std::make_unique<input::look_left_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_RIGHT, std::make_unique<input::look_right_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_UP, std::make_unique<input::look_up_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_DOWN, std::make_unique<input::look_down_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_a, std::make_unique<input::look_left_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_d, std::make_unique<input::look_right_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_w, std::make_unique<input::look_up_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
+    setup_inputs();
 
     // Setup units flyweights
     load_flyweights();
+
     G_TO_REMOVE_GOLEM_HANDLE = units.add(std::make_unique<unit>(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
 
-    // Wireframe
-    key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
+
 
     // Setup world rendering
     for(int x = 0; x < 20; ++x) {
@@ -101,23 +118,19 @@ game::game()
     game_camera.reset({-100.f, 10.f, -200.f});
 
     // Setup mesh rendering
-    mesh_rendering.set_camera(&game_camera);
-    mesh_rendering.set_program(0, load_program("standard"));
-    mesh_rendering.set_program(1, load_program("billboard"));
-
-    mesh_rendering.set_texture(0, gl::texture::load_from_path("asset/texture/terrain.png"));
-    mesh_rendering.set_texture(1, gl::texture{});
-    mesh_rendering.set_texture(2, gl::texture::load_from_path("asset/texture/comparator.png"));
+    setup_renderer();
 }
 
 void game::update(frame_duration last_frame_duration) {
+    std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
+
     key_inputs.dispatch();
 
     unit* my_golem = static_cast<unit*>(G_TO_REMOVE_GOLEM_HANDLE.get());
     glm::vec3& golem_pos = my_golem->get_position();
 
-    golem_pos.x += 0.1f;// * last_frame_duration.count();
-    golem_pos.z += 0.1f;
+    golem_pos.x += 0.1f * last_frame_ms.count();
+    golem_pos.z += 0.1f * last_frame_ms.count();
 }
 
 void game::render() {
@@ -125,7 +138,7 @@ void game::render() {
 
     // TODO: Render every units
     for(auto unit = units.begin_of_units(); unit != units.end_of_units(); ++unit) {
-        rendering::mesh_renderer renderer(&g_TO_REMOVE_GOLEM_MESH, glm::translate(glm::mat4{1.f}, unit->second->get_position()), 2, 0);
+        rendering::mesh_renderer renderer(&g_TO_REMOVE_GOLEM_MESH, glm::translate(glm::mat4{1.f}, unit->second->get_position()), TEXTURE_NONE, PROGRAM_STANDARD);
         mesh_rendering.push(std::move(renderer));
     }
 
