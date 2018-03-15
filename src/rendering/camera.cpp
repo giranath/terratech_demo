@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <iterator>
 
+namespace rendering {
+
 glm::vec3 spherical_space_vec(float theta, float phi) {
     return {std::cos(phi) * std::sin(theta),
             std::sin(phi),
@@ -13,15 +15,9 @@ glm::vec3 spherical_space_vec(float theta, float phi) {
 }
 
 camera::camera(float left, float right, float bottom, float top, float near, float far)
-: pos{}
-, ortho_left{left}
-, ortho_right{right}
-, ortho_bottom{bottom}
-, ortho_top{top}
-, ortho_near{near}
-, ortho_far{far}
-, target_direction{spherical_space_vec(Y_ANGLE, X_ANGLE)}
-, projection_mat{glm::ortho(left, right, bottom, top, near, far)}{
+        : pos{}, ortho_left{left}, ortho_right{right}, ortho_bottom{bottom}, ortho_top{top}, ortho_near{near},
+          ortho_far{far}, target_direction{spherical_space_vec(Y_ANGLE, X_ANGLE)},
+          projection_mat{glm::ortho(left, right, bottom, top, near, far)} {
 
 }
 
@@ -87,21 +83,23 @@ bounding_cube<float> camera::view_cube() const noexcept {
     const glm::vec3 near_bottom_right = bottom_right + direction() * ortho_near;
     const glm::vec3 far_bottom_right = bottom_right + direction() * ortho_far;
 
-    std::array<glm::vec3, 8> points { near_top_left, far_top_left,
-                                      near_top_right, far_top_right,
-                                      near_bottom_left, far_bottom_left,
-                                      near_bottom_right, far_bottom_right};
+    std::array<glm::vec3, 8> points{near_top_left, far_top_left,
+                                    near_top_right, far_top_right,
+                                    near_bottom_left, far_bottom_left,
+                                    near_bottom_right, far_bottom_right};
 
-    auto res_x = std::minmax_element(std::begin(points), std::end(points), [](const glm::vec3& a, const glm::vec3& b) {
+    auto res_x = std::minmax_element(std::begin(points), std::end(points), [](const glm::vec3 &a, const glm::vec3 &b) {
         return a.x < b.x;
     });
-    auto res_y = std::minmax_element(std::begin(points), std::end(points), [](const glm::vec3& a, const glm::vec3& b) {
+    auto res_y = std::minmax_element(std::begin(points), std::end(points), [](const glm::vec3 &a, const glm::vec3 &b) {
         return a.y < b.y;
     });
-    auto res_z = std::minmax_element(std::begin(points), std::end(points), [](const glm::vec3& a, const glm::vec3& b) {
+    auto res_z = std::minmax_element(std::begin(points), std::end(points), [](const glm::vec3 &a, const glm::vec3 &b) {
         return a.z < b.z;
     });
 
     return bounding_cube<float>{res_x.first->x, res_y.second->y, res_z.first->z,
                                 res_x.second->x, res_y.first->y, res_z.second->z};
+}
+
 }

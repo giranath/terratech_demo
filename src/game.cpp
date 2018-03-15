@@ -125,7 +125,7 @@ void game::render() {
 
     // TODO: Render every units
     for(auto unit = units.begin_of_units(); unit != units.end_of_units(); ++unit) {
-        mesh_renderer renderer(&g_TO_REMOVE_GOLEM_MESH, glm::translate(glm::mat4{1.f}, unit->second->get_position()), 2, 0);
+        rendering::mesh_renderer renderer(&g_TO_REMOVE_GOLEM_MESH, glm::translate(glm::mat4{1.f}, unit->second->get_position()), 2, 0);
         mesh_rendering.push(std::move(renderer));
     }
 

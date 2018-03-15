@@ -9,6 +9,8 @@
 #undef near
 #undef far
 
+namespace rendering {
+
 class camera {
     static constexpr float X_ANGLE = glm::radians(-35.264f);
     static constexpr float Y_ANGLE = glm::radians(45.f);
@@ -34,15 +36,21 @@ public:
     glm::mat4 matrix() const noexcept;
 
     glm::mat4 projection() const noexcept;
+
     glm::mat4 view() const noexcept;
 
     glm::vec3 right() const noexcept;
+
     glm::vec3 up() const noexcept;
+
     glm::vec3 forward() const noexcept;
+
     glm::vec3 direction() const noexcept;
 
     bounding_cube<float> view_cube() const noexcept;
 };
+
+}
 
 
 #endif //MMAP_DEMO_CAMERA_HPP

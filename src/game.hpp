@@ -26,9 +26,9 @@ private:
     world game_world;
     unit_manager units;
     unit_flyweight_manager unit_flyweights;
-    world_renderer world_rendering;
-    mesh_rendering_system mesh_rendering;
-    camera game_camera;
+    rendering::world_renderer world_rendering;
+    rendering::mesh_rendering_system mesh_rendering;
+    rendering::camera game_camera;
     bool is_scrolling;
     bool is_running;
     std::array<int, 10> last_fps_durations;
