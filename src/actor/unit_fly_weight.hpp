@@ -11,24 +11,24 @@
 
 class unit_fly_weight
 {
-    int max_health;
-    ressource_value unit_cost;
-
-    uint16_t speed;
-    int16_t armor;
-    int16_t range;
-    uint8_t tranport_unit_capacity;
-    float attack_speed;
-    uint16_t damage;
+private:
     std::vector<ressource_type> ressource_gathering_type;
     std::vector<int> buildable_unit_id_list;
-    int unit_id;
-    bool transportable;
+    ressource_value unit_cost;
     std::string name;
-    uint8_t population_cost;
+    float attack_speed;
+    int max_health;
+    int unit_id;
     int height;
     int width;
     int construction_time;
+    uint16_t speed;
+    uint16_t damage;
+    int16_t armor;
+    int16_t range;
+    uint8_t tranport_unit_capacity;
+    uint8_t population_cost;
+    bool transportable;
 
 public:
 
@@ -36,6 +36,7 @@ public:
     {
         return max_health;
     }
+
     uint8_t get_tranport_unit_capacity()
     {
         return tranport_unit_capacity;

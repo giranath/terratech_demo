@@ -17,10 +17,11 @@ private:
     std::vector<std::unordered_map<uint32_t, base_unit*>> units;
 
 public:
+    unit_manager();
+
     uint32_t get_unit_type(uint32_t id);
 
     uint32_t actor_type_to_uint32_t(base_unit* unit);
-    unit_manager();
 
     base_unit* get(uint32_t id);
 

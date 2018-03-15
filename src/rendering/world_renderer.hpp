@@ -4,6 +4,7 @@
 #include "../opengl/opengl.hpp"
 #include "chunk_renderer.hpp"
 #include "../world/world.hpp"
+#include "rendering_manager.hpp"
 #include <vector>
 
 class world_renderer {
@@ -16,13 +17,12 @@ class world_renderer {
         chunk_rendering(const world_chunk& chunk);
     };
     std::vector<chunk_rendering> chunk_renderers;
-    gl::texture& terrain_texture;
 public:
-    world_renderer(world& w, gl::texture& terrain_texture) noexcept;
+    world_renderer(world& w) noexcept;
 
     void show(int x, int z) noexcept;
 
-    void render(gl::program& program, glm::mat4 parent_model) noexcept;
+    void render(mesh_rendering_system& rendering, glm::mat4 parent_model = glm::mat4{1.f}) noexcept;
 };
 
 
