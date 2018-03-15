@@ -24,6 +24,8 @@ public:
     bool good() const noexcept;
     bool gl_good() const noexcept;
 
+    void close() noexcept;
+
     operator SDL_Window*();
     operator const SDL_Window*() const;
 };
