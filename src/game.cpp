@@ -30,23 +30,6 @@ Shader load_shader(const std::string& path) {
     return shader;
 }
 
-gl::program load_program(const std::string& name) {
-    auto ver = load_shader<gl::vertex_shader>(name + ".vert");
-    auto frag = load_shader<gl::fragment_shader>(name + ".frag");
-
-    gl::program prog{};
-    prog.attach(ver);
-    prog.attach(frag);
-
-    auto res = prog.link();
-    if(!res.good()) {
-        prog = gl::program{};
-        std::cerr << res.message() << std::endl;
-    }
-
-    return prog;
-}
-
 void game::load_flyweight(std::ifstream& stream) {
     using json = nlohmann::json;
     json j = json::parse(stream);
@@ -114,7 +97,36 @@ std::istream& operator>>(std::istream& stream, texture_list_record& record) {
 void game::setup_renderer() {
     mesh_rendering.set_camera(&game_camera);
 
-    // Load programs
+    load_shaders();
+    load_textures();
+}
+
+void game::load_textures() {
+    std::ifstream texture_list_stream("asset/data/texture.list");
+    std::vector<texture_list_record> texture_records;
+    std::copy(std::istream_iterator<texture_list_record>(texture_list_stream),
+              std::istream_iterator<texture_list_record>(),
+              std::back_inserter(texture_records));
+
+    std::for_each(std::begin(texture_records), std::end(texture_records), [this](const texture_list_record& record) {
+        if(record.path != "NONE") {
+            std::string fullpath = "asset/texture/" + record.path;
+            gl::texture texture = gl::texture::load_from_path(fullpath.c_str());
+
+            if (texture.good()) {
+                mesh_rendering.set_texture(record.id, std::move(texture));
+            }
+            else {
+                std::cerr << "cannot load texture " << record.path << std::endl;
+            }
+        }
+        else {
+            mesh_rendering.set_texture(record.id, gl::texture{});
+        }
+    });
+}
+
+void game::load_shaders() {
     std::ifstream program_list_stream("asset/data/shader.list");
     std::vector<shader_list_record> shader_records;
     std::copy(std::istream_iterator<shader_list_record>(program_list_stream),
@@ -138,30 +150,6 @@ void game::setup_renderer() {
                 std::cerr << "cannot link shader #" << record.id << std::endl;
                 std::cerr << res.message() << std::endl;
             }
-        }
-    });
-
-    // Load textures
-    std::ifstream texture_list_stream("asset/data/texture.list");
-    std::vector<texture_list_record> texture_records;
-    std::copy(std::istream_iterator<texture_list_record>(texture_list_stream),
-              std::istream_iterator<texture_list_record>(),
-              std::back_inserter(texture_records));
-
-    std::for_each(std::begin(texture_records), std::end(texture_records), [this](const texture_list_record& record) {
-        if(record.path != "NONE") {
-            std::string fullpath = "asset/texture/" + record.path;
-            gl::texture texture = gl::texture::load_from_path(fullpath.c_str());
-
-            if (texture.good()) {
-                mesh_rendering.set_texture(record.id, std::move(texture));
-            }
-            else {
-                std::cerr << "cannot load texture " << record.path << std::endl;
-            }
-        }
-        else {
-            mesh_rendering.set_texture(record.id, gl::texture{});
         }
     });
 }

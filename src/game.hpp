@@ -40,6 +40,8 @@ private:
     void load_flyweights();
     void setup_inputs();
     void setup_renderer();
+    void load_textures();
+    void load_shaders();
 
 public:
     game();
