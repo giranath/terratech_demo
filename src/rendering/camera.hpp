@@ -60,6 +60,8 @@ public:
 	/// \param position World position calculated by the
 	/// \param direction Direction in the world
 	void screen_to_world(const glm::vec2 mouse_position, glm::vec3& position, glm::vec3& direction) const noexcept;
+
+	glm::vec3 position() const noexcept;
 };
 
 }

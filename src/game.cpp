@@ -13,6 +13,9 @@
 
 // TODO: Include filesystem
 
+int G_TO_REMOVE_SCREEN_WIDTH = 0;
+int G_TO_REMOVE_SCREEN_HEIGHT = 0;
+
 template<typename Shader>
 Shader load_shader(const std::string& path) {
     std::ifstream file(path);
@@ -170,7 +173,7 @@ game::game()
 , last_fps_timepoint(clock::now()) {
     std::fill(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
 
-    g_TO_REMOVE_GOLEM_MESH = rendering::make_cube(300.f, glm::vec3{1.f, 0.f, 0.f});
+    g_TO_REMOVE_GOLEM_MESH = rendering::make_cube(rendering::chunk_renderer::SQUARE_SIZE, glm::vec3{1.f, 0.f, 0.f});
 
     // Setup controls
     setup_inputs();
@@ -208,8 +211,8 @@ void game::update(frame_duration last_frame_duration) {
 	glm::vec3 position, dir;
 	game_camera.screen_to_world_raw({300, 400}, 600, 800, position, dir);
 
-	std::cout << "Position  : " << "X :" << position.x << " Y :" << position.y << " Y :" << position.z << std::endl;
-	std::cout << "Direction  : " << "X :" << dir.x << " Y :" << dir.y << " Y :" << dir.z << std::endl;
+	//std::cout << "Position  : " << "X :" << position.x << " Y :" << position.y << " Y :" << position.z << std::endl;
+	//std::cout << "Direction  : " << "X :" << dir.x << " Y :" << dir.y << " Y :" << dir.z << std::endl;
 }
 
 void game::render() {
@@ -240,6 +243,15 @@ void game::handle_event(SDL_Event event) {
     if(event.type == SDL_MOUSEBUTTONDOWN) {
         if(event.button.button == SDL_BUTTON_MIDDLE) {
             is_scrolling = true;
+        }
+        else if(event.button.button == SDL_BUTTON_LEFT) {
+            glm::vec3 world_pos;
+            glm::vec3 world_direction;
+
+            std::cout << event.button.x << ", " << event.button.y << std::endl;
+            game_camera.screen_to_world_raw(glm::vec2{event.button.x, event.button.y}, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT, world_pos, world_direction);
+
+            units.add(std::make_unique<unit>(world_direction * game_camera.position().y + world_pos, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
         }
     }
     else if(event.type == SDL_MOUSEBUTTONUP) {
@@ -272,6 +284,9 @@ void game::resize(int new_width, int new_height) {
     else {
         game_camera.adjust(-400.f, 400.f, -300.f / aspect, 300.f / aspect, -1000.f, 1000.f);
     }
+
+    G_TO_REMOVE_SCREEN_WIDTH = new_width;
+    G_TO_REMOVE_SCREEN_HEIGHT = new_height;
 }
 
 bool game::wants_to_die() const noexcept {

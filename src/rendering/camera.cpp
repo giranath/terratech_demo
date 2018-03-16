@@ -147,4 +147,8 @@ namespace rendering {
 		direction = glm::normalize(tt);
 
 	}
+
+	glm::vec3 camera::position() const noexcept {
+		return pos;
+	}
 }
