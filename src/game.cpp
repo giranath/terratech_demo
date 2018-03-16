@@ -204,6 +204,12 @@ void game::update(frame_duration last_frame_duration) {
 
     golem_pos.x += 0.1f * last_frame_ms.count();
     golem_pos.z += 0.1f * last_frame_ms.count();
+
+	glm::vec3 position, dir;
+	game_camera.screen_to_world_raw({300, 400}, 600, 800, position, dir);
+
+	std::cout << "Position  : " << "X :" << position.x << " Y :" << position.y << " Y :" << position.z << std::endl;
+	std::cout << "Direction  : " << "X :" << dir.x << " Y :" << dir.y << " Y :" << dir.z << std::endl;
 }
 
 void game::render() {

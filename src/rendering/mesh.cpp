@@ -9,6 +9,9 @@ void mesh_builder::add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color) {
 }
 
 mesh mesh_builder::build() const noexcept {
+	if (vertices.empty())
+		return mesh{};
+
     gl::buffer vertices_buffer = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices_buffer));
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices.front(), GL_STATIC_DRAW);
