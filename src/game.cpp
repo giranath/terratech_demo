@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iterator>
 #include <numeric>
+#include <ctime>
 
 template<typename Shader>
 Shader load_shader(const std::string& name) {
@@ -65,6 +66,10 @@ game::game()
 }
 
 void game::update(frame_duration last_frame_duration) {
+	glm::vec3 position, dir;
+	game_camera.screen_to_world_raw({ 0,0 }, 800, 600, position, dir);
+
+	std::cout << "X :" << position.x << " Y :" << position.y << " Y :" << position.z;
 }
 
 void game::render() {
@@ -115,6 +120,9 @@ void game::resize(int new_width, int new_height) {
     else {
         game_camera.adjust(-400.f, 400.f, -300.f / aspect, 300.f / aspect, -1000.f, 1000.f);
     }
+
+	window_height = new_height;
+	window_width = new_width;
 }
 
 bool game::wants_to_die() const noexcept {

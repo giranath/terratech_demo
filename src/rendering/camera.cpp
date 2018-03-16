@@ -105,3 +105,59 @@ bounding_cube<float> camera::view_cube() const noexcept {
     return bounding_cube<float>{res_x.first->x, res_y.second->y, res_z.first->z,
                                 res_x.second->x, res_y.first->y, res_z.second->z};
 }
+
+/*
+	@mouse_position Raw Mouse screen position
+	@window_height Game screen window height
+	@window_width Game screen window width
+	@position World position calculated by the 
+	@direction Direction in the world  
+*/ 
+
+void camera::screen_to_world_raw(const glm::vec2 mouse_position, const int window_height, const int window_width, glm::vec3& position, glm::vec3& direction) const noexcept
+{
+	float half_height = window_height / 2;
+	float half_width = window_width / 2;
+
+	glm::vec2 clamped_position{(mouse_position.x - half_height) / half_height, -(mouse_position.y - half_width) / half_width };
+	
+	screen_to_world(clamped_position, position, direction);
+}
+/*
+	@mouse_position Mouse screen position betwen -1 and 1
+	@position World position calculated by the
+	@direction Direction in the world
+*/
+void camera::screen_to_world(const glm::vec2 mouse_position, glm::vec3& position, glm::vec3& direction) const noexcept
+{
+	glm::mat4 inverse = glm::inverse(matrix());
+	glm::vec4 homogeneous_mouse_position;
+
+	homogeneous_mouse_position.x = mouse_position.x;
+	homogeneous_mouse_position.y = mouse_position.y;
+	homogeneous_mouse_position.z = 0.0f; 
+	homogeneous_mouse_position.w = 1.0f;
+
+	glm::vec4 homogeneous_position = homogeneous_mouse_position * inverse;
+	homogeneous_position.w = 1.0 / homogeneous_position.w;
+
+	homogeneous_position.x *= homogeneous_position.w;
+	homogeneous_position.y *= homogeneous_position.w;
+	homogeneous_position.z *= homogeneous_position.w;
+
+	// Dir
+	homogeneous_mouse_position.z = -1.0f;
+	glm::vec4 homogeneous_dir = homogeneous_mouse_position * inverse;
+	homogeneous_dir.w = 1.0 / homogeneous_dir.w;
+
+	homogeneous_dir.x *= homogeneous_dir.w;
+	homogeneous_dir.y *= homogeneous_dir.w;
+	homogeneous_dir.z *= homogeneous_dir.w;
+
+
+	position = { homogeneous_position.x, homogeneous_position.y, homogeneous_position.z };
+	direction = { homogeneous_dir.x, homogeneous_dir.y, homogeneous_dir.z };
+
+	glm::vec3 tt = position - direction;
+	direction = glm::normalize(tt);
+}

@@ -42,6 +42,9 @@ public:
     glm::vec3 direction() const noexcept;
 
     bounding_cube<float> view_cube() const noexcept;
+
+	void screen_to_world_raw(const glm::vec2 mouse_position, const int window_height, const int window_widht, glm::vec3& position, glm::vec3& direction) const noexcept;
+	void screen_to_world(const glm::vec2 mouse_position, glm::vec3& position, glm::vec3& direction) const noexcept;
 };
 
 
