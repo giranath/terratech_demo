@@ -4,7 +4,6 @@
 #include "ressource_value.hpp"
 #include "ressource_type.hpp"
 
-#include <experimental/string_view>
 #include <json/json.hpp>
 #include <vector>
 #include <string>
@@ -64,8 +63,19 @@ public:
         damage = json["Damage"];
         tranport_unit_capacity = json["TransportCapacity"];
         buildable_unit_id_list = json["BuildableUnit"].get<std::vector<int>>();
-        ressource_gathering_type = json["RessourceGatheringType"].get<std::vector<ressource_type>>();
-         transportable = json["Transportable"];
+
+        // Converts string values to enum
+        std::vector<std::string> resources = json["RessourceGatheringType"].get<std::vector<std::string>>();
+        std::transform(std::begin(resources), std::end(resources), std::back_inserter(ressource_gathering_type), [](const std::string& name) {
+            if(name == "Food") return ressource_type::food;
+            if(name == "Stone") return ressource_type::stone;
+            if(name == "Wood") return ressource_type::wood;
+            if(name == "Gold") return ressource_type::gold;
+            if(name == "Magic Essence") return ressource_type::magic_essence;
+
+            return ressource_type::unknown;
+        });
+        transportable = json["Transportable"];
         population_cost = json["PopulationCost"];
         height = json["Height"];
         width = json["Width"];

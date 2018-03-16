@@ -1,0 +1,27 @@
+{
+    "Armor": 0,
+    "AttackSpeed": 1,
+    "BuildableUnit": [],
+    "ConstructionTime": 1,
+    "Damage": 10,
+    "Essence": 0,
+    "Food": 100,
+    "Gold": 200,
+    "Height": 1.0,
+    "Life": 50,
+    "Name": "Mage",
+    "PopulationCost": 1,
+    "Range": 15,
+    "ResourceGatheringCapacity": 50,
+    "RessourceGatheringType": [
+        "Magic Essence"
+    ],
+    "Stone": 0,
+    "Texture": "Mage",
+    "TransportCapacity": 0,
+    "Transportable": true,
+    "WalkSpeed": 1,
+    "Width": 1.0,
+    "Wood": 100,
+    "id": 112
+}
