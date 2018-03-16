@@ -14,8 +14,8 @@
 // TODO: Include filesystem
 
 template<typename Shader>
-Shader load_shader(const std::string& name) {
-    std::ifstream file("asset/shader/" + name);
+Shader load_shader(const std::string& path) {
+    std::ifstream file(path);
     Shader shader;
 
     auto res = shader.compile(file);
@@ -92,14 +92,78 @@ void game::setup_inputs() {
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
 }
 
+struct shader_list_record {
+    int id;
+    std::string vertex_path;
+    std::string fragment_path;
+};
+
+std::istream& operator>>(std::istream& stream, shader_list_record& record) {
+    return stream >> record.id >> record.vertex_path >> record.fragment_path;
+}
+
+struct texture_list_record {
+    int id;
+    std::string path;
+};
+
+std::istream& operator>>(std::istream& stream, texture_list_record& record) {
+    return stream >> record.id >> record.path;
+}
+
 void game::setup_renderer() {
     mesh_rendering.set_camera(&game_camera);
-    mesh_rendering.set_program(PROGRAM_STANDARD, load_program("standard"));
-    mesh_rendering.set_program(PROGRAM_BILLBOARD, load_program("billboard"));
 
-    mesh_rendering.set_texture(TEXTURE_TERRAIN, gl::texture::load_from_path("asset/texture/terrain.png"));
-    mesh_rendering.set_texture(TEXTURE_NONE, gl::texture{});
-    mesh_rendering.set_texture(TEXTURE_COMPARATOR, gl::texture::load_from_path("asset/texture/comparator.png"));
+    // Load programs
+    std::ifstream program_list_stream("asset/data/shader.list");
+    std::vector<shader_list_record> shader_records;
+    std::copy(std::istream_iterator<shader_list_record>(program_list_stream),
+              std::istream_iterator<shader_list_record>(),
+              std::back_inserter(shader_records));
+
+    std::for_each(std::begin(shader_records), std::end(shader_records), [this](const shader_list_record& record) {
+        gl::vertex_shader vertex_shader = load_shader<gl::vertex_shader>("asset/shader/" + record.vertex_path);
+        gl::fragment_shader fragment_shader = load_shader<gl::fragment_shader>("asset/shader/" + record.fragment_path);
+
+        if(vertex_shader.good() && fragment_shader.good()) {
+            gl::program program;
+            program.attach(vertex_shader);
+            program.attach(fragment_shader);
+
+            auto res = program.link();
+            if(res.good()) {
+                mesh_rendering.set_program(record.id, std::move(program));
+            }
+            else {
+                std::cerr << "cannot link shader #" << record.id << std::endl;
+                std::cerr << res.message() << std::endl;
+            }
+        }
+    });
+
+    // Load textures
+    std::ifstream texture_list_stream("asset/data/texture.list");
+    std::vector<texture_list_record> texture_records;
+    std::copy(std::istream_iterator<texture_list_record>(texture_list_stream),
+              std::istream_iterator<texture_list_record>(),
+              std::back_inserter(texture_records));
+
+    std::for_each(std::begin(texture_records), std::end(texture_records), [this](const texture_list_record& record) {
+        if(record.path != "NONE") {
+            std::string fullpath = "asset/texture/" + record.path;
+            gl::texture texture = gl::texture::load_from_path(fullpath.c_str());
+
+            if (texture.good()) {
+                mesh_rendering.set_texture(record.id, std::move(texture));
+            }
+            else {
+                std::cerr << "cannot load texture " << record.path << std::endl;
+            }
+        }
+        else {
+            mesh_rendering.set_texture(record.id, gl::texture{});
+        }
+    });
 }
 
 // TODO: REMOVE THIS !!!!!!
@@ -127,8 +191,6 @@ game::game()
     load_flyweights();
 
     G_TO_REMOVE_GOLEM_HANDLE = units.add(std::make_unique<unit>(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
-
-
 
     // Setup world rendering
     for(int x = 0; x < 20; ++x) {

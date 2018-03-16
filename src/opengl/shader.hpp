@@ -73,6 +73,8 @@ public:
     compilation_status compile(const std::string& source) const noexcept;
     compilation_status compile(std::istream& source_stream) const noexcept;
 
+    bool good() const noexcept;
+
     operator GLuint() const noexcept;
 };
 
