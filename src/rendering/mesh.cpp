@@ -7,19 +7,23 @@ void mesh_builder::add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color) {
 }
 
 mesh mesh_builder::build() const noexcept {
-    gl::buffer vertices_buffer = gl::buffer::make();
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices_buffer));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices.front(), GL_STATIC_DRAW);
+    if (!vertices.empty())
+    {
+        gl::buffer vertices_buffer = gl::buffer::make();
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices_buffer));
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices.front(), GL_STATIC_DRAW);
 
-    gl::buffer colors_buffer = gl::buffer::make();
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(colors_buffer));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * colors.size(), &colors.front(), GL_STATIC_DRAW);
+        gl::buffer colors_buffer = gl::buffer::make();
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(colors_buffer));
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * colors.size(), &colors.front(), GL_STATIC_DRAW);
 
-    gl::buffer uvs_buffer = gl::buffer::make();
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(uvs_buffer));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * uvs.size(), &uvs.front(), GL_STATIC_DRAW);
+        gl::buffer uvs_buffer = gl::buffer::make();
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(uvs_buffer));
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * uvs.size(), &uvs.front(), GL_STATIC_DRAW);
 
-    return mesh{std::move(vertices_buffer), std::move(uvs_buffer), std::move(colors_buffer), vertices.size()};
+        return mesh{ std::move(vertices_buffer), std::move(uvs_buffer), std::move(colors_buffer), vertices.size() };
+    }
+    return mesh{};
 }
 
 mesh::mesh(gl::buffer&& vertices, gl::buffer&& uvs, gl::buffer&& colors, std::size_t count) noexcept
