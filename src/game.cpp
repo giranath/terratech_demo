@@ -245,10 +245,10 @@ void game::handle_event(SDL_Event event) {
 			glm::vec2 coords{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y };
 
             game_camera.screen_to_world_raw(coords, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT, world_pos, world_direction);
-
-            units.add(std::make_unique<unit>(/*world_direction * game_camera.position().y +*/ world_pos, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
-
+			
 			glm::vec3 test = game_camera.LinePlaneIntersection(world_pos, world_direction, {0, 1, 0});
+
+			units.add(std::make_unique<unit>(test, glm::vec2{ 0.f, 0.f }, &unit_flyweights[106], &units));
 
 			std::cout << "pick : " << test.x << "," << test.y << "," << test.z << std::endl;
 
