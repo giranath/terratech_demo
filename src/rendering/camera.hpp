@@ -9,9 +9,11 @@
 #undef near
 #undef far
 
+namespace rendering {
+
 class camera {
     static constexpr float X_ANGLE = glm::radians(-35.264f);
-    static constexpr float Y_ANGLE = glm::radians(-45.f);
+    static constexpr float Y_ANGLE = glm::radians(45.f);
 
     glm::vec3 pos;
     float ortho_left, ortho_right, ortho_bottom, ortho_top, ortho_near, ortho_far;
@@ -34,18 +36,33 @@ public:
     glm::mat4 matrix() const noexcept;
 
     glm::mat4 projection() const noexcept;
+
     glm::mat4 view() const noexcept;
 
     glm::vec3 right() const noexcept;
+
     glm::vec3 up() const noexcept;
+
     glm::vec3 forward() const noexcept;
+
     glm::vec3 direction() const noexcept;
 
     bounding_cube<float> view_cube() const noexcept;
 
+	/// \param mouse_position Raw Mouse screen position
+	/// \param window_height Game screen window height
+	/// \param window_width Game screen window width
+	/// \param position World position calculated by the
+	/// \param direction Direction in the world
 	void screen_to_world_raw(const glm::vec2 mouse_position, const int window_height, const int window_widht, glm::vec3& position, glm::vec3& direction) const noexcept;
+
+	/// \param mouse_position Mouse screen position betwen -1 and 1
+	/// \param position World position calculated by the
+	/// \param direction Direction in the world
 	void screen_to_world(const glm::vec2 mouse_position, glm::vec3& position, glm::vec3& direction) const noexcept;
 };
+
+}
 
 
 #endif //MMAP_DEMO_CAMERA_HPP

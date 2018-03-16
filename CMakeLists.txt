@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(DISABLE_PROFILER "Disable profiling when ON" OFF)
+
 find_package(terratech 0.5 REQUIRED)
 find_package(sdl2 REQUIRED)
 find_package(sdl2_image REQUIRED)
@@ -15,9 +17,6 @@ find_package(Threads REQUIRED)
 
 # Generates GL3W files
 execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/thirdparty/gl3w/gl3w_gen.py")
-
-# Download Json.hpp
-file(DOWNLOAD https://github.com/nlohmann/json/releases/download/v3.1.1/json.hpp include/json/json.hpp)
 
 add_executable(mmap_demo
         "${CMAKE_BINARY_DIR}/src/gl3w.c"
@@ -55,7 +54,7 @@ add_executable(mmap_demo
         src/rendering/chunk_renderer.hpp
         src/control/all_commands.hpp
         src/control/command.hpp
-        src/control/input_handler.hpp
+        src/control/key_input_handler.hpp
         src/rendering/chunk_renderer.cpp
         src/rendering/chunk_renderer.hpp
         src/debug/profiler.hpp
@@ -73,10 +72,24 @@ add_executable(mmap_demo
         src/opengl/texture.hpp
         src/sdl/istream_rwops.cpp
         src/sdl/istream_rwops.hpp
-        src/task/thread_pool.cpp
-        src/task/thread_pool.hpp
+        src/actor/actor.hpp
+        src/actor/base_unit.hpp
+        src/actor/building.hpp
+        src/actor/ressource.hpp
+        src/actor/ressource_type.hpp
+        src/actor/target_handle.hpp
+        src/actor/target_handle.cpp
+        src/actor/unit.hpp
+        src/actor/unit_flyweight.hpp
+        src/actor/unit_manager.hpp
+        src/actor/unit_manager.cpp
+        src/async/task_executor.cpp
+        src/async/task_executor.hpp
+        src/async/task.hpp
         src/rendering/rendering_manager.cpp
-        src/rendering/rendering_manager.hpp)
+        src/rendering/rendering_manager.hpp
+        src/control/key_input_handler.cpp
+        src/control/camera_commands.hpp src/constant/rendering.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
@@ -84,6 +97,7 @@ target_include_directories(mmap_demo PUBLIC
         ${sdl2_image_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
         ${GLM_INCLUDE_DIRS}
+        "${CMAKE_SOURCE_DIR}/thirdparty"
         "${CMAKE_BINARY_DIR}/include")
 target_link_libraries(mmap_demo
         ${terratech_LIBRARIES}
@@ -94,3 +108,7 @@ target_link_libraries(mmap_demo
         ${CMAKE_DL_LIBS})
 
 target_compile_definitions(mmap_demo PRIVATE -DGAME_VERSION="${PROJECT_VERSION}")
+
+if(DISABLE_PROFILER)
+    target_compile_definitions(mmap_demo PRIVATE -DNPROFILER)
+endif()
