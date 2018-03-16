@@ -1,6 +1,7 @@
 #include "game.hpp"
 #include "sdl/sdl.hpp"
 #include "debug/profiler.hpp"
+#include "time/clock.hpp"
 
 #include <iostream>
 #include <iterator>
@@ -60,11 +61,13 @@ int main(int argc, char* argv[]) {
     setup_opengl();
 
     // Game loop
+    game_time::highres_clock frame_time;
     while(!game_state.wants_to_die()) {
-        const auto start_of_frame = game::clock::now();
+        frame_time.restart();
 
-        //std::cout << "FPS: " << game_state.fps() << std::endl;
-
+        if(game_state.fps() > 0) {
+            std::cout << game_state.fps() << " : " << game_state.average_fps() << std::endl;
+        }
         // Render last frame on screen
         {
             profiler_us p("rendering");
@@ -97,8 +100,8 @@ int main(int argc, char* argv[]) {
             profiler_us p("update");
             game_state.update(last_frame_duration);
         }
-        const auto end_of_frame = game::clock::now();
-        last_frame_duration = end_of_frame - start_of_frame;
+
+        last_frame_duration = frame_time.elapsed_time<game::frame_duration>();
     }
 
     return 0;
