@@ -7,7 +7,8 @@ enum class ressource_type
     food,
     stone,
     gold,
-    magic_essence
+    magic_essence,
+    unknown
 };
 
 #endif

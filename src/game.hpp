@@ -36,6 +36,7 @@ private:
     int frame_count;
     clock::time_point last_fps_timepoint;
 
+    void load_flyweight(std::ifstream& stream);
     void load_flyweights();
     void setup_inputs();
     void setup_renderer();

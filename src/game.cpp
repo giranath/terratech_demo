@@ -11,6 +11,8 @@
 #include <numeric>
 #include <memory>
 
+// TODO: Include filesystem
+
 template<typename Shader>
 Shader load_shader(const std::string& name) {
     std::ifstream file("asset/shader/" + name);
@@ -45,14 +47,35 @@ gl::program load_program(const std::string& name) {
     return prog;
 }
 
-void game::load_flyweights() {
-    // TODO: Lire le reste
+void game::load_flyweight(std::ifstream& stream) {
     using json = nlohmann::json;
-    json j = json::parse(std::ifstream("asset/data/unit/meat_golem.json"));
+    json j = json::parse(stream);
 
     int id = j["id"];
 
     unit_flyweights[id] = unit_flyweight(j);
+}
+
+void game::load_flyweights() {
+    std::ifstream units_list_stream("asset/data/unit.list");
+
+    std::vector<std::string> units_to_load;
+    std::copy(std::istream_iterator<std::string>(units_list_stream), std::istream_iterator<std::string>(),
+              std::back_inserter(units_to_load));
+
+    std::cout << "will load units" << std::endl;
+    std::for_each(std::begin(units_to_load), std::end(units_to_load), [this](const std::string& rel_path) {
+        std::string full_path = "asset/data/" + rel_path;
+
+        std::ifstream unit_stream(full_path);
+        if(unit_stream.is_open()) {
+            std::cout << "loading " << full_path << std::endl;
+            load_flyweight(unit_stream);
+        }
+        else {
+            std::cerr << "cannot open " << full_path << std::endl;
+        }
+    });
 }
 
 void game::setup_inputs() {
