@@ -207,12 +207,6 @@ void game::update(frame_duration last_frame_duration) {
 
     golem_pos.x += 0.1f * last_frame_ms.count();
     golem_pos.z += 0.1f * last_frame_ms.count();
-
-	glm::vec3 position, dir;
-	game_camera.screen_to_world_raw({300, 400}, 600, 800, position, dir);
-
-	//std::cout << "Position  : " << "X :" << position.x << " Y :" << position.y << " Y :" << position.z << std::endl;
-	//std::cout << "Direction  : " << "X :" << dir.x << " Y :" << dir.y << " Y :" << dir.z << std::endl;
 }
 
 void game::render() {
@@ -248,10 +242,13 @@ void game::handle_event(SDL_Event event) {
             glm::vec3 world_pos;
             glm::vec3 world_direction;
 
-            std::cout << event.button.x << ", " << event.button.y << std::endl;
-            game_camera.screen_to_world_raw(glm::vec2{event.button.x, event.button.y}, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT, world_pos, world_direction);
+            game_camera.screen_to_world_raw(glm::vec2{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y }, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT, world_pos, world_direction);
 
-            units.add(std::make_unique<unit>(world_direction * game_camera.position().y + world_pos, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
+			std::cout << "Mouse click : " << event.button.x << ", " << event.button.y << std::endl;
+			std::cout << "World pos : " << world_pos.x << ", " << world_pos.y << ", " << world_pos.z << std::endl;
+			std::cout << "Cam Pos : " << game_camera.position().x << ", " << game_camera.position().y << ", " << game_camera.position().z << std::endl;
+
+            units.add(std::make_unique<unit>(/*world_direction * game_camera.position().y +*/ world_pos, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
         }
     }
     else if(event.type == SDL_MOUSEBUTTONUP) {

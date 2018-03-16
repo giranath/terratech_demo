@@ -54,7 +54,7 @@ public:
 	/// \param window_width Game screen window width
 	/// \param position World position calculated by the
 	/// \param direction Direction in the world
-	void screen_to_world_raw(const glm::vec2 mouse_position, const int window_height, const int window_widht, glm::vec3& position, glm::vec3& direction) const noexcept;
+	void screen_to_world_raw(const glm::vec2 mouse_position, const int window_widht, const int window_height, glm::vec3& position, glm::vec3& direction) const noexcept;
 
 	/// \param mouse_position Mouse screen position betwen -1 and 1
 	/// \param position World position calculated by the

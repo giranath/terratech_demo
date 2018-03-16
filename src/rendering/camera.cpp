@@ -102,50 +102,41 @@ namespace rendering {
 			res_x.second->x, res_y.first->y, res_z.second->z};
 	}
 
-	void camera::screen_to_world_raw(const glm::vec2 mouse_position, const int window_height, const int window_width, glm::vec3& position, glm::vec3& direction) const noexcept
+	void camera::screen_to_world_raw(const glm::vec2 mouse_position, const int window_width, const int window_height, glm::vec3& position, glm::vec3& direction) const noexcept
 	{
-		float half_height = window_height / 2;
-		float half_width = window_width / 2;
+		float half_height = window_height / 2.0f;
+		float half_width = window_width / 2.0f;
 
-		glm::vec2 clamped_position{ (mouse_position.x - half_height) / half_height, -(mouse_position.y - half_width) / half_width };
+		float tes = (mouse_position.x - half_width);
+		tes /= half_width;
+
+		float tes2 = -(mouse_position.y - half_height);
+		tes2 /= half_height;
+
+		glm::vec2 clamped_position{tes , tes2};
 
 		screen_to_world(clamped_position, position, direction);
 	}
 
 	void camera::screen_to_world(const glm::vec2 mouse_position, glm::vec3& position, glm::vec3& direction) const noexcept
 	{
-		glm::mat4 inverse = glm::inverse(matrix());
-		glm::vec4 homogeneous_mouse_position;
+		float half_widht = glm::abs(ortho_left - ortho_right) / 2.f;
+		float half_height = glm::abs(ortho_top - ortho_bottom) / 2.f;
 
-		homogeneous_mouse_position.x = mouse_position.x;
-		homogeneous_mouse_position.y = mouse_position.y;
-		homogeneous_mouse_position.z = 0.0f;
-		homogeneous_mouse_position.w = 1.0f;
+		float x = mouse_position.x * half_height;
+		float y = mouse_position.y * half_widht;
 
-		glm::vec4 homogeneous_position = homogeneous_mouse_position * inverse;
-		homogeneous_position.w = 1.0 / homogeneous_position.w;
+		glm::vec3 newUp = glm::cross(this->direction(), right());
+		newUp = newUp * x;
 
-		homogeneous_position.x *= homogeneous_position.w;
-		homogeneous_position.y *= homogeneous_position.w;
-		homogeneous_position.z *= homogeneous_position.w;
+		glm::vec3 newRight = glm::cross(this->direction(), up());
+		newRight *= y;
 
-		// Dir
-		homogeneous_mouse_position.z = -1.0f;
-		glm::vec4 homogeneous_dir = homogeneous_mouse_position * inverse;
-		homogeneous_dir.w = 1.0 / homogeneous_dir.w;
-
-		homogeneous_dir.x *= homogeneous_dir.w;
-		homogeneous_dir.y *= homogeneous_dir.w;
-		homogeneous_dir.z *= homogeneous_dir.w;
-
-
-		position = { homogeneous_position.x, homogeneous_position.y, homogeneous_position.z };
+		position = (newUp)+(newRight);
 		position += pos;
-		direction = { homogeneous_dir.x, homogeneous_dir.y, homogeneous_dir.z };
 
-		glm::vec3 tt = position - direction;
-		direction = glm::normalize(tt);
-
+		direction = position;
+		direction += this->direction();
 	}
 
 	glm::vec3 camera::position() const noexcept {
