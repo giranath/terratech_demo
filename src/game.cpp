@@ -5,7 +5,6 @@
 #include "actor/unit.hpp"
 #include "constant/rendering.hpp"
 
-#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iterator>

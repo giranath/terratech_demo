@@ -89,7 +89,9 @@ add_executable(mmap_demo
         src/rendering/rendering_manager.cpp
         src/rendering/rendering_manager.hpp
         src/control/key_input_handler.cpp
-        src/control/camera_commands.hpp src/constant/rendering.hpp)
+        src/control/camera_commands.hpp
+        src/constant/rendering.hpp
+        src/collision/circle_shape.cpp src/collision/circle_shape.hpp src/collision/aabb_shape.cpp src/collision/aabb_shape.hpp src/collision/collision_detector.cpp src/collision/collision_detector.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
