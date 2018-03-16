@@ -110,7 +110,7 @@ namespace rendering {
 		float tes = (mouse_position.x - half_width);
 		tes /= half_width;
 
-		float tes2 = -(mouse_position.y - half_height);
+		float tes2 = (mouse_position.y - half_height);
 		tes2 /= half_height;
 
 		glm::vec2 clamped_position{tes , tes2};
@@ -120,33 +120,21 @@ namespace rendering {
 
 	void camera::screen_to_world(const glm::vec2 mouse_position, glm::vec3& position, glm::vec3& direction) const noexcept
 	{
-		float half_widht = glm::abs(ortho_left - ortho_right) / 2.f;
-		float half_height = glm::abs(ortho_top - ortho_bottom) / 2.f;
-
-		float x = mouse_position.x * half_height;
-		float y = mouse_position.y * half_widht;
-
-		glm::vec3 newUp = glm::cross(this->direction(), right());
-		newUp = newUp * x;
-
-		glm::vec3 newRight = glm::cross(this->direction(), up());
-		newRight *= y;
-
-		position = (newUp)+(newRight);
-		position += pos;
-
-		direction = position;
-		direction += this->direction();
-	}
-
-	glm::vec3 camera::world_coordinates(const glm::vec2 normalized_mouse) const noexcept {
-		glm::vec4 coordinate(normalized_mouse.x, normalized_mouse.y, 0.f, 1.0f);
+		glm::vec4 coordinate(mouse_position.x, mouse_position.y, 0.f, 1.0f);
 		glm::mat4 inv = glm::inverse(matrix());
 
 		glm::vec4 temp = inv * coordinate;
 		temp /= temp.w;
+		position = { temp.x, temp.y, temp.z };
 
-		return glm::vec3(temp.x, temp.y, temp.z);
+		direction = this->direction();
+	}
+
+	glm::vec3 camera::LinePlaneIntersection(const glm::vec3 position, const glm::vec3 direction, glm::vec3 plane_normal) const noexcept
+	{
+		float d = glm::dot(glm::vec3(0,0,0) -position, plane_normal) / glm::dot(direction, plane_normal);
+
+		return d * direction + position;
 	}
 
 	glm::vec3 camera::position() const noexcept {

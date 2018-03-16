@@ -61,7 +61,7 @@ public:
 	/// \param direction Direction in the world
 	void screen_to_world(const glm::vec2 mouse_position, glm::vec3& position, glm::vec3& direction) const noexcept;
 
-	glm::vec3 world_coordinates(const glm::vec2 normalized_mouse) const noexcept;
+	glm::vec3 LinePlaneIntersection(const glm::vec3 position, const glm::vec3 direction, glm::vec3 plane_normal) const noexcept;
 
 	glm::vec3 position() const noexcept;
 };
