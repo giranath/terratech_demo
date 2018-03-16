@@ -14,11 +14,13 @@
     "Range": 0,
     "ResourceGatheringCapacity": 0,
     "RessourceGatheringType": [],
+	"RessourceDropOff": [],
     "Stone": 0,
     "Texture": "Tower",
     "TransportCapacity": 0,
     "Transportable": false,
     "WalkSpeed": 0,
+	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
     "Width": 2.0,
     "Wood": 0,
     "id": 207
