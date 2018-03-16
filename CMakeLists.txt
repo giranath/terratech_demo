@@ -18,9 +18,6 @@ find_package(Threads REQUIRED)
 # Generates GL3W files
 execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/thirdparty/gl3w/gl3w_gen.py")
 
-# Download Json.hpp
-file(DOWNLOAD https://github.com/nlohmann/json/releases/download/v3.1.1/json.hpp include/json/json.hpp)
-
 add_executable(mmap_demo
         "${CMAKE_BINARY_DIR}/src/gl3w.c"
         src/main.cpp
@@ -75,13 +72,24 @@ add_executable(mmap_demo
         src/opengl/texture.hpp
         src/sdl/istream_rwops.cpp
         src/sdl/istream_rwops.hpp
+        src/actor/actor.hpp
+        src/actor/base_unit.hpp
+        src/actor/building.hpp
+        src/actor/ressource.hpp
+        src/actor/ressource_type.hpp
+        src/actor/target_handle.hpp
+        src/actor/target_handle.cpp
+        src/actor/unit.hpp
+        src/actor/unit_flyweight.hpp
+        src/actor/unit_manager.hpp
+        src/actor/unit_manager.cpp
         src/async/task_executor.cpp
         src/async/task_executor.hpp
         src/async/task.hpp
         src/rendering/rendering_manager.cpp
         src/rendering/rendering_manager.hpp
         src/control/key_input_handler.cpp
-        src/control/camera_commands.hpp)
+        src/control/camera_commands.hpp src/constant/rendering.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
@@ -89,6 +97,7 @@ target_include_directories(mmap_demo PUBLIC
         ${sdl2_image_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
         ${GLM_INCLUDE_DIRS}
+        "${CMAKE_SOURCE_DIR}/thirdparty"
         "${CMAKE_BINARY_DIR}/include")
 target_link_libraries(mmap_demo
         ${terratech_LIBRARIES}

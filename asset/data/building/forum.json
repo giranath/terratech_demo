@@ -1,0 +1,27 @@
+{
+    "Armor": 0,
+    "AttackSpeed": 0,
+    "BuildableUnit": [
+        100
+    ],
+    "ConstructionTime": 1,
+    "Damage": 0,
+    "Essence": 0,
+    "Food": 0,
+    "Gold": 0,
+    "Height": 2.0,
+    "Life": 50,
+    "Name": "Forum",
+    "PopulationCost": 1,
+    "Range": 0,
+    "ResourceGatheringCapacity": 0,
+    "RessourceGatheringType": [],
+    "Stone": 0,
+    "Texture": "Forum",
+    "TransportCapacity": 0,
+    "Transportable": false,
+    "WalkSpeed": 0,
+    "Width": 2.0,
+    "Wood": 0,
+    "id": 201
+}

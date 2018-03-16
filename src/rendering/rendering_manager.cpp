@@ -3,11 +3,10 @@
 #include <algorithm>
 #include <iterator>
 
-mesh_renderer::mesh_renderer(const mesh* m, glm::mat4 model, texture_handle texture, program_handle prog)
-: rendering_mesh{m}
-, model{model}
-, texture{texture}
-, program{prog} {
+namespace rendering {
+
+mesh_renderer::mesh_renderer(const rendering::mesh *m, glm::mat4 model, texture_handle texture, program_handle prog)
+        : rendering_mesh{m}, model{model}, texture{texture}, program{prog} {
 
 }
 
@@ -15,42 +14,42 @@ mesh_renderer::sort_key mesh_renderer::key() const noexcept {
     return (program << 8) | texture;
 }
 
-bool mesh_renderer::operator<(const mesh_renderer& other) const noexcept {
+bool mesh_renderer::operator<(const mesh_renderer &other) const noexcept {
     return key() < other.key();
 }
 
 mesh_rendering_system::mesh_rendering_system()
-: vao{gl::vertex_array::make()}
-, current_camera{} {
+        : vao{gl::vertex_array::make()}, current_camera{} {
 
 }
 
-void mesh_rendering_system::set_texture(mesh_renderer::texture_handle handle, gl::texture&& texture) {
+void mesh_rendering_system::set_texture(mesh_renderer::texture_handle handle, gl::texture &&texture) {
     textures[handle] = std::move(texture);
 }
 
-void mesh_rendering_system::set_camera(camera* cam) noexcept {
+void mesh_rendering_system::set_camera(camera *cam) noexcept {
     current_camera = cam;
 }
 
-void mesh_rendering_system::set_program(mesh_renderer::program_handle handle, gl::program&& program) {
+void mesh_rendering_system::set_program(mesh_renderer::program_handle handle, gl::program &&program) {
     programs[handle] = std::move(program);
 }
 
-void mesh_rendering_system::push(const mesh_renderer& renderer) {
+void mesh_rendering_system::push(const mesh_renderer &renderer) {
     meshes.push_back(renderer);
 }
 
-void mesh_rendering_system::push(mesh_renderer&& renderer) {
+void mesh_rendering_system::push(mesh_renderer &&renderer) {
     meshes.push_back(std::move(renderer));
 }
 
-void mesh_rendering_system::emplace(const mesh* m, glm::mat4 model, mesh_renderer::texture_handle texture, mesh_renderer::program_handle prog) {
+void mesh_rendering_system::emplace(const rendering::mesh *m, glm::mat4 model, mesh_renderer::texture_handle texture,
+                                    mesh_renderer::program_handle prog) {
     meshes.emplace_back(m, model, texture, prog);
 }
 
 void mesh_rendering_system::render() {
-    if(meshes.size() > 0) {
+    if (meshes.size() > 0) {
         gl::bind(vao);
 
         // First we sort meshes by program than texture
@@ -59,16 +58,16 @@ void mesh_rendering_system::render() {
         mesh_renderer::program_handle last_program = -1;
         mesh_renderer::texture_handle last_texture = -1;
 
-        gl::program* current_program = nullptr;
-        gl::texture* current_texture = nullptr;
+        gl::program *current_program = nullptr;
+        gl::texture *current_texture = nullptr;
 
         for (const mesh_renderer &renderer : meshes) {
-            if(renderer.program != last_program) {
+            if (renderer.program != last_program) {
                 current_program = &programs[renderer.program];
                 gl::bind(*current_program);
 
                 // Setup camera related uniforms
-                if(current_camera) {
+                if (current_camera) {
                     auto projection_uniform = current_program->find_uniform<glm::mat4>("projection_matrix");
                     auto view_uniform = current_program->find_uniform<glm::mat4>("view_matrix");
 
@@ -78,7 +77,7 @@ void mesh_rendering_system::render() {
             }
 
             // Bind new texture
-            if(renderer.texture != last_texture) {
+            if (renderer.texture != last_texture) {
                 current_texture = &textures[renderer.texture];
 
                 auto is_textured_uniform = current_program->find_uniform<int>("is_textured");
@@ -86,10 +85,9 @@ void mesh_rendering_system::render() {
                 glActiveTexture(GL_TEXTURE0);
                 gl::bind(gl::texture_bind<GL_TEXTURE_2D>(*current_texture));
 
-                if(current_texture->good()) {
+                if (current_texture->good()) {
                     is_textured_uniform.set(1);
-                }
-                else {
+                } else {
                     is_textured_uniform.set(0);
                 }
             }
@@ -107,4 +105,6 @@ void mesh_rendering_system::render() {
 
         meshes.clear();
     }
+}
+
 }

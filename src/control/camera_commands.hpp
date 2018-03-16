@@ -7,10 +7,10 @@
 namespace input {
 
 class camera_command : public command {
-    camera& cam;
+    rendering::camera& cam;
     float speed;
 public:
-    explicit camera_command(camera& cam, float speed)
+    explicit camera_command(rendering::camera& cam, float speed)
     : cam(cam)
     , speed(speed) {
 
@@ -20,14 +20,14 @@ public:
         cam.translate(direction * speed);
     }
 
-    const camera& current_camera() const {
+    const rendering::camera& current_camera() const {
         return cam;
     }
 };
 
 class look_left_command : public camera_command {
 public:
-    explicit look_left_command(camera& cam, float speed)
+    explicit look_left_command(rendering::camera& cam, float speed)
     : camera_command(cam, speed) {
 
     }
@@ -40,7 +40,7 @@ public:
 
 class look_right_command : public camera_command  {
 public:
-    explicit look_right_command(camera& cam, float speed)
+    explicit look_right_command(rendering::camera& cam, float speed)
     : camera_command{ cam, speed } {
 
     }
@@ -53,7 +53,7 @@ public:
 
 class look_up_command : public camera_command {
 public:
-    explicit look_up_command(camera& cam, float speed)
+    explicit look_up_command(rendering::camera& cam, float speed)
     : camera_command{ cam, speed } {
 
     }
@@ -66,7 +66,7 @@ public:
 
 class look_down_command : public camera_command {
 public:
-    explicit look_down_command(camera& cam, float speed)
+    explicit look_down_command(rendering::camera& cam, float speed)
     : camera_command{ cam, speed } {
 
     }

@@ -62,6 +62,10 @@ shader::compilation_status shader::compile(const std::string& source) const noex
     return compile(source.c_str());
 }
 
+bool shader::good() const noexcept {
+    return raw != 0;
+}
+
 shader::operator GLuint() const noexcept {
     return raw;
 }

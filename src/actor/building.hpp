@@ -3,7 +3,7 @@
 
 #include "actor.hpp"
 #include "unit.hpp"
-#include "unit_fly_weight.hpp"
+#include "unit_flyweight.hpp"
 #include <glm/glm.hpp>
 class building : actor
 {

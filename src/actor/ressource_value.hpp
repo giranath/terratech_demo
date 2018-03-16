@@ -11,6 +11,13 @@ struct ressource_value
     unsigned short int gold;
     unsigned short int magic_essence;
 
+    ressource_value():
+        wood{},
+        food{},
+        stone{},
+        gold{},
+        magic_essence{}
+        {}
     int total_ressources()
     {
         return wood + food + stone + gold + magic_essence;
