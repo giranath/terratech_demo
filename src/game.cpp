@@ -242,11 +242,19 @@ void game::handle_event(SDL_Event event) {
             glm::vec3 world_pos;
             glm::vec3 world_direction;
 
-            game_camera.screen_to_world_raw(glm::vec2{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y }, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT, world_pos, world_direction);
+            const float HALF_SCREEN_WIDTH = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
+            const float HALF_SCREEN_HEIGHT = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
+            //game_camera.screen_to_world_raw(, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT, world_pos, world_direction);
 
-			std::cout << "Mouse click : " << event.button.x << ", " << event.button.y << std::endl;
-			std::cout << "World pos : " << world_pos.x << ", " << world_pos.y << ", " << world_pos.z << std::endl;
-			std::cout << "Cam Pos : " << game_camera.position().x << ", " << game_camera.position().y << ", " << game_camera.position().z << std::endl;
+            glm::vec2 coords{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y };
+            glm::vec2 normalized {(coords.x - HALF_SCREEN_WIDTH) / HALF_SCREEN_WIDTH, (coords.y - HALF_SCREEN_HEIGHT) / HALF_SCREEN_HEIGHT};
+
+            world_pos = game_camera.world_coordinates(normalized);
+            //world_pos.y = 0.f;
+
+			//std::cout << "Mouse click : " << event.button.x << ", " << event.button.y << std::endl;
+			//std::cout << "World pos : " << world_pos.x << ", " << world_pos.y << ", " << world_pos.z << std::endl;
+			//std::cout << "Cam Pos : " << game_camera.position().x << ", " << game_camera.position().y << ", " << game_camera.position().z << std::endl;
 
             units.add(std::make_unique<unit>(/*world_direction * game_camera.position().y +*/ world_pos, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
         }

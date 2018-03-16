@@ -139,6 +139,16 @@ namespace rendering {
 		direction += this->direction();
 	}
 
+	glm::vec3 camera::world_coordinates(const glm::vec2 normalized_mouse) const noexcept {
+		glm::vec4 coordinate(normalized_mouse.x, normalized_mouse.y, 0.f, 1.0f);
+		glm::mat4 inv = glm::inverse(matrix());
+
+		glm::vec4 temp = inv * coordinate;
+		temp /= temp.w;
+
+		return glm::vec3(temp.x, temp.y, temp.z);
+	}
+
 	glm::vec3 camera::position() const noexcept {
 		return pos;
 	}
