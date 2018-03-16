@@ -14,13 +14,15 @@
     "Range": 15,
     "ResourceGatheringCapacity": 50,
     "RessourceGatheringType": [
-        "Magic Essence"
+        "MagicEssence"
     ],
+	"RessourceDropOff": [],
     "Stone": 0,
     "Texture": "Mage",
     "TransportCapacity": 0,
     "Transportable": true,
     "WalkSpeed": 1,
+	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
     "Width": 1.0,
     "Wood": 100,
     "id": 112
