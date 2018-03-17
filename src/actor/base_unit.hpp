@@ -46,5 +46,12 @@ public:
 		return flyweight->get_speed();
 	}
 
+    const rendering::mesh& mesh() const noexcept {
+        return flyweight->mesh();
+    }
+
+    const std::string& texture() const noexcept {
+        return flyweight->texture();
+    }
 };
 #endif

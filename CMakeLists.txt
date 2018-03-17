@@ -100,7 +100,7 @@ add_executable(mmap_demo
         src/collision/aabb_shape.hpp
         src/collision/collision_detector.cpp
         src/collision/collision_detector.hpp
-        src/world/biome_type.hpp)
+        src/world/biome_type.hpp src/rendering/virtual_texture.cpp src/rendering/virtual_texture.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}

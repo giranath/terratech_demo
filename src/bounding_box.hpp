@@ -6,6 +6,9 @@
 
 template<typename T>
 class bounding_box {
+public:
+    using value_type = T;
+private:
     T _left {};
     T _top {};
     T _right {};
@@ -54,6 +57,9 @@ public:
 
 template<typename T>
 class bounding_cube {
+public:
+    using value_type = T;
+private:
     T left {};
     T top {};
     T near{};

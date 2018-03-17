@@ -4,6 +4,7 @@
 #include "ressource_value.hpp"
 #include "ressource_type.hpp"
 #include "../world/biome_type.hpp"
+#include "../rendering/mesh.hpp"
 
 #include <json/json.hpp>
 #include <vector>
@@ -22,8 +23,8 @@ private:
     float attack_speed;
     int max_health;
     int unit_id;
-    int height;
-    int width;
+    float height_;
+    float width_;
     int construction_time;
     float speed;
     uint16_t damage;
@@ -32,6 +33,8 @@ private:
     uint8_t tranport_unit_capacity;
     uint8_t population_cost;
     bool transportable;
+    rendering::mesh mesh_;
+    std::string texture_handle;
 
 public:
     unit_flyweight() = default;
@@ -93,7 +96,6 @@ public:
             if (name == "MagicEssence") return ressource_type::magic_essence;
             return ressource_type::unknown;
         });
-        
 
         std::vector<std::string> walk_type = json["WalkableType"].get<std::vector<std::string>>();
         std::transform(std::begin(walk_type), std::end(walk_type), std::back_inserter(walkable_biome), [](const std::string& name)
@@ -107,11 +109,34 @@ public:
         });
         transportable = json["Transportable"];
         population_cost = json["PopulationCost"];
-        height = json["Height"];
-        width = json["Width"];
+        height_ = json["Height"];
+        width_ = json["Width"];
         construction_time = json["ConstructionTime"];
+        texture_handle = json["Texture"];
     }
 
-    //texture_handle
+    void set_mesh(rendering::mesh&& mesh) {
+        mesh_ = std::move(mesh);
+    }
+
+    const rendering::mesh& mesh() const noexcept {
+        return mesh_;
+    }
+
+    rendering::mesh& mesh() noexcept {
+        return mesh_;
+    }
+
+    const std::string& texture() const noexcept {
+        return texture_handle;
+    }
+
+    float width() const noexcept {
+        return width_;
+    }
+
+    float height() const noexcept {
+        return height_;
+    }
 };
 #endif

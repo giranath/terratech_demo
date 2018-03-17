@@ -7,7 +7,7 @@
     "Essence": 100,
     "Food": 500,
     "Gold": 0,
-    "Height": 2.0,
+    "Height": 100.0,
     "Life": 50,
     "Name": "Meat Golem",
     "PopulationCost": 1,
@@ -16,12 +16,12 @@
     "RessourceGatheringType": [],
 	"RessourceDropOff": [],
     "Stone": 0,
-    "Texture": "FoodGolem",
+    "Texture": "MeatGolem",
     "TransportCapacity": 0,
     "Transportable": true,
     "WalkSpeed": 1,
 	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
-    "Width": 2.0,
+    "Width": 100.0,
     "Wood": 0,
     "id": 106
 }
