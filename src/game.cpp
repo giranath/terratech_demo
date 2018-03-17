@@ -5,6 +5,7 @@
 #include "actor/unit.hpp"
 #include "constant/rendering.hpp"
 
+#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iterator>
@@ -12,6 +13,9 @@
 #include <memory>
 
 // TODO: Include filesystem
+
+int G_TO_REMOVE_SCREEN_WIDTH = 0;
+int G_TO_REMOVE_SCREEN_HEIGHT = 0;
 
 template<typename Shader>
 Shader load_shader(const std::string& path) {
@@ -170,7 +174,7 @@ game::game()
 , last_fps_timepoint(clock::now()) {
     std::fill(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
 
-    g_TO_REMOVE_GOLEM_MESH = rendering::make_cube(300.f, glm::vec3{1.f, 0.f, 0.f});
+    g_TO_REMOVE_GOLEM_MESH = rendering::make_cube(rendering::chunk_renderer::SQUARE_SIZE, glm::vec3{1.f, 0.f, 0.f});
 
     // Setup controls
     setup_inputs();
@@ -204,12 +208,6 @@ void game::update(frame_duration last_frame_duration) {
 
     golem_pos.x += 0.1f * last_frame_ms.count();
     golem_pos.z += 0.1f * last_frame_ms.count();
-
-	glm::vec3 position, dir;
-	game_camera.screen_to_world_raw({300, 400}, 600, 800, position, dir);
-
-	std::cout << "Position  : " << "X :" << position.x << " Y :" << position.y << " Y :" << position.z << std::endl;
-	std::cout << "Direction  : " << "X :" << dir.x << " Y :" << dir.y << " Y :" << dir.z << std::endl;
 }
 
 void game::render() {
@@ -240,6 +238,19 @@ void game::handle_event(SDL_Event event) {
     if(event.type == SDL_MOUSEBUTTONDOWN) {
         if(event.button.button == SDL_BUTTON_MIDDLE) {
             is_scrolling = true;
+        }
+        else if(event.button.button == SDL_BUTTON_LEFT) {
+            const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
+            const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
+
+			const glm::vec2 coords{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y };
+            const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
+
+			glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
+			units.add(std::make_unique<unit>(test, glm::vec2{ 0.f, 0.f }, &unit_flyweights[106], &units));
+
+			std::cout << "pick : " << test.x << "," << test.y << "," << test.z << std::endl;
+
         }
     }
     else if(event.type == SDL_MOUSEBUTTONUP) {
@@ -272,6 +283,9 @@ void game::resize(int new_width, int new_height) {
     else {
         game_camera.adjust(-400.f, 400.f, -300.f / aspect, 300.f / aspect, -1000.f, 1000.f);
     }
+
+    G_TO_REMOVE_SCREEN_WIDTH = new_width;
+    G_TO_REMOVE_SCREEN_HEIGHT = new_height;
 }
 
 bool game::wants_to_die() const noexcept {
