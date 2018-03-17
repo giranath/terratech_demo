@@ -7,7 +7,7 @@
     "Essence": 0,
     "Food": 50,
     "Gold": 0,
-    "Height": 1.0,
+    "Height": 40.0,
     "Life": 50,
     "Name": "Archer",
     "PopulationCost": 1,
@@ -21,7 +21,7 @@
     "Transportable": true,
     "WalkSpeed": 1,
 	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
-    "Width": 1.0,
+    "Width": 30.0,
     "Wood": 50,
     "id": 102
 }
