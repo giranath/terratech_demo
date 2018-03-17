@@ -102,49 +102,41 @@ namespace rendering {
 			res_x.second->x, res_y.first->y, res_z.second->z};
 	}
 
-	void camera::screen_to_world_raw(const glm::vec2 mouse_position, const int window_height, const int window_width, glm::vec3& position, glm::vec3& direction) const noexcept
-	{
-		float half_height = window_height / 2;
-		float half_width = window_width / 2;
+	glm::vec3 camera::unproject(glm::vec2 screen_coord, float depth) const noexcept {
+		glm::vec4 coordinate(screen_coord.x, screen_coord.y, depth, 1.0f);
+		glm::mat4 inv = glm::inverse(matrix());
 
-		glm::vec2 clamped_position{ (mouse_position.x - half_height) / half_height, -(mouse_position.y - half_width) / half_width };
+		glm::vec4 temp = inv * coordinate;
+		temp /= temp.w;
 
-		screen_to_world(clamped_position, position, direction);
+		return glm::vec3{temp.x, temp.y, temp.z};
 	}
 
-	void camera::screen_to_world(const glm::vec2 mouse_position, glm::vec3& position, glm::vec3& direction) const noexcept
+	void camera::screen_to_world(glm::vec2 mouse_position, glm::vec3& position, glm::vec3& direction) const noexcept
 	{
-		glm::mat4 inverse = glm::inverse(matrix());
-		glm::vec4 homogeneous_mouse_position;
+		position = unproject(mouse_position, 0.f);
+		direction = this->direction();
+	}
 
-		homogeneous_mouse_position.x = mouse_position.x;
-		homogeneous_mouse_position.y = mouse_position.y;
-		homogeneous_mouse_position.z = 0.0f;
-		homogeneous_mouse_position.w = 1.0f;
+	glm::vec3 camera::line_plane_intersection(glm::vec3 position, glm::vec3 direction, glm::vec3 point_on_plane ,glm::vec3 plane_normal) const noexcept
+	{
+		float d = glm::dot(point_on_plane -position, plane_normal) / glm::dot(direction, plane_normal);
 
-		glm::vec4 homogeneous_position = homogeneous_mouse_position * inverse;
-		homogeneous_position.w = 1.0 / homogeneous_position.w;
+		return d * direction + position;
+	}
 
-		homogeneous_position.x *= homogeneous_position.w;
-		homogeneous_position.y *= homogeneous_position.w;
-		homogeneous_position.z *= homogeneous_position.w;
+    glm::vec3 camera::world_coordinate_of(glm::vec2 normalized_mouse_pos, glm::vec3 point_on_plane, glm::vec3 plane_normal) const noexcept {
+        glm::vec3 pos, dir;
 
-		// Dir
-		homogeneous_mouse_position.z = -1.0f;
-		glm::vec4 homogeneous_dir = homogeneous_mouse_position * inverse;
-		homogeneous_dir.w = 1.0 / homogeneous_dir.w;
+        screen_to_world(normalized_mouse_pos, pos, dir);
+        return line_plane_intersection(pos, dir, point_on_plane, plane_normal);
+    }
 
-		homogeneous_dir.x *= homogeneous_dir.w;
-		homogeneous_dir.y *= homogeneous_dir.w;
-		homogeneous_dir.z *= homogeneous_dir.w;
+	std::pair<glm::vec3, glm::vec3> camera::ray_of(glm::vec2 normalized_screen_coords) const noexcept {
+		return std::make_pair(unproject(normalized_screen_coords, -1.f), unproject(normalized_screen_coords, 1.f));
+	}
 
-
-		position = { homogeneous_position.x, homogeneous_position.y, homogeneous_position.z };
-		position += pos;
-		direction = { homogeneous_dir.x, homogeneous_dir.y, homogeneous_dir.z };
-
-		glm::vec3 tt = position - direction;
-		direction = glm::normalize(tt);
-
+	glm::vec3 camera::position() const noexcept {
+		return pos;
 	}
 }
