@@ -93,12 +93,12 @@ public:
         std::vector<std::string> walk_type = json["WalkableType"].get<std::vector<std::string>>();
         std::transform(std::begin(walk_type), std::end(walk_type), std::back_inserter(walkable_biome), [](const std::string& name)
         {
-            if (name == "Grass") return biome_type::GRASS;
-            if (name == "Rock") return biome_type::ROCK;
-            if (name == "Desert") return biome_type::DESERT;
-            if (name == "Snow") return biome_type::SNOW;
-            if (name == "Water") return biome_type::WATER;
-            return biome_type::UNKNOWN;
+            if (name == "Grass") return biome_type::grass;
+            if (name == "Rock") return biome_type::rock;
+            if (name == "Desert") return biome_type::desert;
+            if (name == "Snow") return biome_type::snow;
+            if (name == "Water") return biome_type::water;
+            return biome_type::unknown;
         });
         transportable = json["Transportable"];
         population_cost = json["PopulationCost"];
