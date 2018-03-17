@@ -240,9 +240,6 @@ void game::update(frame_duration last_frame_duration) {
     if(can_move(my_golem, new_position)) {
         golem_pos = new_position;
     }
-
-	glm::vec3 position, dir;
-	game_camera.screen_to_world_raw({300, 400}, 600, 800, position, dir);
 }
 
 void game::render() {
