@@ -5,6 +5,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <utility>
 
 #undef near
 #undef far
@@ -50,21 +51,15 @@ public:
     glm::vec3 direction() const noexcept;
 
     bounding_cube<float> view_cube() const noexcept;
-
-	/// \param mouse_position Raw Mouse screen position
-	/// \param window_height Game screen window height
-	/// \param window_width Game screen window width
-	/// \param position World position calculated by the
-	/// \param direction Direction in the world
-	void screen_to_world_raw(glm::vec2 screen_coords, const int window_widht, const int window_height, glm::vec3& position, glm::vec3& direction) const noexcept;
-
-	/// \param mouse_position Mouse screen position betwen -1 and 1
+	
+	/// \param normalized_screen_coords Mouse screen position betwen -1 and 1
 	/// \param position World position calculated by the
 	/// \param direction Direction in the world
 	void screen_to_world(glm::vec2 normalized_screen_coords, glm::vec3& position, glm::vec3& direction) const noexcept;
-	glm::vec3 line_plane_intersection(glm::vec3 position, glm::vec3 direction, glm::vec3 plane_normal) const noexcept;
 
-	glm::vec3 world_coordinate_of(glm::vec2 normalized_screen_coords) const noexcept;
+	glm::vec3 line_plane_intersection(glm::vec3 position, glm::vec3 direction, glm::vec3 point_on_plane, glm::vec3 plane_normal) const noexcept;
+
+	glm::vec3 world_coordinate_of(glm::vec2 normalized_screen_coords, glm::vec3 point_on_plane, glm::vec3 plane_normal) const noexcept;
 
 	std::pair<glm::vec3, glm::vec3> ray_of(glm::vec2 normalized_screen_coords) const noexcept;
 

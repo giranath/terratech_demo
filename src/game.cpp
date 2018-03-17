@@ -246,7 +246,7 @@ void game::handle_event(SDL_Event event) {
 			const glm::vec2 coords{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y };
             const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
 
-            glm::vec3 test = game_camera.world_coordinate_of(normalized_coords);
+			glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
 			units.add(std::make_unique<unit>(test, glm::vec2{ 0.f, 0.f }, &unit_flyweights[106], &units));
 
 			std::cout << "pick : " << test.x << "," << test.y << "," << test.z << std::endl;
