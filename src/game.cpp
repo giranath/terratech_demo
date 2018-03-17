@@ -11,6 +11,7 @@
 #include <iterator>
 #include <numeric>
 #include <memory>
+#include <functional>
 
 // TODO: Include filesystem
 
@@ -78,8 +79,9 @@ void game::setup_inputs() {
     // Wireframe
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
 
-	// Change Unit To Spawn
-	key_inputs.register_action(SDLK_1, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 100));
+
+	// Change Unit To Spawn	using change_unit_command
+	key_inputs.register_action(SDLK_i, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 100));
 	key_inputs.register_action(SDLK_2, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 101));
 	key_inputs.register_action(SDLK_3, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 102));
 	key_inputs.register_action(SDLK_4, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 103));
@@ -91,7 +93,8 @@ void game::setup_inputs() {
 	key_inputs.register_action(SDLK_0, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 109));
 	key_inputs.register_action(SDLK_p, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 110));
 	key_inputs.register_action(SDLK_o, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 111));
-	key_inputs.register_action(SDLK_i, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 112));
+	// Change Unit To Spawn	using generic_command
+	key_inputs.register_action(SDLK_1, KMOD_NONE, input::make_generic_command([&]() { next_unit_to_spawn = 112; }));
 }
 
 struct shader_list_record {

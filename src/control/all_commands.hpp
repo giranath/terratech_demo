@@ -4,6 +4,8 @@
 #include "command.hpp"
 #include "camera_commands.hpp"
 #include "change_unit_command.hpp"
+#include "generic_command.hpp"
+
 
 #include "../opengl/opengl.hpp"
 
