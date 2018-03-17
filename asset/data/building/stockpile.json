@@ -14,11 +14,14 @@
     "Range": 0,
     "ResourceGatheringCapacity": 0,
     "RessourceGatheringType": [],
+	"RessourceDropOff": true
+	"RessourceDropOff": ["Wood", "Food", "Stone", "Gold"],
     "Stone": 0,
     "Texture": "Stockpile",
     "TransportCapacity": 0,
     "Transportable": false,
     "WalkSpeed": 0,
+	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
     "Width": 2.0,
     "Wood": 0,
     "id": 206

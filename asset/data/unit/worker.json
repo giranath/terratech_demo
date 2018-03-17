@@ -19,11 +19,13 @@
         "Stone",
         "Food"
     ],
+	"RessourceDropOff": [],
     "Stone": 0,
     "Texture": "Worker",
     "TransportCapacity": 0,
     "Transportable": true,
     "WalkSpeed": 1,
+	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
     "Width": 1.0,
     "Wood": 0,
     "id": 100

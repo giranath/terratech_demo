@@ -16,11 +16,13 @@
     "RessourceGatheringType": [
         "Food"
     ],
+	"RessourceDropOff": [],
     "Stone": 0,
     "Texture": "FisherBoat",
     "TransportCapacity": 10,
     "Transportable": false,
     "WalkSpeed": 2,
+	"WalkableType": ["Water"],
     "Width": 1.0,
     "Wood": 50,
     "id": 101

@@ -14,11 +14,13 @@
     "Range": 1,
     "ResourceGatheringCapacity": 0,
     "RessourceGatheringType": [],
+	"RessourceDropOff": [],
     "Stone": 50,
     "Texture": "Swordsman",
     "TransportCapacity": 0,
     "Transportable": true,
     "WalkSpeed": 1,
+	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
     "Width": 1.0,
     "Wood": 0,
     "id": 103

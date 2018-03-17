@@ -14,11 +14,13 @@
     "Range": 1,
     "ResourceGatheringCapacity": 0,
     "RessourceGatheringType": [],
+	"RessourceDropOff": [],
     "Stone": 0,
     "Texture": "Cavalier",
     "TransportCapacity": 0,
     "Transportable": true,
     "WalkSpeed": 3,
+	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
     "Width": 2.0,
     "Wood": 50,
     "id": 104

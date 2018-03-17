@@ -44,6 +44,8 @@ private:
     void load_textures();
     void load_shaders();
 
+    bool can_move(base_unit* unit, glm::vec3 position) const;
+
 public:
     game();
 

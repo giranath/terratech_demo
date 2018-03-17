@@ -29,3 +29,23 @@ world_chunk& world::chunk_at(int x, int z) {
 
     return *it;
 }
+
+world_chunk* world::get_chunk(int x, int z) {
+    auto it = std::find_if(std::begin(chunks), std::end(chunks), [x, z](const world_chunk& chunk) {
+        return chunk.position() == world_chunk::position_type{x, z};
+    });
+
+    if(it == std::end(chunks)) return nullptr;
+
+    return &(*it);
+}
+
+const world_chunk* world::get_chunk(int x, int z) const {
+    auto it = std::find_if(std::begin(chunks), std::end(chunks), [x, z](const world_chunk& chunk) {
+        return chunk.position() == world_chunk::position_type{x, z};
+    });
+
+    if(it == std::end(chunks)) return nullptr;
+
+    return &(*it);
+}

@@ -3,6 +3,7 @@
 
 #include "ressource_value.hpp"
 #include "ressource_type.hpp"
+#include "../world/biome_type.hpp"
 
 #include <json/json.hpp>
 #include <vector>
@@ -13,6 +14,8 @@ class unit_flyweight
 {
 private:
     std::vector<ressource_type> ressource_gathering_type;
+    std::vector<ressource_type> ressource_drop_off;
+    std::vector<biome_type> walkable_biome;
     std::vector<int> buildable_unit_id_list;
     ressource_value unit_cost;
     std::string name;
@@ -76,9 +79,31 @@ public:
             if(name == "Stone") return ressource_type::stone;
             if(name == "Wood") return ressource_type::wood;
             if(name == "Gold") return ressource_type::gold;
-            if(name == "Magic Essence") return ressource_type::magic_essence;
+            if(name == "MagicEssence") return ressource_type::magic_essence;
 
             return ressource_type::unknown;
+        });
+
+        std::vector<std::string> drop_off = json["RessourceDropOff"].get<std::vector<std::string>>();
+        std::transform(std::begin(drop_off), std::end(drop_off), std::back_inserter(ressource_drop_off), [](const std::string& name) {
+            if (name == "Food") return ressource_type::food;
+            if (name == "Stone") return ressource_type::stone;
+            if (name == "Wood") return ressource_type::wood;
+            if (name == "Gold") return ressource_type::gold;
+            if (name == "MagicEssence") return ressource_type::magic_essence;
+            return ressource_type::unknown;
+        });
+        
+
+        std::vector<std::string> walk_type = json["WalkableType"].get<std::vector<std::string>>();
+        std::transform(std::begin(walk_type), std::end(walk_type), std::back_inserter(walkable_biome), [](const std::string& name)
+        {
+            if (name == "Grass") return biome_type::grass;
+            if (name == "Rock") return biome_type::rock;
+            if (name == "Desert") return biome_type::desert;
+            if (name == "Snow") return biome_type::snow;
+            if (name == "Water") return biome_type::water;
+            return biome_type::unknown;
         });
         transportable = json["Transportable"];
         population_cost = json["PopulationCost"];
