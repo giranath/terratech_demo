@@ -40,5 +40,13 @@ public:
     uint32_t get_id() const noexcept {
         return id;
     }
+
+    const rendering::mesh& mesh() const noexcept {
+        return flyweight->mesh();
+    }
+
+    const std::string& texture() const noexcept {
+        return flyweight->texture();
+    }
 };
 #endif

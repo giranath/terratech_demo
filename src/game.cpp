@@ -63,6 +63,32 @@ void game::load_flyweights() {
             std::cerr << "cannot open " << full_path << std::endl;
         }
     });
+
+    for(auto flyweight_iterator = std::begin(unit_flyweights); flyweight_iterator != std::end(unit_flyweights); ++flyweight_iterator) {
+        const float half_width = flyweight_iterator->second.width() / 2.f;
+        const float height = flyweight_iterator->second.height();
+        auto it_value = virtual_textures.find(flyweight_iterator->second.texture());
+
+        rendering::virtual_texture::area_type area;
+        if(it_value != std::end(virtual_textures)) {
+            area = it_value->second.area;
+        }
+        else {
+            area = rendering::virtual_texture::area_type(0.f, 0.f, 1.f, 1.f);
+        }
+
+        rendering::mesh_builder builder;
+        builder.add_vertex(glm::vec3{-half_width, 0.f,    0.f}, glm::vec2{area.left(),  area.top()});
+        builder.add_vertex(glm::vec3{ half_width, 0.f,    0.f}, glm::vec2{area.right(), area.top()});
+        builder.add_vertex(glm::vec3{ half_width, height, 0.f}, glm::vec2{area.right(), area.bottom()});
+
+        builder.add_vertex(glm::vec3{-half_width, 0.f,    0.f}, glm::vec2{area.left(),  area.top()});
+        builder.add_vertex(glm::vec3{ half_width, height, 0.f}, glm::vec2{area.right(), area.bottom()});
+        builder.add_vertex(glm::vec3{-half_width, height, 0.f}, glm::vec2{area.left(),  area.bottom()});
+
+        // TODO: Create billboard
+        flyweight_iterator->second.set_mesh(builder.build());
+    }
 }
 
 void game::setup_inputs() {
@@ -163,6 +189,10 @@ void game::load_virtual_textures() {
 
         if(texture_it != textures.end()) {
             mesh_rendering.set_texture(record.id, rendering::virtual_texture(texture_it->second, record.area));
+            virtual_texture_value value;
+            value.id = record.id;
+            value.area = record.area;
+            virtual_textures[record.name] = value;
         }
         else {
             std::cerr << "can't load virtual texture '" << record.name << "'" << std::endl;
@@ -227,14 +257,13 @@ bool game::can_move(base_unit* unit, glm::vec3 position) const {
 }
 
 // TODO: REMOVE THIS !!!!!!
-rendering::mesh g_TO_REMOVE_GOLEM_MESH;
 target_handle G_TO_REMOVE_GOLEM_HANDLE;
 
 game::game()
 : tasks(std::thread::hardware_concurrency() - 1)
 , game_world(static_cast<uint32_t>(std::time(nullptr)))
 , world_rendering(game_world)
-, game_camera(-400.f, 400.f, -300.f, 300.f, -1000.f, 1000.f)
+, game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)
 , is_scrolling(false)
 , is_running(true)
 , last_fps_duration_index(0)
@@ -242,15 +271,8 @@ game::game()
 , last_fps_timepoint(clock::now()) {
     std::fill(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
 
-    g_TO_REMOVE_GOLEM_MESH = rendering::make_cube(15.f, glm::vec3{1.f, 0.f, 0.f});
-
     // Setup controls
     setup_inputs();
-
-    // Setup units flyweights
-    load_flyweights();
-
-    G_TO_REMOVE_GOLEM_HANDLE = units.add(std::make_unique<unit>(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
 
     // Setup world rendering
     for(int x = 0; x < 20; ++x) {
@@ -264,6 +286,12 @@ game::game()
 
     // Setup mesh rendering
     setup_renderer();
+
+    // Setup units flyweights
+    load_flyweights();
+
+    G_TO_REMOVE_GOLEM_HANDLE = units.add(std::make_unique<unit>(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
+
 }
 
 void game::update(frame_duration last_frame_duration) {
@@ -288,7 +316,9 @@ void game::render() {
 
     // TODO: Render every units
     for(auto unit = units.begin_of_units(); unit != units.end_of_units(); ++unit) {
-        rendering::mesh_renderer renderer(&g_TO_REMOVE_GOLEM_MESH, glm::translate(glm::mat4{1.f}, unit->second->get_position()), TEXTURE_NONE, PROGRAM_STANDARD);
+        rendering::mesh_renderer renderer(&unit->second->mesh(),
+                                          glm::translate(glm::mat4{1.f}, unit->second->get_position()),
+                                          virtual_textures[unit->second->texture()].id , PROGRAM_BILLBOARD);
         mesh_rendering.push(std::move(renderer));
     }
 
@@ -351,10 +381,10 @@ void game::resize(int new_width, int new_height) {
 
     const float aspect = static_cast<float>(new_width) / new_height;
     if(aspect >= 1.0f) {
-        game_camera.adjust(-400.f * aspect, 400.f * aspect, -300.f, 300.f, -1000.f, 1000.f);
+        game_camera.adjust(-400.f * aspect, 400.f * aspect, -400.f, 400.f, -1000.f, 1000.f);
     }
     else {
-        game_camera.adjust(-400.f, 400.f, -300.f / aspect, 300.f / aspect, -1000.f, 1000.f);
+        game_camera.adjust(-400.f, 400.f, -400.f / aspect, 400.f / aspect, -1000.f, 1000.f);
     }
 
     G_TO_REMOVE_SCREEN_WIDTH = new_width;
