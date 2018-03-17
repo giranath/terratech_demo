@@ -90,9 +90,10 @@ add_executable(mmap_demo
         src/rendering/rendering_manager.hpp
         src/control/key_input_handler.cpp
         src/control/camera_commands.hpp 
-	src/constant/rendering.hpp
-	src/control/change_unit_command.cpp
-	src/control/change_unit_command.hpp)
+		src/constant/rendering.hpp
+		src/control/change_unit_command.cpp
+		src/control/change_unit_command.hpp
+		src/control/generic_command.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}

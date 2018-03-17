@@ -2,6 +2,7 @@
 #define MMAP_DEMO_GENERIC_COMMAND_HPP
 
 #include "command.hpp"
+#include <memory>
 
 namespace input {
 	template <typename fn>
@@ -18,7 +19,7 @@ namespace input {
 	};
 
 	template<typename FN>
-	static std::unique_ptr<input::generic_command<FN>> make_generic_command(FN&& fn) {
+	std::unique_ptr<input::generic_command<FN>> make_generic_command(FN&& fn) {
 		return std::make_unique<input::generic_command<FN>>(std::forward<FN>(fn));
 	}
 
