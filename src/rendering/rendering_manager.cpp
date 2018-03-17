@@ -23,7 +23,7 @@ mesh_rendering_system::mesh_rendering_system()
 
 }
 
-void mesh_rendering_system::set_texture(mesh_renderer::texture_handle handle, gl::texture &&texture) {
+void mesh_rendering_system::set_texture(mesh_renderer::texture_handle handle, rendering::virtual_texture&& texture) {
     textures[handle] = std::move(texture);
 }
 
@@ -31,7 +31,7 @@ void mesh_rendering_system::set_camera(camera *cam) noexcept {
     current_camera = cam;
 }
 
-void mesh_rendering_system::set_program(mesh_renderer::program_handle handle, gl::program &&program) {
+void mesh_rendering_system::set_program(mesh_renderer::program_handle handle, gl::program&& program) {
     programs[handle] = std::move(program);
 }
 
@@ -58,8 +58,8 @@ void mesh_rendering_system::render() {
         mesh_renderer::program_handle last_program = -1;
         mesh_renderer::texture_handle last_texture = -1;
 
-        gl::program *current_program = nullptr;
-        gl::texture *current_texture = nullptr;
+        const gl::program* current_program = nullptr;
+        const gl::texture* current_texture = nullptr;
 
         for (const mesh_renderer &renderer : meshes) {
             if (renderer.program != last_program) {
@@ -78,7 +78,7 @@ void mesh_rendering_system::render() {
 
             // Bind new texture
             if (renderer.texture != last_texture) {
-                current_texture = &textures[renderer.texture];
+                current_texture = &textures[renderer.texture].texture();
 
                 auto is_textured_uniform = current_program->find_uniform<int>("is_textured");
 

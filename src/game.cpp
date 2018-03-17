@@ -103,6 +103,7 @@ void game::setup_renderer() {
 
     load_shaders();
     load_textures();
+    load_virtual_textures();
 }
 
 void game::load_textures() {
@@ -118,14 +119,53 @@ void game::load_textures() {
             gl::texture texture = gl::texture::load_from_path(fullpath.c_str());
 
             if (texture.good()) {
-                mesh_rendering.set_texture(record.id, std::move(texture));
+                textures[record.id] = std::move(texture);
             }
             else {
                 std::cerr << "cannot load texture " << record.path << std::endl;
             }
         }
         else {
-            mesh_rendering.set_texture(record.id, gl::texture{});
+            textures[record.id] = gl::texture{};
+        }
+    });
+}
+
+struct virtual_texture_list_record {
+    std::string name;
+    int id;
+    int texture_id;
+    rendering::virtual_texture::area_type area;
+};
+
+std::istream& operator>>(std::istream& stream, rendering::virtual_texture::area_type& area) {
+    rendering::virtual_texture::area_type::value_type left, right, top, bottom;
+    stream >> left >> bottom >> right >> top;
+
+    area = rendering::virtual_texture::area_type(left, bottom, right, top);
+
+    return stream;
+}
+
+std::istream& operator>>(std::istream& stream, virtual_texture_list_record& record) {
+    return stream >> record.name >> record.id >> record.texture_id >> record.area;
+}
+
+void game::load_virtual_textures() {
+    std::ifstream texture_list_stream("asset/data/virtual_texture.list");
+    std::vector<virtual_texture_list_record> texture_records;
+    std::copy(std::istream_iterator<virtual_texture_list_record>(texture_list_stream),
+              std::istream_iterator<virtual_texture_list_record>(),
+              std::back_inserter(texture_records));
+
+    std::for_each(std::begin(texture_records), std::end(texture_records), [this](const virtual_texture_list_record& record) {
+        auto texture_it = textures.find(record.texture_id);
+
+        if(texture_it != textures.end()) {
+            mesh_rendering.set_texture(record.id, rendering::virtual_texture(texture_it->second, record.area));
+        }
+        else {
+            std::cerr << "can't load virtual texture '" << record.name << "'" << std::endl;
         }
     });
 }
