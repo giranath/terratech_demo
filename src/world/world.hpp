@@ -18,6 +18,8 @@ public:
 
     world_chunk& generate_at(int x, int z);
     world_chunk& chunk_at(int x, int z);
+    world_chunk* get_chunk(int x, int z);
+    const world_chunk* get_chunk(int x, int z) const;
 };
 
 #endif

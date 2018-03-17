@@ -4,8 +4,8 @@
 
 #include "actor/unit.hpp"
 #include "constant/rendering.hpp"
+#include "world/world_generator.hpp"
 
-#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iterator>
@@ -158,6 +158,34 @@ void game::load_shaders() {
     });
 }
 
+// TODO: Move out of here
+// Cette fonction indique si un unité peut se déplacer à une position donnée
+bool game::can_move(base_unit* unit, glm::vec3 position) const {
+    const float CHUNK_WIDTH = world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE;
+    const float CHUNK_DEPTH = world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE;
+
+    if(unit) {
+        int chunk_x = position.x / CHUNK_WIDTH;
+        int chunk_z = position.z / CHUNK_DEPTH;
+
+        const world_chunk* chunk = game_world.get_chunk(chunk_x, chunk_z);
+        if(chunk) {
+            const glm::vec3 chunk_space_position(position.x - chunk_x * CHUNK_WIDTH,
+                                                 position.y,
+                                                 position.z - chunk_z * CHUNK_DEPTH);
+
+            const int x_region = chunk_space_position.x / rendering::chunk_renderer::SQUARE_SIZE;
+            const int z_region = chunk_space_position.z / rendering::chunk_renderer::SQUARE_SIZE;
+
+            int region = chunk->biome_at(x_region, 0, z_region);
+
+            return region != BIOME_WATER;
+        }
+    }
+
+    return false;
+}
+
 // TODO: REMOVE THIS !!!!!!
 rendering::mesh g_TO_REMOVE_GOLEM_MESH;
 target_handle G_TO_REMOVE_GOLEM_HANDLE;
@@ -174,7 +202,7 @@ game::game()
 , last_fps_timepoint(clock::now()) {
     std::fill(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
 
-    g_TO_REMOVE_GOLEM_MESH = rendering::make_cube(rendering::chunk_renderer::SQUARE_SIZE, glm::vec3{1.f, 0.f, 0.f});
+    g_TO_REMOVE_GOLEM_MESH = rendering::make_cube(15.f, glm::vec3{1.f, 0.f, 0.f});
 
     // Setup controls
     setup_inputs();
@@ -206,8 +234,13 @@ void game::update(frame_duration last_frame_duration) {
     unit* my_golem = static_cast<unit*>(G_TO_REMOVE_GOLEM_HANDLE.get());
     glm::vec3& golem_pos = my_golem->get_position();
 
-    golem_pos.x += 0.1f * last_frame_ms.count();
-    golem_pos.z += 0.1f * last_frame_ms.count();
+    glm::vec3 new_position = golem_pos;
+    new_position.x += 0.1f * last_frame_ms.count();
+    new_position.z += 0.1f * last_frame_ms.count();
+
+    if(can_move(my_golem, new_position)) {
+        golem_pos = new_position;
+    }
 }
 
 void game::render() {

@@ -7,7 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(DISABLE_PROFILER "Disable profiling when ON" OFF)
 
-find_package(terratech 0.5 REQUIRED)
+find_package(terratech 0.5.2 REQUIRED)
 find_package(sdl2 REQUIRED)
 find_package(sdl2_image REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -89,7 +89,15 @@ add_executable(mmap_demo
         src/rendering/rendering_manager.cpp
         src/rendering/rendering_manager.hpp
         src/control/key_input_handler.cpp
-        src/control/camera_commands.hpp src/constant/rendering.hpp)
+        src/control/camera_commands.hpp
+        src/constant/rendering.hpp
+        src/collision/circle_shape.cpp
+        src/collision/circle_shape.hpp
+        src/collision/aabb_shape.cpp
+        src/collision/aabb_shape.hpp
+        src/collision/collision_detector.cpp
+        src/collision/collision_detector.hpp
+        src/world/biome_type.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
@@ -106,6 +114,7 @@ target_link_libraries(mmap_demo
         ${OPENGL_gl_LIBRARY}
         ${CMAKE_THREAD_LIBS_INIT}
         ${CMAKE_DL_LIBS})
+set_target_properties(mmap_demo PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 
 target_compile_definitions(mmap_demo PRIVATE -DGAME_VERSION="${PROJECT_VERSION}")
 
