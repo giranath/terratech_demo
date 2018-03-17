@@ -21,8 +21,14 @@ public:
     using frame_duration = clock::duration;
     using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>;
 private:
+    struct virtual_texture_value {
+        int id;
+        rendering::virtual_texture::area_type area;
+    };
     async::task_executor tasks;
     input::key_input_handler key_inputs;
+    std::unordered_map<int, gl::texture> textures;
+    std::unordered_map<std::string, virtual_texture_value> virtual_textures;
     world game_world;
     unit_manager units;
     unit_flyweight_manager unit_flyweights;
@@ -41,6 +47,7 @@ private:
     void setup_inputs();
     void setup_renderer();
     void load_textures();
+    void load_virtual_textures();
     void load_shaders();
 
     bool can_move(base_unit* unit, glm::vec3 position) const;

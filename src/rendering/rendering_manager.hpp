@@ -4,6 +4,7 @@
 #include "camera.hpp"
 #include "mesh.hpp"
 #include "../opengl/opengl.hpp"
+#include "virtual_texture.hpp"
 
 #include <unordered_map>
 #include <glm/glm.hpp>
@@ -31,7 +32,7 @@ struct mesh_renderer {
 class mesh_rendering_system {
     gl::vertex_array vao;
     std::vector<mesh_renderer> meshes;
-    std::unordered_map<mesh_renderer::texture_handle, gl::texture> textures;
+    std::unordered_map<mesh_renderer::texture_handle, virtual_texture> textures;
     std::unordered_map<mesh_renderer::program_handle, gl::program> programs;
     camera *current_camera{};
 public:
@@ -39,9 +40,9 @@ public:
 
     void set_camera(camera *camera) noexcept;
 
-    void set_texture(mesh_renderer::texture_handle handle, gl::texture &&texture);
+    void set_texture(mesh_renderer::texture_handle handle, virtual_texture&& texture);
 
-    void set_program(mesh_renderer::program_handle handle, gl::program &&program);
+    void set_program(mesh_renderer::program_handle handle, gl::program&& program);
 
     void push(const mesh_renderer &renderer);
 
