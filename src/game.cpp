@@ -77,6 +77,21 @@ void game::setup_inputs() {
     key_inputs.register_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
     // Wireframe
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
+
+	// Change Unit To Spawn
+	key_inputs.register_action(SDLK_1, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 100));
+	key_inputs.register_action(SDLK_2, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 101));
+	key_inputs.register_action(SDLK_3, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 102));
+	key_inputs.register_action(SDLK_4, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 103));
+	key_inputs.register_action(SDLK_5, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 104));
+	key_inputs.register_action(SDLK_6, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 105));
+	key_inputs.register_action(SDLK_7, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 106));
+	key_inputs.register_action(SDLK_8, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 107));
+	key_inputs.register_action(SDLK_9, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 108));
+	key_inputs.register_action(SDLK_0, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 109));
+	key_inputs.register_action(SDLK_p, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 110));
+	key_inputs.register_action(SDLK_o, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 111));
+	key_inputs.register_action(SDLK_i, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 112));
 }
 
 struct shader_list_record {
@@ -247,7 +262,7 @@ void game::handle_event(SDL_Event event) {
             const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
 
 			glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
-			units.add(std::make_unique<unit>(test, glm::vec2{ 0.f, 0.f }, &unit_flyweights[106], &units));
+			units.add(std::make_unique<unit>(test, glm::vec2{ 0.f, 0.f }, &unit_flyweights[next_unit_to_spawn], &units));
 
 			std::cout << "pick : " << test.x << "," << test.y << "," << test.z << std::endl;
 
