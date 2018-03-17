@@ -40,5 +40,11 @@ public:
     uint32_t get_id() const noexcept {
         return id;
     }
+
+	float get_speed()
+	{
+		return flyweight->get_speed();
+	}
+
 };
 #endif

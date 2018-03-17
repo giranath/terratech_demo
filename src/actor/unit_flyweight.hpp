@@ -22,10 +22,10 @@ private:
     int height;
     int width;
     int construction_time;
-    uint16_t speed;
+    float speed;
     uint16_t damage;
     int16_t armor;
-    int16_t range;
+    float range;
     uint8_t tranport_unit_capacity;
     uint8_t population_cost;
     bool transportable;
@@ -45,6 +45,11 @@ public:
     {
         return tranport_unit_capacity;
     }
+
+	float get_speed()
+	{
+		return speed;
+	}
     
     void load_unit_from_json(const nlohmann::json& json)
     {
