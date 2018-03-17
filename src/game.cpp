@@ -5,6 +5,7 @@
 #include "actor/unit.hpp"
 #include "constant/rendering.hpp"
 
+#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iterator>
@@ -239,15 +240,13 @@ void game::handle_event(SDL_Event event) {
             is_scrolling = true;
         }
         else if(event.button.button == SDL_BUTTON_LEFT) {
-			glm::vec3 world_pos;
-            glm::vec3 world_direction;
+            const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
+            const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
 
-			glm::vec2 coords{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y };
+			const glm::vec2 coords{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y };
+            const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
 
-            game_camera.screen_to_world_raw(coords, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT, world_pos, world_direction);
-			
-			glm::vec3 test = game_camera.LinePlaneIntersection(world_pos, world_direction, {0, 1, 0});
-
+            glm::vec3 test = game_camera.world_coordinate_of(normalized_coords);
 			units.add(std::make_unique<unit>(test, glm::vec2{ 0.f, 0.f }, &unit_flyweights[106], &units));
 
 			std::cout << "pick : " << test.x << "," << test.y << "," << test.z << std::endl;

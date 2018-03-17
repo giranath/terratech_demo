@@ -20,6 +20,8 @@ class camera {
     glm::vec3 target_direction;
     glm::mat4 projection_mat;
 
+	glm::vec3 unproject(glm::vec2 screen_coord, float depth) const noexcept;
+
 public:
     camera(float left, float right, float bottom, float top, float near, float far);
 
@@ -54,14 +56,17 @@ public:
 	/// \param window_width Game screen window width
 	/// \param position World position calculated by the
 	/// \param direction Direction in the world
-	void screen_to_world_raw(const glm::vec2 mouse_position, const int window_widht, const int window_height, glm::vec3& position, glm::vec3& direction) const noexcept;
+	void screen_to_world_raw(glm::vec2 screen_coords, const int window_widht, const int window_height, glm::vec3& position, glm::vec3& direction) const noexcept;
 
 	/// \param mouse_position Mouse screen position betwen -1 and 1
 	/// \param position World position calculated by the
 	/// \param direction Direction in the world
-	void screen_to_world(const glm::vec2 mouse_position, glm::vec3& position, glm::vec3& direction) const noexcept;
+	void screen_to_world(glm::vec2 normalized_screen_coords, glm::vec3& position, glm::vec3& direction) const noexcept;
+	glm::vec3 line_plane_intersection(glm::vec3 position, glm::vec3 direction, glm::vec3 plane_normal) const noexcept;
 
-	glm::vec3 LinePlaneIntersection(const glm::vec3 position, const glm::vec3 direction, glm::vec3 plane_normal) const noexcept;
+	glm::vec3 world_coordinate_of(glm::vec2 normalized_screen_coords) const noexcept;
+
+	std::pair<glm::vec3, glm::vec3> ray_of(glm::vec2 normalized_screen_coords) const noexcept;
 
 	glm::vec3 position() const noexcept;
 };

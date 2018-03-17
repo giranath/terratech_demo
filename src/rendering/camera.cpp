@@ -102,7 +102,17 @@ namespace rendering {
 			res_x.second->x, res_y.first->y, res_z.second->z};
 	}
 
-	void camera::screen_to_world_raw(const glm::vec2 mouse_position, const int window_width, const int window_height, glm::vec3& position, glm::vec3& direction) const noexcept
+	glm::vec3 camera::unproject(glm::vec2 screen_coord, float depth) const noexcept {
+		glm::vec4 coordinate(screen_coord.x, screen_coord.y, depth, 1.0f);
+		glm::mat4 inv = glm::inverse(matrix());
+
+		glm::vec4 temp = inv * coordinate;
+		temp /= temp.w;
+
+		return glm::vec3{temp.x, temp.y, temp.z};
+	}
+
+	void camera::screen_to_world_raw(glm::vec2 mouse_position, const int window_width, const int window_height, glm::vec3& position, glm::vec3& direction) const noexcept
 	{
 		float half_height = window_height / 2.0f;
 		float half_width = window_width / 2.0f;
@@ -118,23 +128,28 @@ namespace rendering {
 		screen_to_world(clamped_position, position, direction);
 	}
 
-	void camera::screen_to_world(const glm::vec2 mouse_position, glm::vec3& position, glm::vec3& direction) const noexcept
+	void camera::screen_to_world(glm::vec2 mouse_position, glm::vec3& position, glm::vec3& direction) const noexcept
 	{
-		glm::vec4 coordinate(mouse_position.x, mouse_position.y, 0.f, 1.0f);
-		glm::mat4 inv = glm::inverse(matrix());
-
-		glm::vec4 temp = inv * coordinate;
-		temp /= temp.w;
-		position = { temp.x, temp.y, temp.z };
-
+		position = unproject(mouse_position, 0.f);
 		direction = this->direction();
 	}
 
-	glm::vec3 camera::LinePlaneIntersection(const glm::vec3 position, const glm::vec3 direction, glm::vec3 plane_normal) const noexcept
+	glm::vec3 camera::line_plane_intersection(glm::vec3 position, glm::vec3 direction, glm::vec3 plane_normal) const noexcept
 	{
 		float d = glm::dot(glm::vec3(0,0,0) -position, plane_normal) / glm::dot(direction, plane_normal);
 
 		return d * direction + position;
+	}
+
+    glm::vec3 camera::world_coordinate_of(glm::vec2 normalized_mouse_pos) const noexcept {
+        glm::vec3 pos, dir;
+
+        screen_to_world(normalized_mouse_pos, pos, dir);
+        return line_plane_intersection(pos, dir, glm::vec3(0.f, 1.f, 0.f));
+    }
+
+	std::pair<glm::vec3, glm::vec3> camera::ray_of(glm::vec2 normalized_screen_coords) const noexcept {
+		return std::make_pair(unproject(normalized_screen_coords, -1.f), unproject(normalized_screen_coords, 1.f));
 	}
 
 	glm::vec3 camera::position() const noexcept {
