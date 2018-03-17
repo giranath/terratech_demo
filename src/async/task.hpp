@@ -1,6 +1,8 @@
 #ifndef MMAP_DEMO_TASK_HPP
 #define MMAP_DEMO_TASK_HPP
 
+#include <memory>
+
 namespace async {
 
 class base_task {
@@ -22,6 +24,11 @@ public:
         fn();
     }
 };
+
+template<typename FN>
+std::unique_ptr<task<FN>> make_task(FN&& fn) {
+	return std::make_unique<task<FN>>(std::forward<FN>(fn));
+}
 
 }
 

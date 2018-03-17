@@ -41,6 +41,7 @@ private:
     std::size_t last_fps_duration_index;
     int frame_count;
     clock::time_point last_fps_timepoint;
+	int next_unit_to_spawn = 106;
 
     void load_flyweight(std::ifstream& stream);
     void load_flyweights();
