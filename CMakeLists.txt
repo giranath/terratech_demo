@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(DISABLE_PROFILER "Disable profiling when ON" OFF)
+option(ENABLE_TOOLS "Enable tools compilation" OFF)
 
 find_package(terratech 0.5.2 REQUIRED)
 find_package(sdl2 REQUIRED)
@@ -101,7 +102,9 @@ add_executable(mmap_demo
         src/collision/aabb_shape.hpp
         src/collision/collision_detector.cpp
         src/collision/collision_detector.hpp
-        src/world/biome_type.hpp src/rendering/virtual_texture.cpp src/rendering/virtual_texture.hpp)
+        src/world/biome_type.hpp
+		src/rendering/virtual_texture.cpp
+		src/rendering/virtual_texture.hpp src/datadriven/virtual_texture_list_record.cpp src/datadriven/virtual_texture_list_record.hpp src/datadriven/shader_list_record.cpp src/datadriven/shader_list_record.hpp src/datadriven/texture_list_record.cpp src/datadriven/texture_list_record.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
@@ -124,4 +127,8 @@ target_compile_definitions(mmap_demo PRIVATE -DGAME_VERSION="${PROJECT_VERSION}"
 
 if(DISABLE_PROFILER)
     target_compile_definitions(mmap_demo PRIVATE -DNPROFILER)
+endif()
+
+if(ENABLE_TOOLS)
+	add_subdirectory(tool)
 endif()

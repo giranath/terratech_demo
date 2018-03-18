@@ -8,6 +8,10 @@
 #include "collision/collision_detector.hpp"
 #include "collision/aabb_shape.hpp"
 
+#include "datadriven/virtual_texture_list_record.hpp"
+#include "datadriven/shader_list_record.hpp"
+#include "datadriven/texture_list_record.hpp"
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iterator>
@@ -15,11 +19,20 @@
 #include <memory>
 #include <functional>
 
-
 // TODO: Include filesystem
 
 int G_TO_REMOVE_SCREEN_WIDTH = 0;
 int G_TO_REMOVE_SCREEN_HEIGHT = 0;
+
+template<typename Type, typename Fn>
+std::vector<Type> load_data_list(std::istream& stream, Fn fn) {
+    std::vector<Type> elements;
+    std::copy(std::istream_iterator<Type>(stream), std::istream_iterator<Type>(), std::back_inserter(elements));
+
+    std::for_each(std::begin(elements), std::end(elements), fn);
+
+    return elements;
+}
 
 template<typename Shader>
 Shader load_shader(const std::string& path) {
@@ -49,18 +62,11 @@ void game::load_flyweight(std::ifstream& stream) {
 
 void game::load_flyweights() {
     std::ifstream units_list_stream("asset/data/unit.list");
-
-    std::vector<std::string> units_to_load;
-    std::copy(std::istream_iterator<std::string>(units_list_stream), std::istream_iterator<std::string>(),
-              std::back_inserter(units_to_load));
-
-    std::cout << "will load units" << std::endl;
-    std::for_each(std::begin(units_to_load), std::end(units_to_load), [this](const std::string& rel_path) {
+    load_data_list<std::string>(units_list_stream, [this](const std::string& rel_path) {
         std::string full_path = "asset/data/" + rel_path;
 
         std::ifstream unit_stream(full_path);
         if(unit_stream.is_open()) {
-            std::cout << "loading " << full_path << std::endl;
             load_flyweight(unit_stream);
         }
         else {
@@ -95,6 +101,75 @@ void game::load_flyweights() {
     }
 }
 
+void game::setup_renderer() {
+    mesh_rendering.set_camera(&game_camera);
+
+    load_shaders();
+    load_textures();
+    load_virtual_textures();
+}
+
+void game::load_textures() {
+    std::ifstream texture_list_stream("asset/data/texture.list");
+    load_data_list<data::texture_list_record>(texture_list_stream, [this](const data::texture_list_record& record) {
+        if(record.path != "NONE") {
+            std::string fullpath = "asset/texture/" + record.path;
+            gl::texture texture = gl::texture::load_from_path(fullpath.c_str());
+
+            if (texture.good()) {
+                textures[record.id] = std::move(texture);
+            }
+            else {
+                std::cerr << "cannot load texture " << record.path << std::endl;
+            }
+        }
+        else {
+            textures[record.id] = gl::texture{};
+        }
+    });
+}
+
+void game::load_virtual_textures() {
+    std::ifstream texture_list_stream("asset/data/virtual_texture.list");
+    load_data_list<data::virtual_texture_list_record>(texture_list_stream, [this](const data::virtual_texture_list_record& record) {
+        auto texture_it = textures.find(record.texture_id);
+
+        if(texture_it != textures.end()) {
+            mesh_rendering.set_texture(record.id, rendering::virtual_texture(texture_it->second, record.area));
+            virtual_texture_value value;
+            value.id = record.id;
+            value.area = record.area;
+            virtual_textures[record.name] = value;
+        }
+        else {
+            std::cerr << "can't load virtual texture '" << record.name << "'" << std::endl;
+        }
+    });
+}
+
+void game::load_shaders() {
+    std::ifstream program_list_stream("asset/data/shader.list");
+    load_data_list<data::shader_list_record>(program_list_stream, [this](const data::shader_list_record& record) {
+        auto vertex_shader = load_shader<gl::vertex_shader>("asset/shader/" + record.vertex_path);
+        auto fragment_shader = load_shader<gl::fragment_shader>("asset/shader/" + record.fragment_path);
+
+        if(vertex_shader.good() && fragment_shader.good()) {
+            gl::program program;
+            program.attach(vertex_shader);
+            program.attach(fragment_shader);
+
+            auto res = program.link();
+            if(res.good()) {
+                mesh_rendering.set_program(record.id, std::move(program));
+            }
+            else {
+                std::cerr << "cannot link shader #" << record.id << std::endl;
+                std::cerr << res.message() << std::endl;
+            }
+        }
+    });
+}
+
 void game::setup_inputs() {
     // Camera movements
     key_inputs.register_state(SDLK_LEFT, std::make_unique<input::look_left_command>(game_camera, 10.f));
@@ -122,131 +197,9 @@ void game::setup_inputs() {
 	key_inputs.register_action(SDLK_0, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 109));
 	key_inputs.register_action(SDLK_p, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 110));
 	key_inputs.register_action(SDLK_o, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 111));
+
 	// Change Unit To Spawn	using generic_command
 	key_inputs.register_action(SDLK_i, KMOD_NONE, input::make_generic_command([&]() { next_unit_to_spawn = 112; }));
-}
-
-struct shader_list_record {
-    int id;
-    std::string vertex_path;
-    std::string fragment_path;
-};
-
-std::istream& operator>>(std::istream& stream, shader_list_record& record) {
-    return stream >> record.id >> record.vertex_path >> record.fragment_path;
-}
-
-struct texture_list_record {
-    int id;
-    std::string path;
-};
-
-std::istream& operator>>(std::istream& stream, texture_list_record& record) {
-    return stream >> record.id >> record.path;
-}
-
-void game::setup_renderer() {
-    mesh_rendering.set_camera(&game_camera);
-
-    load_shaders();
-    load_textures();
-    load_virtual_textures();
-}
-
-void game::load_textures() {
-    std::ifstream texture_list_stream("asset/data/texture.list");
-    std::vector<texture_list_record> texture_records;
-    std::copy(std::istream_iterator<texture_list_record>(texture_list_stream),
-              std::istream_iterator<texture_list_record>(),
-              std::back_inserter(texture_records));
-
-    std::for_each(std::begin(texture_records), std::end(texture_records), [this](const texture_list_record& record) {
-        if(record.path != "NONE") {
-            std::string fullpath = "asset/texture/" + record.path;
-            gl::texture texture = gl::texture::load_from_path(fullpath.c_str());
-
-            if (texture.good()) {
-                textures[record.id] = std::move(texture);
-            }
-            else {
-                std::cerr << "cannot load texture " << record.path << std::endl;
-            }
-        }
-        else {
-            textures[record.id] = gl::texture{};
-        }
-    });
-}
-
-struct virtual_texture_list_record {
-    std::string name;
-    int id;
-    int texture_id;
-    rendering::virtual_texture::area_type area;
-};
-
-std::istream& operator>>(std::istream& stream, rendering::virtual_texture::area_type& area) {
-    rendering::virtual_texture::area_type::value_type left, right, top, bottom;
-    stream >> left >> bottom >> right >> top;
-
-    area = rendering::virtual_texture::area_type(left, bottom, right, top);
-
-    return stream;
-}
-
-std::istream& operator>>(std::istream& stream, virtual_texture_list_record& record) {
-    return stream >> record.name >> record.id >> record.texture_id >> record.area;
-}
-
-void game::load_virtual_textures() {
-    std::ifstream texture_list_stream("asset/data/virtual_texture.list");
-    std::vector<virtual_texture_list_record> texture_records;
-    std::copy(std::istream_iterator<virtual_texture_list_record>(texture_list_stream),
-              std::istream_iterator<virtual_texture_list_record>(),
-              std::back_inserter(texture_records));
-
-    std::for_each(std::begin(texture_records), std::end(texture_records), [this](const virtual_texture_list_record& record) {
-        auto texture_it = textures.find(record.texture_id);
-
-        if(texture_it != textures.end()) {
-            mesh_rendering.set_texture(record.id, rendering::virtual_texture(texture_it->second, record.area));
-            virtual_texture_value value;
-            value.id = record.id;
-            value.area = record.area;
-            virtual_textures[record.name] = value;
-        }
-        else {
-            std::cerr << "can't load virtual texture '" << record.name << "'" << std::endl;
-        }
-    });
-}
-
-void game::load_shaders() {
-    std::ifstream program_list_stream("asset/data/shader.list");
-    std::vector<shader_list_record> shader_records;
-    std::copy(std::istream_iterator<shader_list_record>(program_list_stream),
-              std::istream_iterator<shader_list_record>(),
-              std::back_inserter(shader_records));
-
-    std::for_each(std::begin(shader_records), std::end(shader_records), [this](const shader_list_record& record) {
-        gl::vertex_shader vertex_shader = load_shader<gl::vertex_shader>("asset/shader/" + record.vertex_path);
-        gl::fragment_shader fragment_shader = load_shader<gl::fragment_shader>("asset/shader/" + record.fragment_path);
-
-        if(vertex_shader.good() && fragment_shader.good()) {
-            gl::program program;
-            program.attach(vertex_shader);
-            program.attach(fragment_shader);
-
-            auto res = program.link();
-            if(res.good()) {
-                mesh_rendering.set_program(record.id, std::move(program));
-            }
-            else {
-                std::cerr << "cannot link shader #" << record.id << std::endl;
-                std::cerr << res.message() << std::endl;
-            }
-        }
-    });
 }
 
 // TODO: Move out of here
@@ -277,6 +230,14 @@ bool game::can_move(base_unit* unit, glm::vec3 position) const {
     return false;
 }
 
+void game::load_datas() {
+    // Setup mesh rendering
+    setup_renderer();
+
+    // Setup units flyweights
+    load_flyweights();
+}
+
 // TODO: REMOVE THIS !!!!!!
 target_handle G_TO_REMOVE_GOLEM_HANDLE;
 
@@ -304,11 +265,7 @@ game::game()
     // Setup camera
     game_camera.reset({-100.f, 10.f, -200.f});
 
-    // Setup mesh rendering
-    setup_renderer();
-
-    // Setup units flyweights
-    load_flyweights();
+    load_datas();
 
     G_TO_REMOVE_GOLEM_HANDLE = units.add(std::make_unique<unit>(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
 
