@@ -26,24 +26,42 @@ private:
         int id;
         rendering::virtual_texture::area_type area;
     };
+
+    // Thread pool
     async::task_executor tasks;
+
+    // Inputs
     input::key_input_handler key_inputs;
+    bool is_scrolling;
+
+    // Textures
     std::unordered_map<int, gl::texture> textures;
     std::unordered_map<std::string, virtual_texture_value> virtual_textures;
+
+    // World
     world game_world;
+
+    // Units
     unit_manager units;
     unit_flyweight_manager unit_flyweights;
+
+    // Rendering
     rendering::world_renderer world_rendering;
     rendering::mesh_rendering_system mesh_rendering;
     rendering::camera game_camera;
-    bool is_scrolling;
+
+    // Game loop management
     bool is_running;
     std::vector<int> last_fps_durations;
     std::size_t last_fps_duration_index;
     int frame_count;
     game_time::highres_clock fps_clock;
-    int next_unit_to_spawn = 106;
 
+    // Gameplay
+    int next_unit_to_spawn = 106;
+    bool can_move(base_unit* unit, glm::vec3 position) const;
+
+    // Initialization functions
     void load_flyweight(std::ifstream& stream);
     void load_flyweights();
     void setup_inputs();
@@ -52,7 +70,7 @@ private:
     void load_virtual_textures();
     void load_shaders();
 
-    bool can_move(base_unit* unit, glm::vec3 position) const;
+    void load_datas();
 
 public:
     game();

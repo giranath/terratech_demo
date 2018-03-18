@@ -1,8 +1,6 @@
 #ifndef DEF_RESSOURCE_VALUE_HPP
 #define DEF_RESSOURCE_VALUE_HPP
 
-
-
 struct ressource_value
 {
     unsigned short int wood;
