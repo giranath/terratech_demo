@@ -1,16 +1,16 @@
 #ifndef MMAP_DEMO_GAME_HPP
 #define MMAP_DEMO_GAME_HPP
 
-#include "async/task_executor.hpp"
+#include "../common/async/task_executor.hpp"
 #include "opengl/opengl.hpp"
-#include "world/world.hpp"
+#include "../common/world/world.hpp"
 #include "rendering/world_renderer.hpp"
 #include "rendering/camera.hpp"
 #include "rendering/rendering_manager.hpp"
 #include "sdl/sdl.hpp"
 #include "control/key_input_handler.hpp"
-#include "actor/unit_manager.hpp"
-#include "time/clock.hpp"
+#include "../common/actor/unit_manager.hpp"
+#include "../common/time/clock.hpp"
 
 #include <chrono>
 #include <array>
@@ -21,6 +21,7 @@ public:
     using clock = std::chrono::high_resolution_clock;
     using frame_duration = clock::duration;
     using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>;
+    using unit_mesh_collection = std::unordered_map<int, rendering::mesh>;
 private:
     struct virtual_texture_value {
         int id;
@@ -44,6 +45,7 @@ private:
     // Units
     unit_manager units;
     unit_flyweight_manager unit_flyweights;
+    unit_mesh_collection unit_meshes;
 
     // Rendering
     rendering::world_renderer world_rendering;

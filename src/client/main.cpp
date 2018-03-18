@@ -1,7 +1,7 @@
 #include "game.hpp"
 #include "sdl/sdl.hpp"
 #include "debug/profiler.hpp"
-#include "time/clock.hpp"
+#include "../common/time/clock.hpp"
 
 #include <iostream>
 #include <iterator>

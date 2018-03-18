@@ -1,15 +1,14 @@
 #include "chunk_renderer.hpp"
-#include "../world/world.hpp"
-#include "../world/world_generator.hpp"
-#include "../bounding_box.hpp"
+#include "../../common/world/world.hpp"
+#include "../../common/world/world_generator.hpp"
+#include "../../common/bounding_box.hpp"
 #include "../debug/profiler.hpp"
+#include "../constant/rendering.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iterator>
 #include <random>
-
-#include "../constant/rendering.hpp"
 
 namespace rendering {
 

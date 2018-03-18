@@ -1,16 +1,16 @@
 #include "game.hpp"
 #include "control/all_commands.hpp"
 #include "debug/profiler.hpp"
-
-#include "actor/unit.hpp"
 #include "constant/rendering.hpp"
-#include "world/world_generator.hpp"
-#include "collision/collision_detector.hpp"
-#include "collision/aabb_shape.hpp"
 
-#include "datadriven/virtual_texture_list_record.hpp"
-#include "datadriven/shader_list_record.hpp"
-#include "datadriven/texture_list_record.hpp"
+#include "../common/actor/unit.hpp"
+#include "../common/world/world_generator.hpp"
+#include "../common/collision/collision_detector.hpp"
+#include "../common/collision/aabb_shape.hpp"
+#include "../common/datadriven/virtual_texture_list_record.hpp"
+#include "../common/datadriven/shader_list_record.hpp"
+#include "../common/datadriven/texture_list_record.hpp"
+#include "../common/datadriven/data_list.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -23,16 +23,6 @@
 
 int G_TO_REMOVE_SCREEN_WIDTH = 0;
 int G_TO_REMOVE_SCREEN_HEIGHT = 0;
-
-template<typename Type, typename Fn>
-std::vector<Type> load_data_list(std::istream& stream, Fn fn) {
-    std::vector<Type> elements;
-    std::copy(std::istream_iterator<Type>(stream), std::istream_iterator<Type>(), std::back_inserter(elements));
-
-    std::for_each(std::begin(elements), std::end(elements), fn);
-
-    return elements;
-}
 
 template<typename Shader>
 Shader load_shader(const std::string& path) {
@@ -62,7 +52,7 @@ void game::load_flyweight(std::ifstream& stream) {
 
 void game::load_flyweights() {
     std::ifstream units_list_stream("asset/data/unit.list");
-    load_data_list<std::string>(units_list_stream, [this](const std::string& rel_path) {
+    data::load_data_list<std::string>(units_list_stream, [this](const std::string& rel_path) {
         std::string full_path = "asset/data/" + rel_path;
 
         std::ifstream unit_stream(full_path);
@@ -96,8 +86,7 @@ void game::load_flyweights() {
         builder.add_vertex(glm::vec3{ half_width, height, 0.f}, glm::vec2{area.right(), area.bottom()});
         builder.add_vertex(glm::vec3{-half_width, height, 0.f}, glm::vec2{area.left(),  area.bottom()});
 
-        // TODO: Create billboard
-        flyweight_iterator->second.set_mesh(builder.build());
+        unit_meshes[flyweight_iterator->first] = builder.build();
     }
 }
 
@@ -111,7 +100,7 @@ void game::setup_renderer() {
 
 void game::load_textures() {
     std::ifstream texture_list_stream("asset/data/texture.list");
-    load_data_list<data::texture_list_record>(texture_list_stream, [this](const data::texture_list_record& record) {
+    data::load_data_list<data::texture_list_record>(texture_list_stream, [this](const data::texture_list_record& record) {
         if(record.path != "NONE") {
             std::string fullpath = "asset/texture/" + record.path;
             gl::texture texture = gl::texture::load_from_path(fullpath.c_str());
@@ -131,7 +120,7 @@ void game::load_textures() {
 
 void game::load_virtual_textures() {
     std::ifstream texture_list_stream("asset/data/virtual_texture.list");
-    load_data_list<data::virtual_texture_list_record>(texture_list_stream, [this](const data::virtual_texture_list_record& record) {
+    data::load_data_list<data::virtual_texture_list_record>(texture_list_stream, [this](const data::virtual_texture_list_record& record) {
         auto texture_it = textures.find(record.texture_id);
 
         if(texture_it != textures.end()) {
@@ -149,7 +138,7 @@ void game::load_virtual_textures() {
 
 void game::load_shaders() {
     std::ifstream program_list_stream("asset/data/shader.list");
-    load_data_list<data::shader_list_record>(program_list_stream, [this](const data::shader_list_record& record) {
+    data::load_data_list<data::shader_list_record>(program_list_stream, [this](const data::shader_list_record& record) {
         auto vertex_shader = load_shader<gl::vertex_shader>("asset/shader/" + record.vertex_path);
         auto fragment_shader = load_shader<gl::fragment_shader>("asset/shader/" + record.fragment_path);
 
@@ -306,7 +295,7 @@ void game::render() {
 
     // TODO: Render every units
     for(auto unit = units.begin_of_units(); unit != units.end_of_units(); ++unit) {
-        rendering::mesh_renderer renderer(&unit->second->mesh(),
+        rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
                                           glm::translate(glm::mat4{1.f}, unit->second->get_position()),
                                           virtual_textures[unit->second->texture()].id , PROGRAM_BILLBOARD);
         mesh_rendering.push(std::move(renderer));

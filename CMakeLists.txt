@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(DISABLE_PROFILER "Disable profiling when ON" OFF)
 option(ENABLE_TOOLS "Enable tools compilation" OFF)
+option(DISABLE_SERVER "Disable server" OFF)
 
 find_package(terratech 0.5.2 REQUIRED)
 find_package(sdl2 REQUIRED)
@@ -15,99 +16,111 @@ find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
 find_package(PythonInterp REQUIRED)
 find_package(Threads REQUIRED)
+find_package(ngsocket REQUIRED)
 
 # Generates GL3W files
 execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/thirdparty/gl3w/gl3w_gen.py")
 
+add_library(common
+        src/common/crypto/rsa.cpp
+        src/common/crypto/rsa.hpp
+        src/common/world/world.cpp
+        src/common/world/world.hpp
+        src/common/world/world_generator.cpp
+        src/common/world/world_generator.hpp
+        src/common/world/world_chunk.cpp
+        src/common/world/world_chunk.hpp
+        src/common/world/site.cpp
+        src/common/world/site.hpp
+        src/common/bounding_box.hpp
+        src/common/actor/actor.hpp
+        src/common/actor/base_unit.hpp
+        src/common/actor/building.hpp
+        src/common/actor/ressource.hpp
+        src/common/actor/ressource_type.hpp
+        src/common/actor/target_handle.hpp
+        src/common/actor/target_handle.cpp
+        src/common/actor/unit.hpp
+        src/common/actor/unit_flyweight.hpp
+        src/common/actor/unit_manager.hpp
+        src/common/actor/unit_manager.cpp
+        src/common/async/task_executor.cpp
+        src/common/async/task_executor.hpp
+        src/common/async/task.hpp
+        src/common/time/clock.hpp
+        src/common/collision/circle_shape.cpp
+        src/common/collision/circle_shape.hpp
+        src/common/collision/aabb_shape.cpp
+        src/common/collision/aabb_shape.hpp
+        src/common/collision/collision_detector.cpp
+        src/common/collision/collision_detector.hpp
+        src/common/world/biome_type.hpp
+        src/common/datadriven/virtual_texture_list_record.hpp
+        src/common/datadriven/virtual_texture_list_record.cpp
+        src/common/datadriven/shader_list_record.cpp
+        src/common/datadriven/shader_list_record.hpp
+        src/common/datadriven/texture_list_record.cpp
+        src/common/datadriven/texture_list_record.hpp
+        src/common/datadriven/data_list.hpp)
+target_include_directories(common PUBLIC "${CMAKE_SOURCE_DIR}/thirdparty")
+
 add_executable(mmap_demo
         "${CMAKE_BINARY_DIR}/src/gl3w.c"
-        src/main.cpp
-        src/sdl/sdl.hpp
-        src/game.cpp
-        src/game.hpp
-        src/opengl/opengl.hpp
-        src/opengl/shader.cpp
-        src/opengl/shader.hpp
-        src/opengl/program.cpp
-        src/opengl/program.hpp
-        src/opengl/bind.hpp
-        src/opengl/vertex_array.cpp
-        src/opengl/vertex_array.hpp
-        src/opengl/buffer.cpp
-        src/opengl/buffer.hpp
-        src/sdl/poll_event_iterator.cpp
-        src/sdl/poll_event_iterator.hpp
-        src/sdl/window.cpp
-        src/sdl/window.hpp
-        src/sdl/context.hpp
-        src/rendering/camera.cpp
-        src/rendering/camera.hpp
-        src/opengl/uniform.hpp
-        src/crypto/rsa.cpp
-        src/crypto/rsa.hpp
-        src/world/world.cpp
-        src/world/world.hpp
-        src/world/world_generator.cpp
-        src/world/world_generator.hpp
-        src/world/world_chunk.cpp
-        src/world/world_chunk.hpp
-        src/rendering/chunk_renderer.cpp
-        src/rendering/chunk_renderer.hpp
-        src/control/all_commands.hpp
-        src/control/command.hpp
-        src/control/key_input_handler.hpp
-        src/rendering/chunk_renderer.cpp
-        src/rendering/chunk_renderer.hpp
-        src/debug/profiler.hpp
-        src/debug/profiler_administrator.hpp
-        src/opengl/debug.cpp
-        src/opengl/debug.hpp
-        src/rendering/world_renderer.cpp
-        src/rendering/world_renderer.hpp
-        src/world/site.cpp
-        src/world/site.hpp
-        src/rendering/mesh.cpp
-        src/rendering/mesh.hpp
-        src/bounding_box.hpp
-        src/opengl/texture.cpp
-        src/opengl/texture.hpp
-        src/sdl/istream_rwops.cpp
-        src/sdl/istream_rwops.hpp
-        src/actor/actor.hpp
-        src/actor/base_unit.hpp
-        src/actor/building.hpp
-        src/actor/ressource.hpp
-        src/actor/ressource_type.hpp
-        src/actor/target_handle.hpp
-        src/actor/target_handle.cpp
-        src/actor/unit.hpp
-        src/actor/unit_flyweight.hpp
-        src/actor/unit_manager.hpp
-        src/actor/unit_manager.cpp
-        src/async/task_executor.cpp
-        src/async/task_executor.hpp
-        src/async/task.hpp
-        src/rendering/rendering_manager.cpp
-        src/rendering/rendering_manager.hpp
-        src/control/key_input_handler.cpp
-        src/control/camera_commands.hpp
-		src/constant/rendering.hpp
-        src/time/clock.hpp
-		src/control/change_unit_command.cpp
-		src/control/change_unit_command.hpp
-		src/control/generic_command.hpp
-        src/collision/circle_shape.cpp
-        src/collision/circle_shape.hpp
-        src/collision/aabb_shape.cpp
-        src/collision/aabb_shape.hpp
-        src/collision/collision_detector.cpp
-        src/collision/collision_detector.hpp
-        src/world/biome_type.hpp
-		src/rendering/virtual_texture.cpp
-		src/rendering/virtual_texture.hpp src/datadriven/virtual_texture_list_record.cpp src/datadriven/virtual_texture_list_record.hpp src/datadriven/shader_list_record.cpp src/datadriven/shader_list_record.hpp src/datadriven/texture_list_record.cpp src/datadriven/texture_list_record.hpp)
+        src/client/main.cpp
+        src/client/sdl/sdl.hpp
+        src/client/game.cpp
+        src/client/game.hpp
+        src/client/opengl/opengl.hpp
+        src/client/opengl/shader.cpp
+        src/client/opengl/shader.hpp
+        src/client/opengl/program.cpp
+        src/client/opengl/program.hpp
+        src/client/opengl/bind.hpp
+        src/client/opengl/vertex_array.cpp
+        src/client/opengl/vertex_array.hpp
+        src/client/opengl/buffer.cpp
+        src/client/opengl/buffer.hpp
+        src/client/sdl/poll_event_iterator.cpp
+        src/client/sdl/poll_event_iterator.hpp
+        src/client/sdl/window.cpp
+        src/client/sdl/window.hpp
+        src/client/sdl/context.hpp
+        src/client/rendering/camera.cpp
+        src/client/rendering/camera.hpp
+        src/client/opengl/uniform.hpp
+        src/client/rendering/chunk_renderer.cpp
+        src/client/rendering/chunk_renderer.hpp
+        src/client/control/all_commands.hpp
+        src/client/control/command.hpp
+        src/client/control/key_input_handler.hpp
+        src/client/rendering/chunk_renderer.cpp
+        src/client/rendering/chunk_renderer.hpp
+        src/client/debug/profiler.hpp
+        src/client/debug/profiler_administrator.hpp
+        src/client/opengl/debug.cpp
+        src/client/opengl/debug.hpp
+        src/client/rendering/world_renderer.cpp
+        src/client/rendering/world_renderer.hpp
+        src/client/rendering/mesh.cpp
+        src/client/rendering/mesh.hpp
+        src/client/opengl/texture.cpp
+        src/client/opengl/texture.hpp
+        src/client/sdl/istream_rwops.cpp
+        src/client/sdl/istream_rwops.hpp
+        src/client/rendering/rendering_manager.cpp
+        src/client/rendering/rendering_manager.hpp
+        src/client/control/key_input_handler.cpp
+        src/client/control/camera_commands.hpp
+        src/client/constant/rendering.hpp
+        src/client/control/change_unit_command.cpp
+        src/client/control/change_unit_command.hpp
+        src/client/control/generic_command.hpp
+        src/client/rendering/virtual_texture.cpp
+        src/client/rendering/virtual_texture.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
+        ${ngsocket_INCLUDE_DIRS}
         ${SDL2_INCLUDE_DIRS}
         ${sdl2_image_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
@@ -115,7 +128,9 @@ target_include_directories(mmap_demo PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         "${CMAKE_BINARY_DIR}/include")
 target_link_libraries(mmap_demo
+        common
         ${terratech_LIBRARIES}
+        ${ngsocket_LIBRARIES}
         ${SDL2_LIBRARIES}
         ${sdl2_image_LIBRARIES}
         ${OPENGL_gl_LIBRARY}
@@ -125,10 +140,27 @@ set_target_properties(mmap_demo PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAK
 
 target_compile_definitions(mmap_demo PRIVATE -DGAME_VERSION="${PROJECT_VERSION}")
 
-if(DISABLE_PROFILER)
+if (DISABLE_PROFILER)
     target_compile_definitions(mmap_demo PRIVATE -DNPROFILER)
-endif()
+endif ()
 
-if(ENABLE_TOOLS)
-	add_subdirectory(tool)
+if (ENABLE_TOOLS)
+    add_subdirectory(tool)
+endif ()
+
+if (NOT DISABLE_SERVER)
+    add_executable(server
+        src/server/server.cpp)
+    target_include_directories(server PRIVATE
+            ${terratech_INCLUDE_DIRS}
+            ${ngsocket_INCLUDE_DIRS}
+            ${GLM_INCLUDE_DIRS}
+            "${CMAKE_SOURCE_DIR}/thirdparty")
+    target_link_libraries(server
+            common
+            ${terratech_LIBRARIES}
+            ${ngsocket_LIBRARIES}
+            ${CMAKE_THREAD_LIBS_INIT}
+            ${CMAKE_DL_LIBS})
+    target_compile_definitions(server PRIVATE -DGAME_SERVER)
 endif()

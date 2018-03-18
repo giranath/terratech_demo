@@ -2,7 +2,7 @@
 #define MMAP_DEMO_VIRTUAL_TEXTURE_HPP
 
 #include "../opengl/texture.hpp"
-#include "../bounding_box.hpp"
+#include "../../common/bounding_box.hpp"
 
 namespace rendering {
 

@@ -22,9 +22,9 @@ world_generator_chunk::operator const terra_chunk*() noexcept {
 
 world_generator::world_generator(uint32_t seed, uint32_t chunk_width, uint32_t chunk_depth)
 : map_generator{terra_map_create(seed, chunk_width, 1, chunk_depth, CHUNK_NOISE_RATIO)}
-, altitude_layer{terra_map_add_noise_layer(map_generator, TERRA_NOISE_OCTAVE_PERLIN)}
-, humidity_layer{terra_map_add_noise_layer(map_generator, TERRA_NOISE_OCTAVE_PERLIN)}
-, temperature_layer{terra_map_add_noise_layer(map_generator, TERRA_NOISE_OCTAVE_PERLIN)}{
+, altitude_layer{terra_map_add_noise_layer(map_generator, TERRA_NOISE_FRACTAL_SIMPLEX)}
+, humidity_layer{terra_map_add_noise_layer(map_generator, TERRA_NOISE_FRACTAL_SIMPLEX)}
+, temperature_layer{terra_map_add_noise_layer(map_generator, TERRA_NOISE_FRACTAL_SIMPLEX)}{
     if(altitude_layer == TERRA_LAYER_INVALID
     || humidity_layer == TERRA_LAYER_INVALID
     || temperature_layer == TERRA_LAYER_INVALID) {

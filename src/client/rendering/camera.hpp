@@ -1,7 +1,7 @@
 #ifndef MMAP_DEMO_CAMERA_HPP
 #define MMAP_DEMO_CAMERA_HPP
 
-#include "../bounding_box.hpp"
+#include "../../common/bounding_box.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
