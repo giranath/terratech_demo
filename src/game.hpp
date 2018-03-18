@@ -10,6 +10,7 @@
 #include "sdl/sdl.hpp"
 #include "control/key_input_handler.hpp"
 #include "actor/unit_manager.hpp"
+#include "time/clock.hpp"
 
 #include <chrono>
 #include <array>
@@ -37,11 +38,11 @@ private:
     rendering::camera game_camera;
     bool is_scrolling;
     bool is_running;
-    std::array<int, 10> last_fps_durations;
+    std::vector<int> last_fps_durations;
     std::size_t last_fps_duration_index;
     int frame_count;
-    clock::time_point last_fps_timepoint;
-	int next_unit_to_spawn = 106;
+    game_time::highres_clock fps_clock;
+    int next_unit_to_spawn = 106;
 
     void load_flyweight(std::ifstream& stream);
     void load_flyweights();
@@ -67,6 +68,7 @@ public:
     void kill() noexcept;
 
     int fps() const noexcept;
+    float average_fps() const noexcept;
 };
 
 

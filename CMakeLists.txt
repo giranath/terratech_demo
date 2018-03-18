@@ -89,8 +89,9 @@ add_executable(mmap_demo
         src/rendering/rendering_manager.cpp
         src/rendering/rendering_manager.hpp
         src/control/key_input_handler.cpp
-        src/control/camera_commands.hpp 
+        src/control/camera_commands.hpp
 		src/constant/rendering.hpp
+        src/time/clock.hpp
 		src/control/change_unit_command.cpp
 		src/control/change_unit_command.hpp
 		src/control/generic_command.hpp

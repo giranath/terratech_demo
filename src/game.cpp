@@ -288,9 +288,8 @@ game::game()
 , is_scrolling(false)
 , is_running(true)
 , last_fps_duration_index(0)
-, frame_count(0)
-, last_fps_timepoint(clock::now()) {
-    std::fill(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
+, frame_count(0) {
+    last_fps_durations.reserve(10);
 
     // Setup controls
     setup_inputs();
@@ -361,11 +360,17 @@ void game::render() {
 
     // Calculates FPS
     ++frame_count;
-    const clock::time_point now = clock::now();
-    if(std::chrono::duration_cast<std::chrono::seconds>(now - last_fps_timepoint).count() >= 1) {
-        last_fps_timepoint = now;
+    if(fps_clock.elapsed_time<std::chrono::seconds>() >= std::chrono::seconds(1)) {
+        fps_clock.substract(std::chrono::seconds(1)); // Keep time accumulation
 
-        last_fps_durations[last_fps_duration_index++ % last_fps_durations.size()] = frame_count;
+        if(last_fps_durations.size() < last_fps_durations.capacity()) {
+            last_fps_durations.push_back(frame_count);
+            last_fps_duration_index = last_fps_durations.size() - 1;
+        }
+        else {
+            last_fps_durations[last_fps_duration_index] = frame_count;
+            last_fps_duration_index = (last_fps_duration_index + 1) % last_fps_durations.capacity();
+        }
 
         frame_count = 0;
     }
@@ -457,7 +462,14 @@ void game::kill() noexcept {
 }
 
 int game::fps() const noexcept {
-    int sum = std::accumulate(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
+    if(last_fps_durations.empty()) return 0;
 
-    return static_cast<int>(sum / last_fps_durations.size());
+    return last_fps_durations[last_fps_duration_index];
+}
+
+float game::average_fps() const noexcept {
+    if(last_fps_durations.empty()) return 0.f;
+
+    float sum = std::accumulate(std::begin(last_fps_durations), std::end(last_fps_durations), 0.f);
+    return sum / last_fps_durations.size();
 }
