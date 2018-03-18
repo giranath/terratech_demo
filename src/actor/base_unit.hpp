@@ -41,14 +41,14 @@ public:
         return id;
     }
 
+    int get_type_id() const noexcept {
+        return flyweight->id();
+    }
+
 	float get_speed()
 	{
 		return flyweight->get_speed();
 	}
-
-    const rendering::mesh& mesh() const noexcept {
-        return flyweight->mesh();
-    }
 
     const std::string& texture() const noexcept {
         return flyweight->texture();

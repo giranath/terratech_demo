@@ -1,8 +1,6 @@
 #ifndef DEF_TARGET_HANDLE_HPP
 #define DEF_TARGET_HANDLE_HPP
 
-
-
 class unit_manager;
 class base_unit;
 class target_handle

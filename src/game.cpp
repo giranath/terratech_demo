@@ -96,8 +96,7 @@ void game::load_flyweights() {
         builder.add_vertex(glm::vec3{ half_width, height, 0.f}, glm::vec2{area.right(), area.bottom()});
         builder.add_vertex(glm::vec3{-half_width, height, 0.f}, glm::vec2{area.left(),  area.bottom()});
 
-        // TODO: Create billboard
-        flyweight_iterator->second.set_mesh(builder.build());
+        unit_meshes[flyweight_iterator->first] = builder.build();
     }
 }
 
@@ -306,7 +305,7 @@ void game::render() {
 
     // TODO: Render every units
     for(auto unit = units.begin_of_units(); unit != units.end_of_units(); ++unit) {
-        rendering::mesh_renderer renderer(&unit->second->mesh(),
+        rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
                                           glm::translate(glm::mat4{1.f}, unit->second->get_position()),
                                           virtual_textures[unit->second->texture()].id , PROGRAM_BILLBOARD);
         mesh_rendering.push(std::move(renderer));

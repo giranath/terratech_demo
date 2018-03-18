@@ -4,7 +4,6 @@
 #include "ressource_value.hpp"
 #include "ressource_type.hpp"
 #include "../world/biome_type.hpp"
-#include "../rendering/mesh.hpp"
 
 #include <json/json.hpp>
 #include <vector>
@@ -33,7 +32,6 @@ private:
     uint8_t tranport_unit_capacity;
     uint8_t population_cost;
     bool transportable;
-    rendering::mesh mesh_;
     std::string texture_handle;
 
 public:
@@ -115,18 +113,6 @@ public:
         texture_handle = json["Texture"];
     }
 
-    void set_mesh(rendering::mesh&& mesh) {
-        mesh_ = std::move(mesh);
-    }
-
-    const rendering::mesh& mesh() const noexcept {
-        return mesh_;
-    }
-
-    rendering::mesh& mesh() noexcept {
-        return mesh_;
-    }
-
     const std::string& texture() const noexcept {
         return texture_handle;
     }
@@ -137,6 +123,10 @@ public:
 
     float height() const noexcept {
         return height_;
+    }
+
+    int id() const noexcept {
+        return unit_id;
     }
 };
 #endif
