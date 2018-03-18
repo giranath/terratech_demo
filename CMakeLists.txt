@@ -90,7 +90,11 @@ add_executable(mmap_demo
         src/rendering/rendering_manager.hpp
         src/control/key_input_handler.cpp
         src/control/camera_commands.hpp
-        src/constant/rendering.hpp
+		src/constant/rendering.hpp
+        src/time/clock.hpp
+		src/control/change_unit_command.cpp
+		src/control/change_unit_command.hpp
+		src/control/generic_command.hpp
         src/collision/circle_shape.cpp
         src/collision/circle_shape.hpp
         src/collision/aabb_shape.cpp

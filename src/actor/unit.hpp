@@ -56,5 +56,6 @@ public:
     void gather_ressource()
     {
     }
+
 };
 #endif

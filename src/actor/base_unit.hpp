@@ -41,6 +41,11 @@ public:
         return id;
     }
 
+	float get_speed()
+	{
+		return flyweight->get_speed();
+	}
+
     const rendering::mesh& mesh() const noexcept {
         return flyweight->mesh();
     }

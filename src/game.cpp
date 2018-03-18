@@ -5,12 +5,16 @@
 #include "actor/unit.hpp"
 #include "constant/rendering.hpp"
 #include "world/world_generator.hpp"
+#include "collision/collision_detector.hpp"
+#include "collision/aabb_shape.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iterator>
 #include <numeric>
 #include <memory>
+#include <functional>
+
 
 // TODO: Include filesystem
 
@@ -103,6 +107,23 @@ void game::setup_inputs() {
     key_inputs.register_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
     // Wireframe
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
+
+
+	// Change Unit To Spawn	using change_unit_command
+	key_inputs.register_action(SDLK_1, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 100));
+	key_inputs.register_action(SDLK_2, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 101));
+	key_inputs.register_action(SDLK_3, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 102));
+	key_inputs.register_action(SDLK_4, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 103));
+	key_inputs.register_action(SDLK_5, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 104));
+	key_inputs.register_action(SDLK_6, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 105));
+	key_inputs.register_action(SDLK_7, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 106));
+	key_inputs.register_action(SDLK_8, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 107));
+	key_inputs.register_action(SDLK_9, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 108));
+	key_inputs.register_action(SDLK_0, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 109));
+	key_inputs.register_action(SDLK_p, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 110));
+	key_inputs.register_action(SDLK_o, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 111));
+	// Change Unit To Spawn	using generic_command
+	key_inputs.register_action(SDLK_i, KMOD_NONE, input::make_generic_command([&]() { next_unit_to_spawn = 112; }));
 }
 
 struct shader_list_record {
@@ -267,9 +288,8 @@ game::game()
 , is_scrolling(false)
 , is_running(true)
 , last_fps_duration_index(0)
-, frame_count(0)
-, last_fps_timepoint(clock::now()) {
-    std::fill(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
+, frame_count(0) {
+    last_fps_durations.reserve(10);
 
     // Setup controls
     setup_inputs();
@@ -297,18 +317,31 @@ game::game()
 void game::update(frame_duration last_frame_duration) {
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
 
+	auto update_task = tasks.push(async::make_task([this, last_frame_ms]() {
+		for (auto u = units.begin_of_units(); u != units.end_of_units(); u++)
+		{
+			unit* actual_unit = static_cast<unit*>(u->second.get());
+
+			glm::vec2 target = actual_unit->get_target_position();
+			glm::vec3 target3D = { target.x, 0, target.y };
+
+			glm::vec3 direction = target3D - actual_unit->get_position();
+
+			if (direction == glm::vec3{})
+				continue;
+
+			direction = glm::normalize(direction);
+
+			glm::vec3 move = actual_unit->get_position() + (direction * 100.0f * (last_frame_ms.count() / 1000.0f));
+
+			if(can_move(actual_unit, move))
+				actual_unit->set_position(move);
+		}
+	}));
+
     key_inputs.dispatch();
 
-    unit* my_golem = static_cast<unit*>(G_TO_REMOVE_GOLEM_HANDLE.get());
-    glm::vec3& golem_pos = my_golem->get_position();
-
-    glm::vec3 new_position = golem_pos;
-    new_position.x += 0.1f * last_frame_ms.count();
-    new_position.z += 0.1f * last_frame_ms.count();
-
-    if(can_move(my_golem, new_position)) {
-        golem_pos = new_position;
-    }
+	update_task.wait();
 }
 
 void game::render() {
@@ -327,14 +360,34 @@ void game::render() {
 
     // Calculates FPS
     ++frame_count;
-    const clock::time_point now = clock::now();
-    if(std::chrono::duration_cast<std::chrono::seconds>(now - last_fps_timepoint).count() >= 1) {
-        last_fps_timepoint = now;
+    if(fps_clock.elapsed_time<std::chrono::seconds>() >= std::chrono::seconds(1)) {
+        fps_clock.substract(std::chrono::seconds(1)); // Keep time accumulation
 
-        last_fps_durations[last_fps_duration_index++ % last_fps_durations.size()] = frame_count;
+        if(last_fps_durations.size() < last_fps_durations.capacity()) {
+            last_fps_durations.push_back(frame_count);
+            last_fps_duration_index = last_fps_durations.size() - 1;
+        }
+        else {
+            last_fps_durations[last_fps_duration_index] = frame_count;
+            last_fps_duration_index = (last_fps_duration_index + 1) % last_fps_durations.capacity();
+        }
 
         frame_count = 0;
     }
+}
+
+bool inside_world_bound(glm::vec3 position)
+{
+	const float CHUNK_WIDTH = world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE;
+	const float CHUNK_DEPTH = world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE;
+
+	float chunk_x = position.x / CHUNK_WIDTH;
+	float chunk_z = position.z / CHUNK_DEPTH;
+
+	if (chunk_x >= 20.f || chunk_z >= 20.f || chunk_x < 0.f || chunk_z < 0.f)
+		return false;
+
+	return true;
 }
 
 void game::handle_event(SDL_Event event) {
@@ -350,9 +403,18 @@ void game::handle_event(SDL_Event event) {
             const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
 
 			glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
-			units.add(std::make_unique<unit>(test, glm::vec2{ 0.f, 0.f }, &unit_flyweights[106], &units));
 
-			std::cout << "pick : " << test.x << "," << test.y << "," << test.z << std::endl;
+			// clicked outside the map
+			if (inside_world_bound(test))
+			{
+				units.add(std::make_unique<unit>(test, glm::vec2{ 0.f, 0.f }, &unit_flyweights[next_unit_to_spawn], &units));
+
+				for (auto u = units.begin_of_units(); u != units.end_of_units(); u++)
+				{
+					unit* actual_unit = static_cast<unit*>(u->second.get());
+					actual_unit->set_target_position({ test.x, test.z });
+				}
+			}
 
         }
     }
@@ -400,7 +462,14 @@ void game::kill() noexcept {
 }
 
 int game::fps() const noexcept {
-    int sum = std::accumulate(std::begin(last_fps_durations), std::end(last_fps_durations), 0);
+    if(last_fps_durations.empty()) return 0;
 
-    return static_cast<int>(sum / last_fps_durations.size());
+    return last_fps_durations[last_fps_duration_index];
+}
+
+float game::average_fps() const noexcept {
+    if(last_fps_durations.empty()) return 0.f;
+
+    float sum = std::accumulate(std::begin(last_fps_durations), std::end(last_fps_durations), 0.f);
+    return sum / last_fps_durations.size();
 }
