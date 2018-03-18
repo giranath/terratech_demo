@@ -1,16 +1,16 @@
 #ifndef MMAP_DEMO_GAME_HPP
 #define MMAP_DEMO_GAME_HPP
 
-#include "async/task_executor.hpp"
+#include "../common/async/task_executor.hpp"
 #include "opengl/opengl.hpp"
-#include "world/world.hpp"
+#include "../common/world/world.hpp"
 #include "rendering/world_renderer.hpp"
 #include "rendering/camera.hpp"
 #include "rendering/rendering_manager.hpp"
 #include "sdl/sdl.hpp"
 #include "control/key_input_handler.hpp"
-#include "actor/unit_manager.hpp"
-#include "time/clock.hpp"
+#include "../common/actor/unit_manager.hpp"
+#include "../common/time/clock.hpp"
 
 #include <chrono>
 #include <array>

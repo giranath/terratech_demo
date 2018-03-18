@@ -3,7 +3,7 @@
 
 #include "../opengl/opengl.hpp"
 #include "chunk_renderer.hpp"
-#include "../world/world.hpp"
+#include "../../common/world/world.hpp"
 #include "rendering_manager.hpp"
 #include <vector>
 

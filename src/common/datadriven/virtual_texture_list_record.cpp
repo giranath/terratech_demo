@@ -2,11 +2,11 @@
 
 namespace data {
 
-std::istream &operator>>(std::istream &stream, rendering::virtual_texture::area_type &area) {
-    rendering::virtual_texture::area_type::value_type left, right, top, bottom;
+std::istream &operator>>(std::istream &stream, bounding_box<float>& area) {
+    float left, right, top, bottom;
     stream >> left >> bottom >> right >> top;
 
-    area = rendering::virtual_texture::area_type(left, bottom, right, top);
+    area = bounding_box<float>(left, bottom, right, top);
 
     return stream;
 }

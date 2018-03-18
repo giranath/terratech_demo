@@ -3,7 +3,7 @@
 
 #include "../opengl/opengl.hpp"
 #include "mesh.hpp"
-#include "../world/world_chunk.hpp"
+#include "../../common/world/world_chunk.hpp"
 #include "rendering_manager.hpp"
 #include <glm/glm.hpp>
 #include <vector>
