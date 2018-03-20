@@ -19,8 +19,6 @@
 #include <memory>
 #include <functional>
 
-// TODO: Include filesystem
-
 int G_TO_REMOVE_SCREEN_WIDTH = 0;
 int G_TO_REMOVE_SCREEN_HEIGHT = 0;
 

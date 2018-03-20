@@ -1,53 +1,36 @@
-#include "../common/networking/tcp_socket.hpp"
-#include "../common/networking/socket_set.hpp"
+#include "../common/time/clock.hpp"
+
+#include "authoritative_game.hpp"
+
+#ifdef WIN32
+#include <SDL.h>
+#include <SDL_net.h>
+#else
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_net.h>
+#endif
 
 #include <iostream>
-#include <vector>
 
 int main(int argc, const char** argv) {
-    // The server starts a single game
-    // 1. Load resources
-    // 2. Generate map
-    // 3. Wait for client connection
-    // 4. Start the game
-    SDLNet_Init();
+    if(SDL_Init(0) == -1) {
+        std::cerr << "cannot initialize SDL: " << SDL_GetError() << std::endl;
+        return 1;
+    }
 
-    networking::tcp_listener listener;
-    listener.try_bind(1647);
+    if(SDLNet_Init() == -1) {
+        std::cerr << "cannot initialize SDLnet: " << SDLNet_GetError() << std::endl;
+        SDL_Quit();
+        return 1;
+    }
 
-    networking::socket_set all_sockets(12);
-    all_sockets.add(listener);
-
-    std::vector<networking::tcp_socket> client_sockets;
-
-    bool is_running = true;
-    while(is_running) {
-        int num_ready = all_sockets.check(std::chrono::seconds(1));
-        if(num_ready > 0) {
-            if(all_sockets.is_ready(listener)) {
-                std::cout << "new connection" << std::endl;
-                networking::tcp_socket connected_client = listener.accept();
-                all_sockets.add(connected_client);
-                client_sockets.emplace_back(std::move(connected_client));
-            }
-            else {
-                std::for_each(std::begin(client_sockets), std::end(client_sockets), [&](networking::tcp_socket& socket) {
-                    if(all_sockets.is_ready(socket)) {
-                        char RECV_BUFFER[7];
-
-                        socket.receive(reinterpret_cast<uint8_t*>(RECV_BUFFER), 7);
-                        std::cout << "received: " << RECV_BUFFER << std::endl;
-
-                        std::string MSG = "THANK!";
-                        socket.send(reinterpret_cast<const uint8_t*>(MSG.c_str()), 7);
-
-                        is_running = false;
-                        all_sockets.remove(socket);
-                    }
-                });
-            }
-        }
+    authoritative_game game;
+    game_time::highres_clock frame_time;
+    while(game.is_running()) {
+        game.update(frame_time.elapsed_time<gameplay::base_game::frame_duration>());
+        frame_time.restart();
     }
 
     SDLNet_Quit();
+    SDL_Quit();
 }

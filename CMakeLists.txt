@@ -172,9 +172,10 @@ endif ()
 
 if (NOT DISABLE_SERVER)
     add_executable(server
-            src/server/main.cpp src/server/server.cpp src/server/server.hpp)
+            src/server/main.cpp src/server/authoritative_game.cpp src/server/authoritative_game.hpp)
     target_include_directories(server PRIVATE
             ${terratech_INCLUDE_DIRS}
+            ${SDL2_INCLUDE_DIRS}
             ${sdl2_net_INCLUDE_DIRS}
             ${GLM_INCLUDE_DIRS}
             "${CMAKE_SOURCE_DIR}/thirdparty")
@@ -182,6 +183,7 @@ if (NOT DISABLE_SERVER)
             common
             ${SOCKET_LIBRARIES}
             ${terratech_LIBRARIES}
+            ${SDL2_LIBRARIES}
             ${sdl2_net_LIBRARIES}
             ${CMAKE_THREAD_LIBS_INIT}
             ${CMAKE_DL_LIBS})
