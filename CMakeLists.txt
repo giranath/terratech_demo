@@ -18,6 +18,12 @@ find_package(PythonInterp REQUIRED)
 find_package(Threads REQUIRED)
 find_package(ngsocket REQUIRED)
 
+if(WIN32)
+    set(SOCKET_LIBRARIES wsock32 ws2_32)
+else()
+    set(SOCKET_LIBRARIES)
+endif()
+
 # Generates GL3W files
 execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/thirdparty/gl3w/gl3w_gen.py")
 
@@ -62,7 +68,11 @@ add_library(common
         src/common/datadriven/texture_list_record.cpp
         src/common/datadriven/texture_list_record.hpp
         src/common/datadriven/data_list.hpp)
-target_include_directories(common PUBLIC "${CMAKE_SOURCE_DIR}/thirdparty")
+target_include_directories(common PUBLIC
+        "${CMAKE_SOURCE_DIR}/thirdparty"
+        ${ngsocket_INCLUDE_DIRS}
+        ${terratech_INCLUDE_DIRS}
+        ${GLM_INCLUDE_DIRS})
 
 add_executable(mmap_demo
         "${CMAKE_BINARY_DIR}/src/gl3w.c"
@@ -129,6 +139,7 @@ target_include_directories(mmap_demo PUBLIC
         "${CMAKE_BINARY_DIR}/include")
 target_link_libraries(mmap_demo
         common
+        ${SOCKET_LIBRARIES}
         ${terratech_LIBRARIES}
         ${ngsocket_LIBRARIES}
         ${SDL2_LIBRARIES}
@@ -158,6 +169,7 @@ if (NOT DISABLE_SERVER)
             "${CMAKE_SOURCE_DIR}/thirdparty")
     target_link_libraries(server
             common
+            ${SOCKET_LIBRARIES}
             ${terratech_LIBRARIES}
             ${ngsocket_LIBRARIES}
             ${CMAKE_THREAD_LIBS_INIT}
