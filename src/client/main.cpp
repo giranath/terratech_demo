@@ -3,10 +3,58 @@
 #include "debug/profiler.hpp"
 #include "../common/time/clock.hpp"
 
+#ifdef WIN32
+#include <SDL_net.h>
+#else
+#include <SDL2/SDL_net.h>
+#endif
+
+
 #include <iostream>
 #include <iterator>
 #include <chrono>
 
+void connect(std::string ip_addr, int port)
+{
+    SDLNet_Init();
+    IPaddress ip;
+    TCPsocket tcpsock;
+
+    if (SDLNet_ResolveHost(&ip, ip_addr.c_str(), port) == -1)
+    {
+        std::cout << "error : " << SDLNet_GetError();
+        exit(1);
+    }
+
+    tcpsock = SDLNet_TCP_Open(&ip);
+    if (!tcpsock)
+    {
+        std::cout << "error : " << SDLNet_GetError();
+        exit(1);
+    }
+
+    char *msg = "Hello!";
+    int len = strlen(msg) + 1;
+    int result = SDLNet_TCP_Send(tcpsock, msg, len);
+    if (result < len)
+    {
+        std::cout << "error : " << SDLNet_GetError();
+    }
+
+    char msag[7];
+
+    result = SDLNet_TCP_Recv(tcpsock, msag, 7);
+    if (result <= 0) {
+        // An error may have occured, but sometimes you can just ignore it
+        // It may be good to disconnect sock because it is likely invalid now.
+    }
+    printf("Received: \"%s\"\n", msg);
+    if (result <= 0) {
+        // An error may have occured, but sometimes you can just ignore it
+        // It may be good to disconnect sock because it is likely invalid now.
+    }
+    printf("Received: \"%s\"\n", msg);
+}
 void setup_opengl() {
     std::cout << "available extensions: " << std::endl;
     gl::get_extensions(std::ostream_iterator<const char*>(std::cout, "\n"));
@@ -27,6 +75,7 @@ void set_opengl_version(int major, int minor) {
 }
 
 int main(int argc, char* argv[]) {
+    connect("192.192.192.1", 1647);
     sdl::context<>& sdl = sdl::context<>::instance();
     if(!sdl.good()) {
         std::cerr << "cannot initialize SDL: " << SDL_GetError() << std::endl;
