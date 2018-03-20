@@ -67,7 +67,7 @@ add_library(common
         src/common/datadriven/shader_list_record.hpp
         src/common/datadriven/texture_list_record.cpp
         src/common/datadriven/texture_list_record.hpp
-        src/common/datadriven/data_list.hpp)
+        src/common/datadriven/data_list.hpp src/common/networking/header.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${ngsocket_INCLUDE_DIRS}
