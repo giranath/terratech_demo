@@ -68,7 +68,7 @@ add_library(common
         src/common/datadriven/texture_list_record.cpp
         src/common/datadriven/texture_list_record.hpp
         src/common/datadriven/data_list.hpp
-        src/common/networking/header.hpp src/common/networking/tcp_socket.cpp src/common/networking/tcp_socket.hpp src/common/networking/socket_set.cpp src/common/networking/socket_set.hpp)
+        src/common/networking/header.hpp src/common/networking/tcp_socket.cpp src/common/networking/tcp_socket.hpp src/common/networking/socket_set.cpp src/common/networking/socket_set.hpp src/common/game/base_game.cpp src/common/game/base_game.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
 		${SDL2_INCLUDE_DIRS}
@@ -163,7 +163,7 @@ endif ()
 
 if (NOT DISABLE_SERVER)
     add_executable(server
-        src/server/server.cpp)
+            src/server/main.cpp src/server/server.cpp src/server/server.hpp)
     target_include_directories(server PRIVATE
             ${terratech_INCLUDE_DIRS}
             ${sdl2_net_INCLUDE_DIRS}

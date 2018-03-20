@@ -47,7 +47,7 @@ void game::load_flyweight(std::ifstream& stream) {
 
     int id = j["id"];
 
-    unit_flyweights[id] = unit_flyweight(j);
+    unit_flyweights()[id] = unit_flyweight(j);
 }
 
 void game::load_flyweights() {
@@ -64,7 +64,7 @@ void game::load_flyweights() {
         }
     });
 
-    for(auto flyweight_iterator = std::begin(unit_flyweights); flyweight_iterator != std::end(unit_flyweights); ++flyweight_iterator) {
+    for(auto flyweight_iterator = std::begin(unit_flyweights()); flyweight_iterator != std::end(unit_flyweights()); ++flyweight_iterator) {
         const float half_width = flyweight_iterator->second.width() / 2.f;
         const float height = flyweight_iterator->second.height();
         auto it_value = virtual_textures.find(flyweight_iterator->second.texture());
@@ -231,12 +231,11 @@ void game::load_datas() {
 target_handle G_TO_REMOVE_GOLEM_HANDLE;
 
 game::game()
-: tasks(std::thread::hardware_concurrency() - 1)
+: base_game(std::thread::hardware_concurrency() - 1)
 , game_world(static_cast<uint32_t>(std::time(nullptr)))
 , world_rendering(game_world)
 , game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)
 , is_scrolling(false)
-, is_running(true)
 , last_fps_duration_index(0)
 , frame_count(0) {
     last_fps_durations.reserve(10);
@@ -256,15 +255,15 @@ game::game()
 
     load_datas();
 
-    G_TO_REMOVE_GOLEM_HANDLE = units.add(std::make_unique<unit>(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
+    G_TO_REMOVE_GOLEM_HANDLE = units().add(std::make_unique<unit>(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, &unit_flyweights()[106], &units()));
 
 }
 
-void game::update(frame_duration last_frame_duration) {
+void game::on_update(frame_duration last_frame_duration) {
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
 
-	auto update_task = tasks.push(async::make_task([this, last_frame_ms]() {
-		for (auto u = units.begin_of_units(); u != units.end_of_units(); u++)
+	auto update_task = push_task(async::make_task([this, last_frame_ms]() {
+		for (auto u = units().begin_of_units(); u != units().end_of_units(); u++)
 		{
 			unit* actual_unit = static_cast<unit*>(u->second.get());
 
@@ -294,7 +293,7 @@ void game::render() {
     world_rendering.render(mesh_rendering);
 
     // TODO: Render every units
-    for(auto unit = units.begin_of_units(); unit != units.end_of_units(); ++unit) {
+    for(auto unit = units().begin_of_units(); unit != units().end_of_units(); ++unit) {
         rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
                                           glm::translate(glm::mat4{1.f}, unit->second->get_position()),
                                           virtual_textures[unit->second->texture()].id , PROGRAM_BILLBOARD);
@@ -353,9 +352,9 @@ void game::handle_event(SDL_Event event) {
 			// clicked outside the map
 			if (inside_world_bound(test))
 			{
-				units.add(std::make_unique<unit>(test, glm::vec2{ 0.f, 0.f }, &unit_flyweights[next_unit_to_spawn], &units));
+				units().add(std::make_unique<unit>(test, glm::vec2{ 0.f, 0.f }, &unit_flyweights()[next_unit_to_spawn], &units()));
 
-				for (auto u = units.begin_of_units(); u != units.end_of_units(); u++)
+				for (auto u = units().begin_of_units(); u != units().end_of_units(); u++)
 				{
 					unit* actual_unit = static_cast<unit*>(u->second.get());
 					actual_unit->set_target_position({ test.x, test.z });
@@ -397,14 +396,6 @@ void game::resize(int new_width, int new_height) {
 
     G_TO_REMOVE_SCREEN_WIDTH = new_width;
     G_TO_REMOVE_SCREEN_HEIGHT = new_height;
-}
-
-bool game::wants_to_die() const noexcept {
-    return !is_running;
-}
-
-void game::kill() noexcept {
-    is_running = false;
 }
 
 int game::fps() const noexcept {

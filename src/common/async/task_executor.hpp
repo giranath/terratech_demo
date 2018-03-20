@@ -18,6 +18,7 @@ class task_executor {
 public:
     using task_handle = uint32_t;
     using task_ptr = std::unique_ptr<base_task>;
+    using task_future = std::future<task_ptr>;
 private:
     struct task_value {
         task_ptr value;
@@ -67,7 +68,7 @@ public:
     explicit task_executor(std::size_t worker_count);
     ~task_executor();
 
-    std::future<task_ptr> push(task_ptr new_task);
+    task_future push(task_ptr new_task);
 };
 }
 
