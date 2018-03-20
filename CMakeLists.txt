@@ -68,7 +68,13 @@ add_library(common
         src/common/datadriven/texture_list_record.cpp
         src/common/datadriven/texture_list_record.hpp
         src/common/datadriven/data_list.hpp
-        src/common/networking/header.hpp src/common/networking/tcp_socket.cpp src/common/networking/tcp_socket.hpp src/common/networking/socket_set.cpp src/common/networking/socket_set.hpp)
+        src/common/networking/header.hpp 
+		src/common/networking/tcp_socket.cpp 
+		src/common/networking/tcp_socket.hpp 
+		src/common/networking/socket_set.cpp 
+		src/common/networking/socket_set.hpp
+		src/common/networking/world_chunk.hpp
+		src/common/networking/world_map.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
 		${SDL2_INCLUDE_DIRS}
