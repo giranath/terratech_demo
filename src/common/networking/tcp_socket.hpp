@@ -18,10 +18,10 @@ class tcp_socket {
     friend tcp_listener;
     friend socket_set;
     TCPsocket raw_socket;
-public:
+
     // DO NOT USE
     tcp_socket(TCPsocket s) noexcept;
-
+public:
     tcp_socket();
     tcp_socket(const tcp_socket&) = delete;
     tcp_socket(tcp_socket&& other) noexcept;
