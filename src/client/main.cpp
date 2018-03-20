@@ -2,6 +2,7 @@
 #include "sdl/sdl.hpp"
 #include "debug/profiler.hpp"
 #include "../common/time/clock.hpp"
+#include "../common/networking/tcp_socket.hpp"
 
 #ifdef WIN32
 #include <SDL_net.h>
@@ -16,45 +17,34 @@
 
 void connect(std::string ip_addr, int port)
 {
+    
     SDLNet_Init();
-    IPaddress ip;
-    TCPsocket tcpsock;
-
-    if (SDLNet_ResolveHost(&ip, ip_addr.c_str(), port) == -1)
+    networking::tcp_socket sock;
+    if (!sock.try_connect(ip_addr.c_str(), port))
     {
-        std::cout << "error : " << SDLNet_GetError();
-        exit(1);
-    }
-
-    tcpsock = SDLNet_TCP_Open(&ip);
-    if (!tcpsock)
-    {
-        std::cout << "error : " << SDLNet_GetError();
-        exit(1);
+        std::cout << "error" << std::endl;
     }
 
     char *msg = "Hello!";
     int len = strlen(msg) + 1;
-    int result = SDLNet_TCP_Send(tcpsock, msg, len);
+    int result = sock.send(reinterpret_cast<const uint8_t*>(msg), len);
     if (result < len)
     {
         std::cout << "error : " << SDLNet_GetError();
     }
 
-    char msag[7];
+    uint8_t msag[7];
 
-    result = SDLNet_TCP_Recv(tcpsock, msag, 7);
+    result = sock.receive(msag, 7);
     if (result <= 0) {
+        std::cout << "error : " << SDLNet_GetError();
         // An error may have occured, but sometimes you can just ignore it
         // It may be good to disconnect sock because it is likely invalid now.
     }
-    printf("Received: \"%s\"\n", msg);
-    if (result <= 0) {
-        // An error may have occured, but sometimes you can just ignore it
-        // It may be good to disconnect sock because it is likely invalid now.
-    }
-    printf("Received: \"%s\"\n", msg);
+    printf("Received: \"%s\"\n", msag);
 }
+
+
 void setup_opengl() {
     std::cout << "available extensions: " << std::endl;
     gl::get_extensions(std::ostream_iterator<const char*>(std::cout, "\n"));

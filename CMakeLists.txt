@@ -71,6 +71,7 @@ add_library(common
         src/common/networking/header.hpp src/common/networking/tcp_socket.cpp src/common/networking/tcp_socket.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
+		${SDL2_INCLUDE_DIRS}
         ${sdl2_net_INCLUDE_DIRS}
         ${terratech_INCLUDE_DIRS}
         ${GLM_INCLUDE_DIRS})

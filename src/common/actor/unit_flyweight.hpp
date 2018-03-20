@@ -113,6 +113,75 @@ public:
         texture_handle = json["Texture"];
     }
 
+    static std::vector<std::string> ressource_enum_to_string(std::vector<ressource_type> v)
+    {
+        std::vector<std::string> str_vec;
+        str_vec.reserve(v.size());
+
+        std::transform(std::begin(v), std::end(v), std::back_inserter(str_vec), [](const ressource_type name)
+        {
+            if (name == ressource_type::food ) return"Food";
+            if (name == ressource_type::gold) return"Gold";
+            if (name == ressource_type::stone) return"Stone";
+            if (name == ressource_type::wood) return"Wood";
+            if (name == ressource_type::magic_essence) return"MagicEssence";
+            return "Unknown";
+        });
+        return str_vec;
+    }
+
+    static std::vector<std::string> biome_enum_to_string(std::vector<biome_type> v)
+    {
+        std::vector<std::string> str_vec;
+        str_vec.reserve(v.size());
+
+        std::transform(std::begin(v), std::end(v), std::back_inserter(str_vec), [](const biome_type name)
+        {
+            if (name == biome_type::grass) return"Grass";
+            if (name == biome_type::rock) return"Rock";
+            if (name == biome_type::snow) return"Snow";
+            if (name == biome_type::water) return"Water";
+            if (name == biome_type::desert) return"Desert";
+            return "Unknown";
+        });
+        return str_vec;
+    }
+
+    friend void to_json(nlohmann::json& j, const unit_flyweight& uf)
+    {
+        j = {
+            {"id", uf.unit_id},
+            {"Name", uf.name},
+            {"Food",uf.unit_cost.food},
+            {"Wood",uf.unit_cost.wood},
+            {"Stone",uf.unit_cost.stone},
+            {"Gold", uf.unit_cost.gold},
+            {"Essence", uf.unit_cost.magic_essence},
+            {"Life", uf.max_health},
+            {"Armor", uf.armor},
+            {"AttackSpeed", uf.attack_speed},
+            {"WalkSpeed", uf.speed},
+            {"Range", uf.range},
+            {"Damage", uf.damage},
+            {"TransportCapacity", uf.tranport_unit_capacity},
+            {"BuildableUnit", uf.buildable_unit_id_list},
+            {"RessourceGatheringType", ressource_enum_to_string(uf.ressource_gathering_type)},
+            {"RessourceDropOff", ressource_enum_to_string(uf.ressource_drop_off)},
+            {"WalkableType", biome_enum_to_string(uf.walkable_biome) },
+            {"Transportable", uf.transportable},
+            {"PopulationCost", uf.population_cost },
+            {"Height", uf.height_},
+            {"Width", uf.width_},
+            {"ConstructionTime", uf.construction_time},
+            {"Texture", uf.texture}
+        }
+    }
+
+    void from_json(const nlohmann::json& j, unit_flyweight& uf)
+    {
+        uf.load_unit_from_json(j);
+    }
+
     const std::string& texture() const noexcept {
         return texture_handle;
     }
