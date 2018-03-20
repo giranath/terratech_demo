@@ -16,7 +16,7 @@ find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
 find_package(PythonInterp REQUIRED)
 find_package(Threads REQUIRED)
-find_package(ngsocket REQUIRED)
+find_package(sdl2_net REQUIRED)
 
 if(WIN32)
     set(SOCKET_LIBRARIES wsock32 ws2_32)
@@ -67,10 +67,11 @@ add_library(common
         src/common/datadriven/shader_list_record.hpp
         src/common/datadriven/texture_list_record.cpp
         src/common/datadriven/texture_list_record.hpp
-        src/common/datadriven/data_list.hpp src/common/networking/header.hpp)
+        src/common/datadriven/data_list.hpp
+        src/common/networking/header.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
-        ${ngsocket_INCLUDE_DIRS}
+        ${sdl2_net_INCLUDE_DIRS}
         ${terratech_INCLUDE_DIRS}
         ${GLM_INCLUDE_DIRS})
 
@@ -130,9 +131,9 @@ add_executable(mmap_demo
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
-        ${ngsocket_INCLUDE_DIRS}
         ${SDL2_INCLUDE_DIRS}
         ${sdl2_image_INCLUDE_DIRS}
+        ${sdl2_net_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
         ${GLM_INCLUDE_DIRS}
         "${CMAKE_SOURCE_DIR}/thirdparty"
@@ -141,9 +142,9 @@ target_link_libraries(mmap_demo
         common
         ${SOCKET_LIBRARIES}
         ${terratech_LIBRARIES}
-        ${ngsocket_LIBRARIES}
         ${SDL2_LIBRARIES}
         ${sdl2_image_LIBRARIES}
+        ${sdl2_net_LIBRARIES}
         ${OPENGL_gl_LIBRARY}
         ${CMAKE_THREAD_LIBS_INIT}
         ${CMAKE_DL_LIBS})
@@ -164,14 +165,14 @@ if (NOT DISABLE_SERVER)
         src/server/server.cpp)
     target_include_directories(server PRIVATE
             ${terratech_INCLUDE_DIRS}
-            ${ngsocket_INCLUDE_DIRS}
+            ${sdl2_net_INCLUDE_DIRS}
             ${GLM_INCLUDE_DIRS}
             "${CMAKE_SOURCE_DIR}/thirdparty")
     target_link_libraries(server
             common
             ${SOCKET_LIBRARIES}
             ${terratech_LIBRARIES}
-            ${ngsocket_LIBRARIES}
+            ${sdl2_net_LIBRARIES}
             ${CMAKE_THREAD_LIBS_INIT}
             ${CMAKE_DL_LIBS})
     target_compile_definitions(server PRIVATE -DGAME_SERVER)
