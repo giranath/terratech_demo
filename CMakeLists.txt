@@ -18,6 +18,12 @@ find_package(PythonInterp REQUIRED)
 find_package(Threads REQUIRED)
 find_package(ngsocket REQUIRED)
 
+if(WIN32)
+    set(SOCKET_LIBRARIES wsock32 ws2_32)
+else()
+    set(SOCKET_LIBRARIES)
+endif()
+
 # Generates GL3W files
 execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/thirdparty/gl3w/gl3w_gen.py")
 
@@ -129,6 +135,7 @@ target_include_directories(mmap_demo PUBLIC
         "${CMAKE_BINARY_DIR}/include")
 target_link_libraries(mmap_demo
         common
+        ${SOCKET_LIBRARIES}
         ${terratech_LIBRARIES}
         ${ngsocket_LIBRARIES}
         ${SDL2_LIBRARIES}
@@ -158,6 +165,7 @@ if (NOT DISABLE_SERVER)
             "${CMAKE_SOURCE_DIR}/thirdparty")
     target_link_libraries(server
             common
+            ${SOCKET_LIBRARIES}
             ${terratech_LIBRARIES}
             ${ngsocket_LIBRARIES}
             ${CMAKE_THREAD_LIBS_INIT}
