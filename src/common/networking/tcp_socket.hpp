@@ -11,10 +11,12 @@
 
 namespace networking {
 
+class socket_set;
 class tcp_listener;
 
 class tcp_socket {
     friend tcp_listener;
+    friend socket_set;
     TCPsocket raw_socket;
 public:
     // DO NOT USE
@@ -38,6 +40,7 @@ public:
 };
 
 class tcp_listener {
+    friend socket_set;
     TCPsocket listener_socket;
 public:
     tcp_listener();
