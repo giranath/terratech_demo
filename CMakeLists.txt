@@ -9,7 +9,7 @@ option(DISABLE_PROFILER "Disable profiling when ON" OFF)
 option(ENABLE_TOOLS "Enable tools compilation" OFF)
 option(DISABLE_SERVER "Disable server" OFF)
 
-find_package(terratech 0.5.2 REQUIRED)
+find_package(terratech 0.6.0 REQUIRED)
 find_package(sdl2 REQUIRED)
 find_package(sdl2_image REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -68,7 +68,7 @@ add_library(common
         src/common/datadriven/texture_list_record.cpp
         src/common/datadriven/texture_list_record.hpp
         src/common/datadriven/data_list.hpp
-        src/common/networking/header.hpp)
+        src/common/networking/header.hpp src/common/networking/tcp_socket.cpp src/common/networking/tcp_socket.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${sdl2_net_INCLUDE_DIRS}
