@@ -173,8 +173,8 @@ public:
             {"Height", uf.height_},
             {"Width", uf.width_},
             {"ConstructionTime", uf.construction_time},
-            {"Texture", uf.texture}
-        }
+            {"Texture", uf.texture_handle}
+        };
     }
 
     void from_json(const nlohmann::json& j, unit_flyweight& uf)
