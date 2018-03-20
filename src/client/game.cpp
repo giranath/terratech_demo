@@ -255,8 +255,7 @@ game::game()
 
     load_datas();
 
-    G_TO_REMOVE_GOLEM_HANDLE = units().add(std::make_unique<unit>(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, &unit_flyweights()[106], &units()));
-
+    G_TO_REMOVE_GOLEM_HANDLE = add_unit(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, 106);
 }
 
 void game::on_update(frame_duration last_frame_duration) {
@@ -352,7 +351,7 @@ void game::handle_event(SDL_Event event) {
 			// clicked outside the map
 			if (inside_world_bound(test))
 			{
-				units().add(std::make_unique<unit>(test, glm::vec2{ 0.f, 0.f }, &unit_flyweights()[next_unit_to_spawn], &units()));
+                add_unit(test, glm::vec2{0.f, 0.f}, next_unit_to_spawn);
 
 				for (auto u = units().begin_of_units(); u != units().end_of_units(); u++)
 				{

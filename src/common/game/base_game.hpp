@@ -45,6 +45,7 @@ public:
     void stop() noexcept;
 
     async::task_executor::task_future push_task(async::task_executor::task_ptr task);
+    target_handle add_unit(glm::vec3 position, glm::vec2 target, int flyweight_id);
 };
 
 }

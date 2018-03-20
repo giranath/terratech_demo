@@ -1,4 +1,5 @@
 #include "base_game.hpp"
+#include "../actor/unit.hpp"
 
 namespace gameplay {
 
@@ -38,6 +39,10 @@ void base_game::stop() noexcept {
 
 async::task_executor::task_future base_game::push_task(async::task_executor::task_ptr task) {
     return tasks.push(std::move(task));
+}
+
+target_handle base_game::add_unit(glm::vec3 position, glm::vec2 target, int flyweight_id) {
+    return units_.add(std::make_unique<unit>(position, target, &unit_flyweights_[flyweight_id], &units_));
 }
 
 }
