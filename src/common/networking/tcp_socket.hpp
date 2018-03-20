@@ -11,7 +11,10 @@
 
 namespace networking {
 
+class tcp_listener;
+
 class tcp_socket {
+    friend tcp_listener;
     TCPsocket raw_socket;
 public:
     // DO NOT USE
@@ -30,6 +33,23 @@ public:
 
     int receive(uint8_t* data, int data_len) noexcept;
     int send(const uint8_t* data, int data_len) noexcept;
+
+    operator TCPsocket() const noexcept;
+};
+
+class tcp_listener {
+    TCPsocket listener_socket;
+public:
+    tcp_listener();
+    tcp_listener(const tcp_listener&) = delete;
+    tcp_listener(tcp_listener&& other) noexcept;
+    ~tcp_listener();
+    tcp_listener& operator=(tcp_listener&& other) noexcept;
+
+    tcp_listener& operator=(const tcp_listener&) = delete;
+
+    tcp_socket accept() const noexcept;
+    bool try_bind(uint16_t port) noexcept;
 
     operator TCPsocket() const noexcept;
 };

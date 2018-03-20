@@ -6,21 +6,13 @@
 int main(int argc, const char** argv) {
     SDLNet_Init();
 
-    IPaddress address;
-
-    if(SDLNet_ResolveHost(&address, nullptr, 1647) == -1) {
-        std::cerr << "cannot resolve address: " << SDLNet_GetError() << std::endl;
-        SDLNet_Quit();
-        return 1;
-    }
+    networking::tcp_listener listener;
+    listener.try_bind(1647);
 
     SDLNet_SocketSet all_sockets = SDLNet_AllocSocketSet(12);
-    TCPsocket server_socket = SDLNet_TCP_Open(&address);
 
-    SDLNet_TCP_AddSocket(all_sockets, server_socket);
-
-    std::cout << "waiting for connection..." << std::endl;
-    TCPsocket connected_client = nullptr;
+    TCPsocket raw = listener;
+    SDLNet_TCP_AddSocket(all_sockets, raw);
 
     std::vector<networking::tcp_socket> client_sockets;
 
@@ -28,11 +20,12 @@ int main(int argc, const char** argv) {
     while(is_running) {
         int num_ready = SDLNet_CheckSockets(all_sockets, 1000);
         if(num_ready > 0) {
-            if(SDLNet_SocketReady(server_socket)) {
+            if(SDLNet_SocketReady(raw)) {
                 std::cout << "new connection" << std::endl;
-                TCPsocket connected_client = SDLNet_TCP_Accept(server_socket);
-                SDLNet_TCP_AddSocket(all_sockets, connected_client);
-                client_sockets.emplace_back(connected_client);
+                networking::tcp_socket connected_client = listener.accept();
+                TCPsocket raw_client = connected_client;
+                SDLNet_TCP_AddSocket(all_sockets, raw_client);
+                client_sockets.emplace_back(std::move(connected_client));
             }
             else {
                 std::for_each(std::begin(client_sockets), std::end(client_sockets), [&](networking::tcp_socket& socket) {
@@ -56,7 +49,6 @@ int main(int argc, const char** argv) {
     }
 
     // Close le serveur
-    SDLNet_TCP_Close(server_socket);
     SDLNet_FreeSocketSet(all_sockets);
 
     SDLNet_Quit();

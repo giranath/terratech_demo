@@ -5,11 +5,51 @@
 
 namespace networking {
 
+tcp_listener::tcp_listener()
+: listener_socket(nullptr) {
+
+}
+
+tcp_listener::tcp_listener(tcp_listener&& other) noexcept
+: listener_socket(other.listener_socket) {
+    other.listener_socket = nullptr;
+}
+
+tcp_listener::~tcp_listener() {
+    SDLNet_TCP_Close(listener_socket);
+}
+
+tcp_listener& tcp_listener::operator=(tcp_listener &&other) noexcept {
+    std::swap(listener_socket, other.listener_socket);
+
+    return *this;
+}
+
+tcp_listener::operator TCPsocket() const noexcept {
+    return listener_socket;
+}
+
+tcp_socket tcp_listener::accept() const noexcept {
+    TCPsocket client_socket = SDLNet_TCP_Accept(listener_socket);
+
+    return tcp_socket(client_socket);
+}
+
+bool tcp_listener::try_bind(uint16_t port) noexcept {
+    IPaddress ip;
+    if(SDLNet_ResolveHost(&ip, nullptr, port) == -1) {
+        std::cerr << "failed to bind " << port << std::endl;
+        return false;
+    }
+
+    listener_socket = SDLNet_TCP_Open(&ip);
+    return true;
+}
+
 tcp_socket::tcp_socket(TCPsocket s) noexcept
 : raw_socket(s) {
 
 }
-
 
 tcp_socket::tcp_socket()
 : raw_socket(nullptr) {
