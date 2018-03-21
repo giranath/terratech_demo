@@ -21,6 +21,7 @@ class authoritative_game : public gameplay::base_game {
 
     void on_connection();
     void on_client_data(const client& c);
+    void on_client_disconnection(const client& c);
     void check_sockets();
 
 public:
