@@ -7,7 +7,7 @@
 #include "../common/world/world.hpp"
 #include "../common/networking/tcp_socket.hpp"
 #include "../common/networking/socket_set.hpp"
-#include "../common/networking/header.hpp"
+#include "../common/networking/packet.hpp"
 
 class authoritative_game : public gameplay::base_game {
     using client = networking::tcp_socket;
@@ -21,8 +21,6 @@ class authoritative_game : public gameplay::base_game {
     void load_assets();
     void generate_world();
     void setup_listener();
-
-    std::optional<networking::packet> receive_packet_from(const client& c);
 
     void on_connection();
     void on_client_data(const client& c);
