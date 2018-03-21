@@ -29,15 +29,15 @@ struct packet {
     using byte_collection = std::vector<uint8_t>;
     header head;
     byte_collection bytes;
-    template <class T>
 
-    packet(T& obj) :
-        head(sizeof(obj))
-    {
+    template <class T>
+    explicit packet(const T& obj)
+    : head(sizeof(obj))
+    , bytes() {
         static_assert(std::is_trivially_copyable<T>::value, "the object is not trivial");
          
         bytes.reserve(head.size);
-        uint8_t* ptr = reinterpret_cast<uint8_t*> (obj);
+        const uint8_t* ptr = reinterpret_cast<const uint8_t*>(obj);
         std::copy(ptr, ptr + head.size, std::back_inserter(bytes));
     }
 
