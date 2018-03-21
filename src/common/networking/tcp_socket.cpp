@@ -91,7 +91,7 @@ bool tcp_socket::is_connected() const noexcept {
     return raw_socket != nullptr;
 }
 
-int tcp_socket::receive(uint8_t* data, int data_len) noexcept {
+int tcp_socket::receive(uint8_t* data, int data_len) const noexcept {
     int v = SDLNet_TCP_Recv(raw_socket, data, data_len);
 
     if(v < 0) {
@@ -102,7 +102,7 @@ int tcp_socket::receive(uint8_t* data, int data_len) noexcept {
     return v;
 }
 
-int tcp_socket::send(const uint8_t *data, int data_len) noexcept {
+int tcp_socket::send(const uint8_t *data, int data_len) const noexcept {
     int v = SDLNet_TCP_Send(raw_socket, data, data_len);
 
     if(v < 0) {

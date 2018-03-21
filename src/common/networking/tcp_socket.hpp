@@ -17,9 +17,8 @@ class tcp_listener;
 class tcp_socket {
     friend tcp_listener;
     friend socket_set;
-    TCPsocket raw_socket;
+    mutable TCPsocket raw_socket;
 
-    // DO NOT USE
     tcp_socket(TCPsocket s) noexcept;
 public:
     tcp_socket();
@@ -33,8 +32,8 @@ public:
     bool try_connect(const char* address, uint16_t port) noexcept;
     bool is_connected() const noexcept;
 
-    int receive(uint8_t* data, int data_len) noexcept;
-    int send(const uint8_t* data, int data_len) noexcept;
+    int receive(uint8_t* data, int data_len) const noexcept;
+    int send(const uint8_t* data, int data_len) const noexcept;
 
     operator TCPsocket() const noexcept;
 };

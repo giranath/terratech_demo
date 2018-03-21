@@ -1,6 +1,7 @@
 #include "authoritative_game.hpp"
 #include "../common/actor/unit.hpp"
 #include "../common/datadriven/data_list.hpp"
+#include "../common/networking/header.hpp"
 
 #include <thread>
 #include <string>
@@ -90,7 +91,44 @@ void authoritative_game::on_connection() {
     // TODO: Send this client the flyweights
 }
 
+std::optional<networking::packet> authoritative_game::receive_packet_from(const networking::tcp_socket& c) {
+    networking::header::size_type packet_size;
+    int recv_size = c.receive(reinterpret_cast<uint8_t*>(&packet_size), sizeof(packet_size));
+
+    // The client has disconnected
+    if(recv_size == 0) {
+        return {};
+    }
+
+    networking::packet received_packet(packet_size);
+    // TODO: Call receive multiple time if packet_size is too big
+    recv_size = c.receive(&received_packet.bytes.front(), packet_size);
+    if(recv_size == 0) {
+        return {};
+    }
+
+    return {std::move(received_packet)};
+}
+
 void authoritative_game::on_client_data(const client& c) {
+    auto received_packet = receive_packet_from(c);
+
+    if(received_packet) {
+        try {
+            nlohmann::json json_body = nlohmann::json::parse(std::begin(received_packet->bytes),
+                                                             std::end(received_packet->bytes));
+
+            // here we should have a valid json
+        }
+        catch(const nlohmann::json::parse_error& e) {
+            // TODO: The client has sent us crap
+            std::cerr << "client has sent us some crap: " << "[" << e.id << "] " << e.what() << std::endl;
+        }
+    }
+    else {
+        on_client_disconnection(c);
+    }
+
     // TODO: Read what the user has sent
     // TODO: Validate input
 }

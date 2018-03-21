@@ -2,9 +2,9 @@
 #define MMAP_DEMO_HEADER_HPP
 
 #include <cstdint>
-#include <string>
+#include <vector>
 
-namespace network {
+namespace networking {
 
 struct header {
     using size_type = uint64_t;
@@ -19,11 +19,11 @@ struct header {
 
 struct packet {
     header head;
-    std::string raw_data;
+    std::vector<uint8_t> bytes;
 
-    packet(header head, const std::string data)
+    explicit packet(header head)
     : head(head)
-    , raw_data(data) {
+    , bytes(head.size, 0){
 
     }
 };
