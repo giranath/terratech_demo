@@ -41,7 +41,11 @@ int main(int argc, char* argv[]) {
     }
     SDLNet_Init();
     networking::tcp_socket sock;
-    sock.try_connect("localhost", 6426);
+    if(!sock.try_connect("localhost", 6426)) {
+        std::cerr << "cannot connect to server" << std::endl;
+        SDLNet_Quit();
+        return 1;
+    }
     
     // Setup OpenGL attributes
     set_opengl_version(3, 3);

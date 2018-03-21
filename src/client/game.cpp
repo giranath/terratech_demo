@@ -43,7 +43,7 @@ Shader load_shader(const std::string& path) {
 }
 
 void game::load_flyweights() {
-    
+
     for(auto flyweight_iterator = std::begin(unit_flyweights()); flyweight_iterator != std::end(unit_flyweights()); ++flyweight_iterator) {
         const float half_width = flyweight_iterator->second.width() / 2.f;
         const float height = flyweight_iterator->second.height();
@@ -223,9 +223,16 @@ void game::on_init() {
     auto packet = networking::receive_packet_from(socket);
     if (packet)
     {
-        unit_flyweight_manager manager_u = packet->as<unit_flyweight_manager>();
+        try {
+            auto manager_u = packet->as<unit_flyweight>();
+        }
+        catch(const std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            throw;
+        }
         //set_flyweight_manager(manager_u);
     }
+
     packet = networking::receive_packet_from(socket);
     if (packet)
     {

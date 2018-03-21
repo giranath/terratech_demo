@@ -167,7 +167,7 @@ public:
     friend void to_json(nlohmann::json& j, const unit_flyweight& uf);
 };
 
-void to_json(nlohmann::json& j, const unit_flyweight& uf);
+//void to_json(nlohmann::json& j, const unit_flyweight& uf);
 void from_json(const nlohmann::json& j, unit_flyweight& uf);
 
 #endif
