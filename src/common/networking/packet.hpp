@@ -30,26 +30,19 @@ struct packet {
     header head;
     byte_collection bytes;
 
-    template <class T>
-    explicit packet(const T& obj)
-    : head(sizeof(obj))
-    , bytes() {
-        static_assert(std::is_trivially_copyable<T>::value, "the object is not trivial");
-         
-        bytes.reserve(head.size);
-        const uint8_t* ptr = reinterpret_cast<const uint8_t*>(obj);
-        std::copy(ptr, ptr + head.size, std::back_inserter(bytes));
-    }
-
-    template <class T>
-    T has() const
-    {
-        static_assert(std::is_trivially_copyable<T>::value, "the object is not trivial");
-        T* obj = reinterpret_cast<T*>(&bytes.front());
-        return *obj;
-    }
-
     explicit packet(header head);
+
+    template<class T>
+    static packet make(const T& obj) {
+        static_assert(std::is_trivially_copyable<T>::value, "the object is not trivial");
+
+        packet p(header(sizeof(obj)));
+        p.bytes.reserve(p.head.size);
+        const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&obj);
+        std::copy(ptr, ptr + p.head.size, std::back_inserter(p.bytes));
+
+        return p;
+    }
     
 };
 
