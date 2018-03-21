@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     }
     SDLNet_Init();
     networking::tcp_socket sock;
-    if(!sock.try_connect("localhost", 6426)) {
+    if(!sock.try_connect("192.192.192.1", 6426)) {
         std::cerr << "cannot connect to server" << std::endl;
         SDLNet_Quit();
         return 1;

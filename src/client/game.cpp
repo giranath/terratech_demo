@@ -223,14 +223,13 @@ void game::on_init() {
     auto packet = networking::receive_packet_from(socket);
     if (packet)
     {
-        try {
-            auto manager_u = packet->as<unit_flyweight>();
+        auto manager_u = packet->as<std::unordered_map<std::string, unit_flyweight>>();
+        unit_flyweight_manager manager;
+        for (auto& v : manager_u)
+        {
+            manager.emplace(std::stoi(v.first), std::move(v.second));
         }
-        catch(const std::exception& e) {
-            std::cerr << e.what() << std::endl;
-            throw;
-        }
-        //set_flyweight_manager(manager_u);
+        set_flyweight_manager(manager);
     }
 
     packet = networking::receive_packet_from(socket);
