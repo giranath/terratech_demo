@@ -53,6 +53,7 @@ public:
 
     tcp_socket accept() const noexcept;
     bool try_bind(uint16_t port) noexcept;
+    bool is_bound() const noexcept;
 
     operator TCPsocket() const noexcept;
 };

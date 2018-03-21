@@ -46,6 +46,10 @@ bool tcp_listener::try_bind(uint16_t port) noexcept {
     return true;
 }
 
+bool tcp_listener::is_bound() const noexcept {
+    return listener_socket != nullptr;
+}
+
 tcp_socket::tcp_socket(TCPsocket s) noexcept
 : raw_socket(s) {
 

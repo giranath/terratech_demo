@@ -10,7 +10,8 @@
 
 authoritative_game::authoritative_game()
 : base_game(std::thread::hardware_concurrency() - 1)
-, world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())){
+, world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()))
+, sockets(3) {
 
 }
 
@@ -50,11 +51,27 @@ void authoritative_game::generate_world() {
     }
 }
 
+void authoritative_game::setup_listener() {
+    std::cout << "binding to port 6426..." << std::endl;
+    for(int i = 0; i < 10 && !connection_listener.try_bind(6426); ++i) {
+        std::cerr << " attempt # " << i + 1 << " to bind port failed because: " << SDLNet_GetError() << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    if(connection_listener.is_bound()) {
+        std::cout << "waiting for connections on port 6426" << std::endl;
+        sockets.add(connection_listener);
+    }
+    else {
+        throw std::runtime_error("failed to bind port");
+    }
+}
+
 void authoritative_game::on_init() {
     load_assets();
     generate_world();
 
-    // TODO: Wait for connections
+    setup_listener();
 }
 
 void authoritative_game::on_update(frame_duration last_frame) {
