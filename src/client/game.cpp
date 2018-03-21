@@ -235,6 +235,13 @@ void game::on_init() {
     auto packet = networking::receive_packet_from(socket);
     if (packet)
     {
+        auto manager_u = packet->as<unit_flyweight>();
+        set_flyweight_manager(manager_u);
+    }
+
+    packet = networking::receive_packet_from(socket);
+    if (packet)
+    {
         networking::world_map map = packet->as<networking::world_map>();
 
         for (size_t i = 0; i < map.chunk_width * map.chunk_height; ++i)

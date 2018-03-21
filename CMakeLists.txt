@@ -80,7 +80,7 @@ add_library(common
 		src/common/networking/world_map.hpp
         src/common/game/base_game.cpp 
 		src/common/game/base_game.hpp
-		src/common/world/infinite_world.cpp src/common/networking/packet.cpp)
+		src/common/world/infinite_world.cpp src/common/networking/packet.cpp src/common/actor/unit_flyweight.cpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
 		${SDL2_INCLUDE_DIRS}
