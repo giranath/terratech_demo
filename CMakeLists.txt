@@ -17,6 +17,7 @@ find_package(glm REQUIRED)
 find_package(PythonInterp REQUIRED)
 find_package(Threads REQUIRED)
 find_package(sdl2_net REQUIRED)
+find_package(Crypto++ REQUIRED)
 
 if(WIN32)
     set(SOCKET_LIBRARIES wsock32 ws2_32)
@@ -28,8 +29,6 @@ endif()
 execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/thirdparty/gl3w/gl3w_gen.py")
 
 add_library(common
-        src/common/crypto/rsa.cpp
-        src/common/crypto/rsa.hpp
         src/common/world/world.cpp
         src/common/world/world.hpp
         src/common/world/world_generator.cpp
@@ -68,19 +67,20 @@ add_library(common
         src/common/datadriven/texture_list_record.cpp
         src/common/datadriven/texture_list_record.hpp
         src/common/datadriven/data_list.hpp
-		src/common/networking/packet.hpp
-		src/common/networking/tcp_socket.cpp 
-		src/common/networking/tcp_socket.hpp 
-		src/common/networking/socket_set.cpp 
-		src/common/networking/socket_set.hpp
-		src/common/networking/world_chunk.hpp
-		src/common/networking/world_map.hpp
-        src/common/game/base_game.cpp 
-		src/common/game/base_game.hpp
-		src/common/world/infinite_world.cpp src/common/networking/packet.cpp)
+        src/common/networking/packet.hpp
+        src/common/networking/tcp_socket.cpp
+        src/common/networking/tcp_socket.hpp
+        src/common/networking/socket_set.cpp
+        src/common/networking/socket_set.hpp
+        src/common/networking/world_chunk.hpp
+        src/common/networking/world_map.hpp
+        src/common/game/base_game.cpp
+        src/common/game/base_game.hpp
+        src/common/world/infinite_world.cpp
+        src/common/networking/packet.cpp src/common/crypto/aes.cpp src/common/crypto/aes.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
-		${SDL2_INCLUDE_DIRS}
+        ${SDL2_INCLUDE_DIRS}
         ${sdl2_net_INCLUDE_DIRS}
         ${terratech_INCLUDE_DIRS}
         ${GLM_INCLUDE_DIRS})
@@ -141,6 +141,7 @@ add_executable(mmap_demo
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
+        ${CRYPTO++_INCLUDE_DIR}
         ${SDL2_INCLUDE_DIRS}
         ${sdl2_image_INCLUDE_DIRS}
         ${sdl2_net_INCLUDE_DIRS}
@@ -150,6 +151,7 @@ target_include_directories(mmap_demo PUBLIC
         "${CMAKE_BINARY_DIR}/include")
 target_link_libraries(mmap_demo
         common
+        ${CRYPTO++_LIBRARIES}
         ${SOCKET_LIBRARIES}
         ${terratech_LIBRARIES}
         ${SDL2_LIBRARIES}
@@ -175,12 +177,14 @@ if (NOT DISABLE_SERVER)
             src/server/main.cpp src/server/authoritative_game.cpp src/server/authoritative_game.hpp)
     target_include_directories(server PRIVATE
             ${terratech_INCLUDE_DIRS}
+			${CRYPTO++_INCLUDE_DIR}
             ${SDL2_INCLUDE_DIRS}
             ${sdl2_net_INCLUDE_DIRS}
             ${GLM_INCLUDE_DIRS}
             "${CMAKE_SOURCE_DIR}/thirdparty")
     target_link_libraries(server
             common
+			${CRYTPO++_LIBRARIES}
             ${SOCKET_LIBRARIES}
             ${terratech_LIBRARIES}
             ${SDL2_LIBRARIES}
