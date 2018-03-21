@@ -173,6 +173,7 @@ if (ENABLE_TOOLS)
 endif ()
 
 if (NOT DISABLE_SERVER)
+    MESSAGE("CRYPTO: ${CRYPTO++_LIBRARIES}")
     add_executable(server
             src/server/main.cpp src/server/authoritative_game.cpp src/server/authoritative_game.hpp)
     target_include_directories(server PRIVATE
@@ -184,7 +185,7 @@ if (NOT DISABLE_SERVER)
             "${CMAKE_SOURCE_DIR}/thirdparty")
     target_link_libraries(server
             common
-			${CRYTPO++_LIBRARIES}
+			${CRYPTO++_LIBRARIES}
             ${SOCKET_LIBRARIES}
             ${terratech_LIBRARIES}
             ${SDL2_LIBRARIES}
