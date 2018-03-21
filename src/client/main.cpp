@@ -2,7 +2,7 @@
 #include "sdl/sdl.hpp"
 #include "debug/profiler.hpp"
 #include "../common/time/clock.hpp"
-
+#include "../common/networking/tcp_socket.hpp"
 #ifdef WIN32
 #include <SDL_net.h>
 #else
@@ -12,6 +12,7 @@
 #include <iostream>
 #include <iterator>
 #include <chrono>
+
 
 void setup_opengl() {
     std::cout << "available extensions: " << std::endl;
@@ -32,13 +33,16 @@ void set_opengl_version(int major, int minor) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {    
     sdl::context<>& sdl = sdl::context<>::instance();
     if(!sdl.good()) {
         std::cerr << "cannot initialize SDL: " << SDL_GetError() << std::endl;
         return 1;
     }
-
+    SDLNet_Init();
+    networking::tcp_socket sock;
+    sock.try_connect("192.192.192.1", 6426);
+    
     // Setup OpenGL attributes
     set_opengl_version(3, 3);
 
@@ -63,7 +67,7 @@ int main(int argc, char* argv[]) {
 
     setup_opengl();
 
-    game game_state;
+    game game_state(sock);
     game_state.resize(800, 600);
 
     // TODO: Init on another thread
@@ -114,6 +118,6 @@ int main(int argc, char* argv[]) {
     }
 
     game_state.release();
-
+    SDLNet_Quit();
     return 0;
 }

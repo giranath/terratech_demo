@@ -43,6 +43,7 @@ void world_chunk::set_biome_at(const std::vector<uint8_t>& biome_vec) noexcept
 
 void world_chunk::set_biome_at(std::vector<uint8_t>&& biome_vec) noexcept
 {
+    biomes.resize(biome_vec.size());
     std::copy(biome_vec.begin(), biome_vec.end(), biomes.begin());
 }
 

@@ -5,6 +5,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(MSVC)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
+endif(MSVC)
+
 option(DISABLE_PROFILER "Disable profiling when ON" OFF)
 option(ENABLE_TOOLS "Enable tools compilation" OFF)
 option(DISABLE_SERVER "Disable server" OFF)

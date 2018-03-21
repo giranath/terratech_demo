@@ -243,11 +243,8 @@ void game::on_init() {
             if (packet)
             {
                 networking::world_chunk chunk = packet->as<networking::world_chunk>();
-                world_chunk game_chunk = game_world.add(chunk.x, chunk.y);
-                for (auto& b : chunk.regions_biome)
-                {
-                    game_chunk.set_biome_at(std::move(chunk.regions_biome));
-                }
+                world_chunk& game_chunk = game_world.add(chunk.x, chunk.y);
+                game_chunk.set_biome_at(std::move(chunk.regions_biome));
                 
             }
             
