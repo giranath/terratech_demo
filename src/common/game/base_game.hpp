@@ -27,10 +27,15 @@ private:
     // Game loop management
     bool will_loop;
 protected:
+    virtual void on_init() = 0;
     virtual void on_update(frame_duration last_frame) = 0;
+    virtual void on_release() = 0;
 
 public:
-    base_game(std::size_t thread_count);
+    explicit base_game(std::size_t thread_count);
+
+    void init();
+    void release();
 
     unit_flyweight_manager& unit_flyweights();
     const unit_flyweight_manager& unit_flyweights() const;

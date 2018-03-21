@@ -61,10 +61,13 @@ int main(int argc, char* argv[]) {
 
     game::frame_duration last_frame_duration = TARGET_FRAME_DURATION;
 
+    setup_opengl();
+
     game game_state;
     game_state.resize(800, 600);
 
-    setup_opengl();
+    // TODO: Init on another thread
+    game_state.init();
 
     // Game loop
     game_time::highres_clock frame_time;
@@ -109,6 +112,8 @@ int main(int argc, char* argv[]) {
 
         last_frame_duration = frame_time.elapsed_time<game::frame_duration>();
     }
+
+    game_state.release();
 
     return 0;
 }

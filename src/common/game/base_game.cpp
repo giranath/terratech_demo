@@ -9,6 +9,14 @@ base_game::base_game(std::size_t thread_count)
 
 }
 
+void base_game::init() {
+    on_init();
+}
+
+void base_game::release() {
+    on_release();
+}
+
 base_game::unit_flyweight_manager& base_game::unit_flyweights() {
     return unit_flyweights_;
 }

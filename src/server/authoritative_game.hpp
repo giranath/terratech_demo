@@ -7,7 +7,9 @@ class authoritative_game : public gameplay::base_game {
 public:
     authoritative_game();
 
+    void on_init() override;
     void on_update(frame_duration last_frame) override;
+    void on_release() override;
 };
 
 

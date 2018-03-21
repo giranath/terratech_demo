@@ -9,6 +9,10 @@ authoritative_game::authoritative_game()
 
 }
 
+void authoritative_game::on_init() {
+
+}
+
 void authoritative_game::on_update(frame_duration last_frame) {
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame);
 
@@ -34,4 +38,8 @@ void authoritative_game::on_update(frame_duration last_frame) {
     }));
 
     update_task.wait();
+}
+
+void authoritative_game::on_release() {
+
 }

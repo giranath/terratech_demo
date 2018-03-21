@@ -25,11 +25,15 @@ int main(int argc, const char** argv) {
     }
 
     authoritative_game game;
+    game.init();
+
     game_time::highres_clock frame_time;
     while(game.is_running()) {
         game.update(frame_time.elapsed_time<gameplay::base_game::frame_duration>());
         frame_time.restart();
     }
+
+    game.release();
 
     SDLNet_Quit();
     SDL_Quit();

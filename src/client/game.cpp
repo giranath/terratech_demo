@@ -238,6 +238,9 @@ game::game()
 , frame_count(0) {
     last_fps_durations.reserve(10);
 
+}
+
+void game::on_init() {
     // Setup controls
     setup_inputs();
 
@@ -254,6 +257,10 @@ game::game()
     load_datas();
 
     G_TO_REMOVE_GOLEM_HANDLE = add_unit(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, 106);
+}
+
+void game::on_release() {
+
 }
 
 void game::on_update(frame_duration last_frame_duration) {
