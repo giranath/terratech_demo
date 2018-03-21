@@ -36,7 +36,7 @@ private:
 
 public:
     unit_flyweight() = default;
-    explicit unit_flyweight(const nlohmann::json& data) {
+    explicit unit_flyweight(nlohmann::json& data) {
         load_unit_from_json(data);
     }
 

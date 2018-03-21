@@ -16,11 +16,11 @@
 
 #include <chrono>
 #include <array>
-#include <unordered_map>
+#include <map>
 
 class game : public gameplay::base_game {
 public:
-    using unit_mesh_collection = std::unordered_map<int, rendering::mesh>;
+    using unit_mesh_collection = std::map<int, rendering::mesh>;
 private:
     struct virtual_texture_value {
         int id;

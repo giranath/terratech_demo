@@ -43,19 +43,7 @@ Shader load_shader(const std::string& path) {
 }
 
 void game::load_flyweights() {
-    std::ifstream units_list_stream("asset/data/unit.list");
-    data::load_data_list<std::string>(units_list_stream, [this](const std::string& rel_path) {
-        std::string full_path = "asset/data/" + rel_path;
-
-        std::ifstream unit_stream(full_path);
-        if(unit_stream.is_open()) {
-            load_flyweight(nlohmann::json::parse(unit_stream));
-        }
-        else {
-            std::cerr << "cannot open " << full_path << std::endl;
-        }
-    });
-
+    
     for(auto flyweight_iterator = std::begin(unit_flyweights()); flyweight_iterator != std::end(unit_flyweights()); ++flyweight_iterator) {
         const float half_width = flyweight_iterator->second.width() / 2.f;
         const float height = flyweight_iterator->second.height();
@@ -233,6 +221,12 @@ game::game(networking::tcp_socket& socket)
 
 void game::on_init() {
     auto packet = networking::receive_packet_from(socket);
+    if (packet)
+    {
+        unit_flyweight_manager manager_u = packet->as<unit_flyweight_manager>();
+        //set_flyweight_manager(manager_u);
+    }
+    packet = networking::receive_packet_from(socket);
     if (packet)
     {
         networking::world_map map = packet->as<networking::world_map>();
