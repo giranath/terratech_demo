@@ -90,9 +90,16 @@ void authoritative_game::on_connection() {
     // Get client socket
     networking::tcp_socket connecting_socket = connection_listener.accept();
 
+    // Send the flyweights
+    std::cout << "sending flyweights..." << std::endl;
+    if(!networking::send_packet(connecting_socket, networking::packet::make(unit_flyweights()))) {
+        std::cerr << "failed to send flyweights" << std::endl;
+        return;
+    }
+
+    // Send the map
+    std::cout << "sending map..." << std::endl;
     networking::world_map map_infos(20, 20);
-
-
     if(networking::send_packet(connecting_socket, networking::packet::make(map_infos))) {
         for(const world_chunk& chunk : world) {
             std::vector<uint8_t> biomes;
@@ -108,7 +115,9 @@ void authoritative_game::on_connection() {
             }
 
             networking::world_chunk chunk_info(chunk.position().x, chunk.position().y, biomes);
-            networking::send_packet(connecting_socket, networking::packet::make(chunk_info));
+            if(!networking::send_packet(connecting_socket, networking::packet::make(chunk_info))) {
+                return;
+            }
         }
     }
 
@@ -117,9 +126,11 @@ void authoritative_game::on_connection() {
     // TODO: CRYPTO: Wait for symetric key from client
     // TODO: Send this client the flyweights
 
+    std::cout << "adding new client" << std::endl;
     // Add the client
     sockets.add(connecting_socket);
     connected_clients.push_back(std::move(connecting_socket));
+
 }
 
 void authoritative_game::on_client_data(const client& c) {
