@@ -1,8 +1,6 @@
 #ifndef MMAP_DEMO_AUTHORITATIVE_GAME_HPP
 #define MMAP_DEMO_AUTHORITATIVE_GAME_HPP
 
-#include <optional>
-
 #include "../common/game/base_game.hpp"
 #include "../common/world/world.hpp"
 #include "../common/networking/tcp_socket.hpp"
