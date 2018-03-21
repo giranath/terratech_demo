@@ -34,6 +34,8 @@ void authoritative_game::load_flyweights() {
 
 void authoritative_game::load_assets() {
     load_flyweights();
+    // TODO: Load building
+    // TODO: Load world generation
 }
 
 void authoritative_game::on_init() {

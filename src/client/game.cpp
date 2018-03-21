@@ -158,9 +158,9 @@ void game::setup_inputs() {
     key_inputs.register_state(SDLK_d, std::make_unique<input::look_right_command>(game_camera, 10.f));
     key_inputs.register_state(SDLK_w, std::make_unique<input::look_up_command>(game_camera, 10.f));
     key_inputs.register_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
+
     // Wireframe
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
-
 
     // Change Unit To Spawn	using change_unit_command
     key_inputs.register_action(SDLK_1, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 100));
@@ -190,7 +190,7 @@ bool game::can_move(base_unit* unit, glm::vec3 position) const {
         int chunk_x = position.x / CHUNK_WIDTH;
         int chunk_z = position.z / CHUNK_DEPTH;
 
-        const world_chunk* chunk = game_world.get_chunk(chunk_x, chunk_z);
+        const world_chunk* chunk = game_world.chunk_at(chunk_x, chunk_z);
         if(chunk) {
             const glm::vec3 chunk_space_position(position.x - chunk_x * CHUNK_WIDTH,
                                                  position.y,
@@ -215,9 +215,6 @@ void game::load_datas() {
     // Setup units flyweights
     load_flyweights();
 }
-
-// TODO: REMOVE THIS !!!!!!
-target_handle G_TO_REMOVE_GOLEM_HANDLE;
 
 game::game()
 : base_game(std::thread::hardware_concurrency() - 1)
@@ -246,8 +243,6 @@ void game::on_init() {
     game_camera.reset({-100.f, 10.f, -200.f});
 
     load_datas();
-
-    G_TO_REMOVE_GOLEM_HANDLE = add_unit(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, 106);
 }
 
 void game::on_release() {
@@ -281,7 +276,7 @@ void game::on_update(frame_duration last_frame_duration) {
 
     key_inputs.dispatch();
 
-	update_task.wait();
+    update_task.wait();
 }
 
 void game::render() {
@@ -354,7 +349,6 @@ void game::handle_event(SDL_Event event) {
                     actual_unit->set_target_position({ test.x, test.z });
                 }
             }
-
         }
     }
     else if(event.type == SDL_MOUSEBUTTONUP) {

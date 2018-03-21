@@ -35,7 +35,7 @@ private:
     std::unordered_map<std::string, virtual_texture_value> virtual_textures;
 
     // World
-    world game_world;
+    infinite_world game_world;
 
     // Units
     unit_mesh_collection unit_meshes;

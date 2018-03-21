@@ -77,7 +77,7 @@ add_library(common
 		src/common/networking/world_map.hpp
         src/common/game/base_game.cpp 
 		src/common/game/base_game.hpp
-		)
+		src/common/world/infinite_world.cpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
 		${SDL2_INCLUDE_DIRS}
