@@ -42,7 +42,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "can't catch SIGTERM" << std::endl;
     }
 
-    // TODO: Add a way to close the server gracefully
     game_time::highres_clock frame_time;
     while(game.is_running() && g_signal_status == 0) {
         game.update(frame_time.elapsed_time<gameplay::base_game::frame_duration>());
