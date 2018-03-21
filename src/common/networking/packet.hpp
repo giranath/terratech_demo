@@ -6,6 +6,9 @@
 #include <cstdint>
 #include <vector>
 #include <optional>
+#include <algorithm>
+#include <iterator>
+#include <type_traits>
 
 namespace networking {
 
@@ -21,8 +24,20 @@ struct packet {
     using byte_collection = std::vector<uint8_t>;
     header head;
     byte_collection bytes;
+    template <class T>
+
+    packet(T& obj) :
+        head(sizeof(obj))
+    {
+        static_assert(std::is_trivially_copyable<T>::value, "the object is not trivial");
+         
+        bytes.reserve(head.size);
+        uint8_t* ptr = reinterpret_cast<uint8_t*> (obj);
+        std::copy(ptr, ptr + head.size, std::back_inserter(bytes));
+    }
 
     explicit packet(header head);
+    
 };
 
 std::optional<packet> receive_packet_from(const tcp_socket& socket);
