@@ -41,6 +41,14 @@ struct packet {
         std::copy(ptr, ptr + head.size, std::back_inserter(bytes));
     }
 
+    template <class T>
+    T has() const
+    {
+        static_assert(std::is_trivially_copyable<T>::value, "the object is not trivial");
+        T* obj = reinterpret_cast<T*>(&bytes.front());
+        return *obj;
+    }
+
     explicit packet(header head);
     
 };
