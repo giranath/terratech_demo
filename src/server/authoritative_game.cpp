@@ -173,6 +173,7 @@ void authoritative_game::on_update(frame_duration last_frame) {
 }
 
 void authoritative_game::on_release() {
+    std::cout << "releasing..." << std::endl;
     std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const networking::tcp_socket& socket) {
         sockets.remove(socket);
     });
