@@ -12,6 +12,7 @@
 #include "../common/actor/unit_manager.hpp"
 #include "../common/time/clock.hpp"
 #include "../common/game/base_game.hpp"
+#include "../common/networking/tcp_socket.hpp"
 
 #include <chrono>
 #include <array>
@@ -35,7 +36,7 @@ private:
     std::unordered_map<std::string, virtual_texture_value> virtual_textures;
 
     // World
-    infinite_world game_world;
+    world game_world;
 
     // Units
     unit_mesh_collection unit_meshes;
@@ -55,6 +56,10 @@ private:
     int next_unit_to_spawn = 106;
     bool can_move(base_unit* unit, glm::vec3 position) const;
 
+
+    //Networking
+    networking::tcp_socket& socket;
+
     // Initialization functions
     void load_flyweights();
     void setup_inputs();
@@ -66,8 +71,8 @@ private:
     void load_datas();
 
 public:
-    game();
-
+    game(networking::tcp_socket& socket);
+    
     void on_init() override;
     void on_update(frame_duration last_frame) override;
     void on_release() override;

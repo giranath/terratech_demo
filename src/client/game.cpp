@@ -11,6 +11,8 @@
 #include "../common/datadriven/shader_list_record.hpp"
 #include "../common/datadriven/texture_list_record.hpp"
 #include "../common/datadriven/data_list.hpp"
+#include "../common/networking/packet.hpp"
+#include "../common/networking/world_map.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -216,19 +218,25 @@ void game::load_datas() {
     load_flyweights();
 }
 
-game::game()
+game::game(networking::tcp_socket& socket)
 : base_game(std::thread::hardware_concurrency() - 1)
-, game_world(static_cast<uint32_t>(std::time(nullptr)))
+, game_world()
 , world_rendering(game_world)
 , game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)
 , is_scrolling(false)
 , last_fps_duration_index(0)
-, frame_count(0) {
+, frame_count(0) 
+, socket(socket){
     last_fps_durations.reserve(10);
-
 }
 
 void game::on_init() {
+    auto packet = networking::receive_packet_from(socket);
+    if (packet)
+    {
+        networking::world_map map = packet->has<networking::world_map>();
+    }
+
     // Setup controls
     setup_inputs();
 

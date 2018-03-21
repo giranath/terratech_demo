@@ -45,7 +45,7 @@ struct packet {
     T has() const
     {
         static_assert(std::is_trivially_copyable<T>::value, "the object is not trivial");
-        T* obj = reinterpret_cast<T*>(&bytes.front());
+        const T* obj = reinterpret_cast<const T*>(&bytes.front());
         return *obj;
     }
 
