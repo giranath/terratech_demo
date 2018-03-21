@@ -39,15 +39,6 @@ Shader load_shader(const std::string& path) {
     return shader;
 }
 
-void game::load_flyweight(std::ifstream& stream) {
-    using json = nlohmann::json;
-    json j = json::parse(stream);
-
-    int id = j["id"];
-
-    unit_flyweights()[id] = unit_flyweight(j);
-}
-
 void game::load_flyweights() {
     std::ifstream units_list_stream("asset/data/unit.list");
     data::load_data_list<std::string>(units_list_stream, [this](const std::string& rel_path) {
@@ -55,7 +46,7 @@ void game::load_flyweights() {
 
         std::ifstream unit_stream(full_path);
         if(unit_stream.is_open()) {
-            load_flyweight(unit_stream);
+            load_flyweight(nlohmann::json::parse(unit_stream));
         }
         else {
             std::cerr << "cannot open " << full_path << std::endl;

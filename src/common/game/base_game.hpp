@@ -26,6 +26,7 @@ private:
 
     // Game loop management
     bool will_loop;
+
 protected:
     virtual void on_init() = 0;
     virtual void on_update(frame_duration last_frame) = 0;
@@ -51,6 +52,8 @@ public:
 
     async::task_executor::task_future push_task(async::task_executor::task_ptr task);
     target_handle add_unit(glm::vec3 position, glm::vec2 target, int flyweight_id);
+
+    void load_flyweight(const nlohmann::json& json);
 };
 
 }

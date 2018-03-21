@@ -53,4 +53,10 @@ target_handle base_game::add_unit(glm::vec3 position, glm::vec2 target, int flyw
     return units_.add(std::make_unique<unit>(position, target, &unit_flyweights_[flyweight_id], &units_));
 }
 
+void base_game::load_flyweight(const nlohmann::json& json) {
+    int id = json["id"];
+
+    unit_flyweights_[id] = unit_flyweight(json);
+}
+
 }

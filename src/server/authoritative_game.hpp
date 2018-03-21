@@ -4,6 +4,11 @@
 #include "../common/game/base_game.hpp"
 
 class authoritative_game : public gameplay::base_game {
+
+    void load_flyweights();
+
+    void load_assets();
+
 public:
     authoritative_game();
 

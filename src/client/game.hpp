@@ -56,7 +56,6 @@ private:
     bool can_move(base_unit* unit, glm::vec3 position) const;
 
     // Initialization functions
-    void load_flyweight(std::ifstream& stream);
     void load_flyweights();
     void setup_inputs();
     void setup_renderer();

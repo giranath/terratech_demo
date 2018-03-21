@@ -1,16 +1,45 @@
 #include "authoritative_game.hpp"
 #include "../common/actor/unit.hpp"
+#include "../common/datadriven/data_list.hpp"
 
 #include <thread>
+#include <string>
 #include <iostream>
+#include <fstream>
 
 authoritative_game::authoritative_game()
 : base_game(std::thread::hardware_concurrency() - 1) {
 
 }
 
-void authoritative_game::on_init() {
+void authoritative_game::load_flyweights() {
+    std::ifstream units_list_stream("asset/data/unit.list");
+    if(!units_list_stream.is_open()) {
+        std::cerr << "cannot open 'asset/data/unit.list'" << std::endl;
+    }
 
+    data::load_data_list<std::string>(units_list_stream, [this](const std::string& rel_path) {
+        std::string full_path = "asset/data/" + rel_path;
+
+        std::ifstream unit_stream(full_path);
+        if(unit_stream.is_open()) {
+            std::cout << "loading flyweight '" << full_path << "'" << std::endl;
+            load_flyweight(nlohmann::json::parse(unit_stream));
+        }
+        else {
+            std::cerr << "cannot open " << full_path << std::endl;
+        }
+    });
+}
+
+void authoritative_game::load_assets() {
+    load_flyweights();
+}
+
+void authoritative_game::on_init() {
+    load_assets();
+
+    // TODO: Generate world
 }
 
 void authoritative_game::on_update(frame_duration last_frame) {
