@@ -28,7 +28,6 @@ endif()
 execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/thirdparty/gl3w/gl3w_gen.py")
 
 add_library(common
-        src/common/crypto/rsa.cpp
         src/common/crypto/rsa.hpp
         src/common/world/world.cpp
         src/common/world/world.hpp

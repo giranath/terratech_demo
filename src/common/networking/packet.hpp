@@ -15,6 +15,8 @@
 #include <experimental/optional>
 #endif
 
+#include <json/json.hpp>
+
 namespace networking {
 
 struct header {
@@ -34,21 +36,21 @@ struct packet {
 
     template<class T>
     static packet make(const T& obj) {
-        static_assert(std::is_trivially_copyable<T>::value, "the object is not trivial");
+        nlohmann::json json = obj;
 
-        packet p(header(sizeof(obj)));
-        p.bytes.reserve(p.head.size);
-        const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&obj);
-        std::copy(ptr, ptr + p.head.size, std::back_inserter(p.bytes));
+        std::string json_str = json.dump();
+        packet p(header(json_str.size()));
+        std::transform(std::begin(json_str), std::end(json_str), std::begin(p.bytes), [](char letter) {
+            return static_cast<uint8_t>(letter);
+        });
 
         return p;
     }
 
     template <class T>
     T as() const {
-        static_assert(std::is_trivially_copyable<T>::value, "the object is not trivial");
-        const T* obj = reinterpret_cast<const T*>(&bytes.front());
-        return *obj;
+        nlohmann::json json = nlohmann::json::parse(std::begin(bytes), std::end(bytes));
+        return json.get<T>();
     }
 };
 
