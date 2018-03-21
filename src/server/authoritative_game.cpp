@@ -87,12 +87,11 @@ void authoritative_game::on_init() {
 }
 
 void authoritative_game::on_connection() {
+    bool sync = true;
     // Get client socket
     networking::tcp_socket connecting_socket = connection_listener.accept();
 
     networking::world_map map_infos(20, 20);
-
-
     if(networking::send_packet(connecting_socket, networking::packet::make(map_infos))) {
         for(const world_chunk& chunk : world) {
             std::vector<uint8_t> biomes;
@@ -108,7 +107,10 @@ void authoritative_game::on_connection() {
             }
 
             networking::world_chunk chunk_info(chunk.position().x, chunk.position().y, biomes);
-            networking::send_packet(connecting_socket, networking::packet::make(chunk_info));
+            if(!networking::send_packet(connecting_socket, networking::packet::make(chunk_info))) {
+                sync = false;
+                break;
+            }
         }
     }
 
@@ -118,8 +120,10 @@ void authoritative_game::on_connection() {
     // TODO: Send this client the flyweights
 
     // Add the client
-    sockets.add(connecting_socket);
-    connected_clients.push_back(std::move(connecting_socket));
+    if(sync) {
+        sockets.add(connecting_socket);
+        connected_clients.push_back(std::move(connecting_socket));
+    }
 }
 
 void authoritative_game::on_client_data(const client& c) {
