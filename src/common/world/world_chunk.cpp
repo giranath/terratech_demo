@@ -36,6 +36,16 @@ void world_chunk::load(terra_chunk* chunk) noexcept {
     }
 }
 
+void world_chunk::set_biome_at(const std::vector<uint8_t>& biome_vec) noexcept
+{
+    std::copy(biome_vec.begin(), biome_vec.end(), biomes.begin());
+}
+
+void world_chunk::set_biome_at(std::vector<uint8_t>&& biome_vec) noexcept
+{
+    std::copy(biome_vec.begin(), biome_vec.end(), biomes.begin());
+}
+
 int world_chunk::biome_at(int x, int y, int z) const noexcept {
     const std::size_t Y_OFFSET = world::CHUNK_WIDTH * world::CHUNK_DEPTH;
     const std::size_t Z_OFFSET = world::CHUNK_WIDTH;

@@ -31,7 +31,8 @@ public:
      * @param chunk The terratech chunk to load
      */
     void load(terra_chunk* chunk) noexcept;
-
+    void set_biome_at(const std::vector<uint8_t>& biome_vec) noexcept;
+    void set_biome_at(std::vector<uint8_t>&& biome_vec) noexcept;
     int biome_at(int x, int y, int z) const noexcept;
     std::vector<site*> sites_at(int x, int y, int z) noexcept;
     std::vector<const site*> sites_at(int x, int y, int z) const noexcept;

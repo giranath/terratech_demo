@@ -13,6 +13,7 @@
 #include "../common/datadriven/data_list.hpp"
 #include "../common/networking/packet.hpp"
 #include "../common/networking/world_map.hpp"
+#include "../common/networking/world_chunk.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -234,8 +235,25 @@ void game::on_init() {
     auto packet = networking::receive_packet_from(socket);
     if (packet)
     {
-        networking::world_map map = packet->has<networking::world_map>();
+        networking::world_map map = packet->as<networking::world_map>();
+
+        for (size_t i = 0; i < map.chunk_width * map.chunk_height; ++i)
+        {
+            packet = networking::receive_packet_from(socket);
+            if (packet)
+            {
+                networking::world_chunk chunk = packet->as<networking::world_chunk>();
+                world_chunk game_chunk = game_world.add(chunk.x, chunk.y);
+                for (auto& b : chunk.regions_biome)
+                {
+                    game_chunk.set_biome_at(std::move(chunk.regions_biome));
+                }
+                
+            }
+            
+        }
     }
+
 
     // Setup controls
     setup_inputs();
