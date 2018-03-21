@@ -29,28 +29,27 @@ struct packet {
     using byte_collection = std::vector<uint8_t>;
     header head;
     byte_collection bytes;
-    template <class T>
 
-    packet(T& obj) :
-        head(sizeof(obj))
-    {
+    explicit packet(header head);
+
+    template<class T>
+    static packet make(const T& obj) {
         static_assert(std::is_trivially_copyable<T>::value, "the object is not trivial");
-         
-        bytes.reserve(head.size);
-        uint8_t* ptr = reinterpret_cast<uint8_t*> (obj);
-        std::copy(ptr, ptr + head.size, std::back_inserter(bytes));
+
+        packet p(header(sizeof(obj)));
+        p.bytes.reserve(p.head.size);
+        const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&obj);
+        std::copy(ptr, ptr + p.head.size, std::back_inserter(p.bytes));
+
+        return p;
     }
 
     template <class T>
-    T has() const
-    {
+    T as() const {
         static_assert(std::is_trivially_copyable<T>::value, "the object is not trivial");
         const T* obj = reinterpret_cast<const T*>(&bytes.front());
         return *obj;
     }
-
-    explicit packet(header head);
-    
 };
 
 #ifndef __APPLE__

@@ -85,10 +85,17 @@ void authoritative_game::on_init() {
 }
 
 void authoritative_game::on_connection() {
+    // Get client socket
+    networking::tcp_socket connecting_socket = connection_listener.accept();
+
     // TODO: Reserve a place to current connection
     // TODO: CRYPTO: Send public key to client
     // TODO: CRYPTO: Wait for symetric key from client
     // TODO: Send this client the flyweights
+
+    // Add the client
+    sockets.add(connecting_socket);
+    connected_clients.push_back(std::move(connecting_socket));
 }
 
 void authoritative_game::on_client_data(const client& c) {
