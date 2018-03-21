@@ -16,7 +16,6 @@
 #endif
 
 #include <json/json.hpp>
-#include <iostream>
 
 namespace networking {
 
@@ -40,7 +39,6 @@ struct packet {
         nlohmann::json json = obj;
 
         std::string json_str = json.dump();
-        std::cerr << json_str << std::endl;
         packet p(header(json_str.size()));
         std::transform(std::begin(json_str), std::end(json_str), std::begin(p.bytes), [](char letter) {
             return static_cast<uint8_t>(letter);
