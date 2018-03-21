@@ -43,7 +43,13 @@ struct packet {
 
         return p;
     }
-    
+
+    template <class T>
+    T as() const {
+        static_assert(std::is_trivially_copyable<T>::value, "the object is not trivial");
+        T* obj = reinterpret_cast<T*>(&bytes.front());
+        return *obj;
+    }
 };
 
 #ifndef __APPLE__
