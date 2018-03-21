@@ -5,10 +5,15 @@
 
 #include <cstdint>
 #include <vector>
-#include <optional>
 #include <algorithm>
 #include <iterator>
 #include <type_traits>
+
+#ifndef __APPLE__
+#include <optional>
+#else
+#include <experimental/optional>
+#endif
 
 namespace networking {
 
@@ -40,7 +45,13 @@ struct packet {
     
 };
 
-std::optional<packet> receive_packet_from(const tcp_socket& socket);
+#ifndef __APPLE__
+using optional_packet = std::optional<packet>;
+#else
+using optional_packet = std::experimental::optional<packet>;
+#endif
+
+optional_packet receive_packet_from(const tcp_socket& socket);
 bool send_packet(const tcp_socket& socket, const packet& packet);
 
 }

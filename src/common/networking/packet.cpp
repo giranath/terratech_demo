@@ -15,7 +15,7 @@ packet::packet(header head)
 
 }
 
-std::optional<packet> receive_packet_from(const tcp_socket& socket) {
+optional_packet receive_packet_from(const tcp_socket& socket) {
     header::size_type packet_size;
     int recv_size = socket.receive(reinterpret_cast<uint8_t*>(&packet_size), sizeof(packet_size));
     packet_size = SDL_SwapBE64(packet_size);
