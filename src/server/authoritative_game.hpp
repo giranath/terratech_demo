@@ -7,15 +7,21 @@
 #include "../common/networking/socket_set.hpp"
 
 class authoritative_game : public gameplay::base_game {
+    using client = networking::tcp_socket;
+
     infinite_world world;
     networking::socket_set sockets;
     networking::tcp_listener connection_listener;
-    std::vector<networking::tcp_socket> connected_clients;
+    std::vector<client> connected_clients;
 
     void load_flyweights();
     void load_assets();
     void generate_world();
     void setup_listener();
+
+    void on_connection();
+    void on_client_data(const client& c);
+    void check_sockets();
 
 public:
     authoritative_game();

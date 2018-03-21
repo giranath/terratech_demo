@@ -27,6 +27,7 @@ int main(int argc, const char** argv) {
     authoritative_game game;
     game.init();
 
+    // TODO: Add a way to close the server gracefully
     game_time::highres_clock frame_time;
     while(game.is_running()) {
         game.update(frame_time.elapsed_time<gameplay::base_game::frame_duration>());

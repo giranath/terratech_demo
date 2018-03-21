@@ -31,6 +31,7 @@ protected:
     virtual void on_init() = 0;
     virtual void on_update(frame_duration last_frame) = 0;
     virtual void on_release() = 0;
+    virtual void on_stop() {};
 
 public:
     explicit base_game(std::size_t thread_count);

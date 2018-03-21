@@ -42,6 +42,7 @@ void base_game::update(frame_duration last_frame) {
 }
 
 void base_game::stop() noexcept {
+    on_stop();
     will_loop = false;
 }
 

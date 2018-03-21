@@ -74,9 +74,40 @@ void authoritative_game::on_init() {
     setup_listener();
 }
 
+void authoritative_game::on_connection() {
+
+}
+
+void authoritative_game::on_client_data(const client& c) {
+
+}
+
+void authoritative_game::check_sockets() {
+    int numready = sockets.check(std::chrono::milliseconds(0));
+    if(numready == -1) {
+        std::cerr << "SDLNet_CheckSockets: " << SDLNet_GetError() << std::endl;
+    }
+    else if(numready > 0){
+        if(sockets.is_ready(connection_listener)) {
+            on_connection();
+        }
+        else {
+            std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const client& c) {
+                if(sockets.is_ready(c)) {
+                    on_client_data(c);
+                }
+            });
+        }
+    }
+}
+
 void authoritative_game::on_update(frame_duration last_frame) {
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame);
 
+    // Handle data reception from clients
+    check_sockets();
+
+    /*
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {
         for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {
             unit* actual_unit = static_cast<unit*>(u->second.get());
@@ -97,8 +128,13 @@ void authoritative_game::on_update(frame_duration last_frame) {
     }));
 
     update_task.wait();
+     */
 }
 
 void authoritative_game::on_release() {
+    std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const networking::tcp_socket& socket) {
+        sockets.remove(socket);
+    });
 
+    connected_clients.clear();
 }
