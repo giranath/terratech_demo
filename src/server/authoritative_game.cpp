@@ -2,6 +2,8 @@
 #include "../common/actor/unit.hpp"
 #include "../common/datadriven/data_list.hpp"
 #include "../common/networking/packet.hpp"
+#include "../common/networking/world_map.hpp"
+#include "../common/networking/world_chunk.hpp"
 
 #include <thread>
 #include <string>
@@ -87,6 +89,28 @@ void authoritative_game::on_init() {
 void authoritative_game::on_connection() {
     // Get client socket
     networking::tcp_socket connecting_socket = connection_listener.accept();
+
+    networking::world_map map_infos(20, 20);
+
+
+    if(networking::send_packet(connecting_socket, networking::packet::make(map_infos))) {
+        for(const world_chunk& chunk : world) {
+            std::vector<uint8_t> biomes;
+            biomes.reserve(world::CHUNK_WIDTH * world::CHUNK_HEIGHT * world::CHUNK_DEPTH);
+
+            // SETUP BIOMES
+            for(int y = 0; y < world::CHUNK_HEIGHT; ++y) {
+                for(int z = 0; z < world::CHUNK_DEPTH; ++z) {
+                    for(int x = 0; x < world::CHUNK_WIDTH; ++x) {
+                        biomes.push_back(chunk.biome_at(x, y, z));
+                    }
+                }
+            }
+
+            networking::world_chunk chunk_info(chunk.position().x, chunk.position().y, biomes);
+            networking::send_packet(connecting_socket, networking::packet::make(chunk_info));
+        }
+    }
 
     // TODO: Reserve a place to current connection
     // TODO: CRYPTO: Send public key to client
