@@ -2,12 +2,12 @@
 
     uint32_t unit_manager::get_unit_type(uint32_t id)
     {
-        return id >> 24;
+        return id & 0x0ff0000;
     }
 
     uint32_t unit_manager::actor_type_to_uint32_t(base_unit* unit)
     {
-        return static_cast<uint32_t>(unit->get_type()) << 24;
+        return static_cast<uint32_t>(unit->get_type()) << 16;
     }
 
     unit_manager::unit_manager() :
@@ -33,19 +33,28 @@
         return unit_counter;
     }
 
-    target_handle unit_manager::add(unit_ptr unit)
+    target_handle unit_manager::add(unit_ptr unit, uint32_t id)
     {
-        uint32_t type = actor_type_to_uint32_t(unit.get());
-        base_unit* temp_ptr = unit.get();
-        units[type >> 24][type + unit_counter] = std::move(unit);
-        temp_ptr->set_id(type + unit_counter);
-        ++unit_counter;
-        return target_handle{this, temp_ptr};
+        if (unit)
+        {
+            unit_id id_unit;
+            id_unit.from_uint32_t(id);
+            uint32_t type = id_unit.unit_type;
+
+            base_unit* temp_ptr = unit.get();
+            units[type][id] = std::move(unit);
+            temp_ptr->set_id(type + unit_counter);
+            ++unit_counter;
+            return target_handle{ this, temp_ptr };
+        }
+        
     }
 
     void unit_manager::remove(uint32_t id)
     {
-        uint32_t type = get_unit_type(id);
+        unit_id id_unit;
+        id_unit.from_uint32_t(id);
+        uint32_t type = id_unit.unit_type;
         units[type].erase(id);
     }
 

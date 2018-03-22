@@ -14,6 +14,7 @@
 #include "../common/networking/packet.hpp"
 #include "../common/networking/world_map.hpp"
 #include "../common/networking/world_chunk.hpp"
+#include "../common/networking/networking_constant.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -274,10 +275,14 @@ void game::on_update(frame_duration last_frame_duration) {
     if (socket_s.check(std::chrono::milliseconds(0)) > 0)
     {
         auto packet = networking::receive_packet_from(socket);
+        
         if (packet)
         {
-            //packet->as<>()
+            if (packet->head.packet_id == 0)
+            {
+                //std::vector<unit> unit_v = packet->as < std::vector<unit>>();
 
+            }
         }
     }
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);

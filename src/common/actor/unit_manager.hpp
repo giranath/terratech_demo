@@ -10,6 +10,22 @@
 #include <unordered_map>
 #include <memory>
 
+struct unit_id
+{
+    uint8_t player_id;
+    uint8_t unit_type;
+    uint16_t counter;
+    uint32_t to_uint32_t() const
+    {
+        return *reinterpret_cast<const uint32_t*>(this);
+    }
+
+    void from_uint32_t(uint32_t val)
+    {
+        *this = *reinterpret_cast<unit_id*>(&val);
+    }
+};
+
 class unit_manager
 {
 public:
@@ -31,7 +47,7 @@ public:
 
     uint32_t get_next_id();
 
-    target_handle add(unit_ptr unit);
+    target_handle add(unit_ptr unit, uint32_t id);
 
     void remove(uint32_t id);
 

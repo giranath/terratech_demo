@@ -199,6 +199,10 @@ set_target_properties(mmap_demo PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAK
 
 target_compile_definitions(mmap_demo PRIVATE -DGAME_VERSION="${PROJECT_VERSION}")
 
+if(NOT ENABLE_CRYPTO)
+    target_compile_definitions(mmap_demo PRIVATE -DNCRYPTO)
+endif()
+
 if (DISABLE_PROFILER)
     target_compile_definitions(mmap_demo PRIVATE -DNPROFILER)
 endif ()
@@ -229,4 +233,9 @@ if (NOT DISABLE_SERVER)
             ${CMAKE_THREAD_LIBS_INIT}
             ${CMAKE_DL_LIBS})
     target_compile_definitions(server PRIVATE -DGAME_SERVER)
+	
+	if(NOT ENABLE_CRYPTO)
+    target_compile_definitions(server PRIVATE -DNCRYPTO)
+	endif()
+	
 endif()
