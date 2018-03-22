@@ -34,3 +34,7 @@ void target_handle::set(base_unit* unit)
 {
     id = unit->get_id();
 }
+
+target_handle::operator bool() const noexcept {
+    return manager != nullptr;
+}

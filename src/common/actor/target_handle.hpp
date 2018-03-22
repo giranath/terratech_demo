@@ -20,6 +20,8 @@ public:
     base_unit* get();
 
     void set(base_unit* unit);
+
+    operator bool() const noexcept;
 };
 
 #endif

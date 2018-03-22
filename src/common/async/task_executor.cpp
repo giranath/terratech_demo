@@ -53,7 +53,7 @@ task_executor::~task_executor() {
     }
 }
 
-std::future<task_executor::task_ptr> task_executor::push(task_ptr new_task) {
+task_executor::task_future task_executor::push(task_ptr new_task) {
     task_handle handle = last_handle + 1;
     std::future<task_ptr> future;
     {
