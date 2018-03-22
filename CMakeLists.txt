@@ -220,7 +220,7 @@ if (NOT DISABLE_SERVER)
     add_executable(server
             src/server/main.cpp
             src/server/authoritative_game.cpp
-            src/server/authoritative_game.hpp)
+            src/server/authoritative_game.hpp src/server/server_unit_manager.cpp src/server/server_unit_manager.hpp)
     target_include_directories(server PRIVATE
             ${terratech_INCLUDE_DIRS}
             ${CRYPTO++_INCLUDE_DIR}

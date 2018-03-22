@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include "server_unit_manager.hpp"
 
 // The states:
 //  - lobby
@@ -19,7 +20,7 @@
 uint8_t authoritative_game::client::next_id = 0;
 
 authoritative_game::authoritative_game()
-: base_game(std::thread::hardware_concurrency() - 1)
+: base_game(std::thread::hardware_concurrency() - 1, std::make_unique<server_unit_manager>())
 , world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()))
 , sockets(3) {
 
@@ -138,7 +139,11 @@ void authoritative_game::on_connection() {
     std::cout << "adding new client" << std::endl;
     // Add the client
     sockets.add(connecting_socket);
-    connected_clients.emplace_back(std::move(connecting_socket));
+
+    client connecting_client(std::move(connecting_socket));
+    uint8_t client_id = connecting_client.id;
+    connected_clients.push_back(std::move(connecting_client));
+    spawn_unit(client_id, glm::vec3{10.f, 0.f, 10.f}, glm::vec2{0.f, 0.f}, 106);
 }
 
 void authoritative_game::on_client_data(const client& c) {
@@ -195,7 +200,9 @@ void authoritative_game::check_sockets() {
 }
 
 void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id) {
-    auto created_unit = add_unit(position, target, flyweight_id);
+    unit_manager& manager = units();
+    server_unit_manager& units = static_cast<server_unit_manager&>(manager);
+    auto created_unit = units.add_unit_to(owner, make_unit(position, target, flyweight_id));
 
     std::vector<unit> units_to_spawn;
     units_to_spawn.push_back(*static_cast<unit*>(created_unit.get()));

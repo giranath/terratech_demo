@@ -3,8 +3,9 @@
 
 namespace gameplay {
 
-base_game::base_game(std::size_t thread_count)
+base_game::base_game(std::size_t thread_count, std::unique_ptr<unit_manager> units)
 : tasks(thread_count)
+, units_(std::move(units))
 , will_loop(true) {
 
 }
@@ -26,11 +27,11 @@ const base_game::unit_flyweight_manager& base_game::unit_flyweights() const {
 }
 
 unit_manager& base_game::units() {
-    return units_;
+    return *units_;
 }
 
 const unit_manager& base_game::units() const {
-    return units_;
+    return *units_;
 }
 
 bool base_game::is_running() const noexcept {
@@ -51,7 +52,11 @@ async::task_executor::task_future base_game::push_task(async::task_executor::tas
 }
 
 target_handle base_game::add_unit(glm::vec3 position, glm::vec2 target, int flyweight_id) {
-    return target_handle{};//units_.add(std::make_unique<unit>(position, target, &unit_flyweights_[flyweight_id], &units_));
+    return target_handle{};//units_.add();
+}
+
+unit_manager::unit_ptr base_game::make_unit(glm::vec3 position, glm::vec2 target, int flyweight_id) {
+    return std::make_unique<unit>(position, target, &unit_flyweights_[flyweight_id], units_.get());
 }
 
 void base_game::load_flyweight(const nlohmann::json& json) {

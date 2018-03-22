@@ -21,7 +21,7 @@ private:
     async::task_executor tasks;
 
     // Units
-    unit_manager units_;
+    std::unique_ptr<unit_manager> units_;
     unit_flyweight_manager unit_flyweights_;
 
     // Game loop management
@@ -34,7 +34,7 @@ protected:
     virtual void on_stop() {};
 
 public:
-    explicit base_game(std::size_t thread_count);
+    explicit base_game(std::size_t thread_count, std::unique_ptr<unit_manager> units);
 
     void init();
     void release();
@@ -53,6 +53,7 @@ public:
 
     async::task_executor::task_future push_task(async::task_executor::task_ptr task);
     target_handle add_unit(glm::vec3 position, glm::vec2 target, int flyweight_id);
+    unit_manager::unit_ptr make_unit(glm::vec3 position, glm::vec2 target, int flyweight_id); // TODO: Make const
 
     void load_flyweight(const nlohmann::json& json);
 
