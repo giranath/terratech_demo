@@ -12,6 +12,8 @@
 
 class unit_flyweight
 {
+public:
+    static const int INVALID_ID = std::numeric_limits<int>::max();
 private:
     std::vector<ressource_type> ressource_gathering_type;
     std::vector<ressource_type> ressource_drop_off;

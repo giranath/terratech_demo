@@ -9,7 +9,7 @@
 class base_unit : public actor
 {
     unit_flyweight* flyweight;
-    uint8_t flyweight_id;
+    int flyweight_id;
 
     int current_health;
     uint32_t id;
@@ -18,9 +18,14 @@ public:
     base_unit(glm::vec3 position = {}, unit_flyweight* definition = nullptr, actor_type type = actor_type::MAX_ACTOR_TYPE)
     : actor(position, true, true, type)
     , flyweight(definition)
-    , flyweight_id(flyweight->id())
-    , current_health(flyweight->get_max_health()) {
+    , flyweight_id(flyweight ? flyweight->id() : unit_flyweight::INVALID_ID)
+    , current_health(flyweight ? flyweight->get_max_health() : 0) {
 
+    }
+
+    void set_flyweight(unit_flyweight* new_flyweight) {
+        flyweight = new_flyweight;
+        current_health = flyweight->get_max_health();
     }
 
     void take_damage(unsigned int damage)
