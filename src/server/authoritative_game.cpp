@@ -4,6 +4,7 @@
 #include "../common/networking/packet.hpp"
 #include "../common/networking/world_map.hpp"
 #include "../common/networking/world_chunk.hpp"
+#include "../common/networking/networking_constant.hpp"
 
 #include <thread>
 #include <string>
@@ -97,7 +98,7 @@ void authoritative_game::on_connection() {
         serialized_flyweights.emplace(std::to_string(it->first), it->second);
     }
 
-    if(!networking::send_packet(connecting_socket, networking::packet::make(serialized_flyweights))) {
+    if(!networking::send_packet(connecting_socket, networking::packet::make(serialized_flyweights, SETUP_FLYWEIGHTS))) {
         std::cerr << "failed to send flyweights" << std::endl;
         return;
     }
@@ -105,7 +106,7 @@ void authoritative_game::on_connection() {
     // Send the map
     std::cout << "sending map..." << std::endl;
     networking::world_map map_infos(20, 20);
-    if(networking::send_packet(connecting_socket, networking::packet::make(map_infos))) {
+    if(networking::send_packet(connecting_socket, networking::packet::make(map_infos, SETUP_WORLD_SIZE))) {
         for(const world_chunk& chunk : world) {
             std::vector<uint8_t> biomes;
             biomes.reserve(world::CHUNK_WIDTH * world::CHUNK_HEIGHT * world::CHUNK_DEPTH);
@@ -120,7 +121,7 @@ void authoritative_game::on_connection() {
             }
 
             networking::world_chunk chunk_info(chunk.position().x, chunk.position().y, biomes);
-            if(!networking::send_packet(connecting_socket, networking::packet::make(chunk_info))) {
+            if(!networking::send_packet(connecting_socket, networking::packet::make(chunk_info, SETUP_CHUNK))) {
                 return;
             }
         }

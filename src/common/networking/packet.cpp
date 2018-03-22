@@ -4,8 +4,9 @@
 
 namespace networking {
 
-header::header(size_type size)
-: size(size) {
+header::header(size_type size, packet_id_type packet_id)
+: size(size)
+, packet_id{packet_id} {
 
 }
 
@@ -19,13 +20,21 @@ optional_packet receive_packet_from(const tcp_socket& socket) {
     header::size_type packet_size;
     int recv_size = socket.receive(reinterpret_cast<uint8_t*>(&packet_size), sizeof(packet_size));
     packet_size = SDL_SwapBE64(packet_size);
-
+    
     // The client has disconnected
-    if(recv_size == 0) {
+    if (recv_size == 0) {
         return {};
     }
 
-    networking::packet received_packet(packet_size);
+    header::packet_id_type packet_id;
+    recv_size = socket.receive(reinterpret_cast<uint8_t*>(&packet_id), sizeof(packet_id));
+
+    // The client has disconnected
+    if (recv_size == 0) {
+        return {};
+    }
+
+    networking::packet received_packet(header{ packet_size, packet_id});
 
     header::size_type to_receive_size = packet_size;
     auto current_it = received_packet.bytes.begin();
@@ -58,6 +67,7 @@ bool send_packet(const tcp_socket& socket, const packet& packet) {
 #endif
 
     socket.send(reinterpret_cast<const uint8_t*>(&packet_size), sizeof(packet_size));
+    socket.send(reinterpret_cast<const uint8_t*>(&packet.head.packet_id), sizeof(packet.head.packet_id));
 
     header::size_type to_send_size = packet.head.size;
     const header::size_type PER_ITERATION_MAXLEN = std::numeric_limits<int>::max();

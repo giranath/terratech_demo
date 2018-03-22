@@ -21,10 +21,10 @@ namespace networking {
 
 struct header {
     using size_type = uint64_t;
-
+    using packet_id_type = uint8_t;
     size_type size;
-
-    header(size_type size);
+    packet_id_type packet_id;
+    header(size_type size, packet_id_type packet_type);
 };
 
 struct packet {
@@ -35,11 +35,11 @@ struct packet {
     explicit packet(header head);
 
     template<class T>
-    static packet make(const T& obj) {
+    static packet make(const T& obj, const header::packet_id_type& packet_id) {
         nlohmann::json json = obj;
 
         std::string json_str = json.dump();
-        packet p(header(json_str.size()));
+        packet p(header(json_str.size(), packet_id));
         std::transform(std::begin(json_str), std::end(json_str), std::begin(p.bytes), [](char letter) {
             return static_cast<uint8_t>(letter);
         });
