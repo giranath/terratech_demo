@@ -18,7 +18,7 @@ public:
 
     }
 
-    std::size_t Put2(const byte* byte, std::size_t length, int /*messageEnd*/, bool /*blocking*/) {
+    std::size_t Put2(const CryptoPP::byte* byte, std::size_t length, int /*messageEnd*/, bool /*blocking*/) {
         iterator = std::copy(byte, byte + length, iterator);
 
         return 0;

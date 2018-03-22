@@ -1,7 +1,7 @@
 #include "packet.hpp"
 
 #include <numeric>
-
+#include <iostream>
 namespace networking {
 
 header::header(size_type size)
@@ -18,12 +18,16 @@ packet::packet(header head)
 optional_packet receive_packet_from(const tcp_socket& socket) {
     header::size_type packet_size;
     int recv_size = socket.receive(reinterpret_cast<uint8_t*>(&packet_size), sizeof(packet_size));
-    packet_size = SDL_SwapBE64(packet_size);
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+    packet_size = SDL_Swap64(packet_size);
+#endif
 
     // The client has disconnected
-    if(recv_size == 0) {
+    if(recv_size < sizeof(header::size_type)) {
         return {};
     }
+
+    std::cout << " receiving " << packet_size << std::endl;
 
     networking::packet received_packet(packet_size);
 
@@ -36,13 +40,13 @@ optional_packet receive_packet_from(const tcp_socket& socket) {
         header::size_type len = std::min(PER_ITERATION_MAXLEN, to_receive_size);
         recv_size = socket.receive(&(*current_it), static_cast<int>(len));
 
-        if(recv_size < len) {
+        if(recv_size <= 0) {
             // Client has been disconnected
             return {};
         }
         else {
-            to_receive_size -= len;
-            current_it = std::next(current_it, len);
+            to_receive_size -= recv_size;
+            current_it = std::next(current_it, recv_size);
         }
     }
 
@@ -67,12 +71,12 @@ bool send_packet(const tcp_socket& socket, const packet& packet) {
         header::size_type len = std::min(PER_ITERATION_MAXLEN, to_send_size);
         int send_len = socket.send(&(*current_it), static_cast<int>(len));
 
-        if(send_len < len) {
+        if(send_len <= 0) {
             return false;
         }
         else {
-            to_send_size -= len;
-            current_it = std::next(current_it, len);
+            to_send_size -= send_len;
+            current_it = std::next(current_it, send_len);
         }
     }
 
