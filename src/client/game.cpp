@@ -278,9 +278,9 @@ void game::on_update(frame_duration last_frame_duration) {
         
         if (packet)
         {
-            if (packet->head.packet_id == 0)
+            if (packet->head.packet_id == SPAWN_UNITS)
             {
-                //std::vector<unit> unit_v = packet->as < std::vector<unit>>();
+                std::vector<unit> unit_v = packet->as < std::vector<unit>>();
 
             }
         }

@@ -18,7 +18,7 @@ class unit : public base_unit
     target_handle target;
     glm::vec2 target_position;
 public:
-    unit(glm::vec3 position, glm::vec2 target_position, unit_flyweight* unit_fly, unit_manager* manager);
+    unit(glm::vec3 position = { 0, 0, 0 }, glm::vec2 target_position = {0,0}, unit_flyweight* unit_fly = nullptr, unit_manager* manager = nullptr);
     void set_target(target_handle _target);
     target_handle& get_target();
     void set_target_position(glm::vec2 _target_position);
