@@ -32,8 +32,6 @@ public:
     using unit_ptr = std::unique_ptr<base_unit>;
     using iterator = std::unordered_map<uint32_t, unit_ptr>::iterator;
 private:
-    uint32_t unit_counter;
-
     std::vector<std::unordered_map<uint32_t, unit_ptr>> units;
 
 public:
@@ -44,8 +42,6 @@ public:
     uint32_t actor_type_to_uint32_t(base_unit* unit);
 
     base_unit* get(uint32_t id);
-
-    uint32_t get_next_id();
 
     target_handle add(unit_ptr unit, uint32_t id);
 

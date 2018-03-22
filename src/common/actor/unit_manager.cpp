@@ -11,7 +11,6 @@ uint32_t unit_manager::actor_type_to_uint32_t(base_unit* unit)
 }
 
 unit_manager::unit_manager() :
-    unit_counter{},
     units{ static_cast<uint32_t>(actor_type::MAX_ACTOR_TYPE) }
 {}
 
@@ -28,11 +27,6 @@ base_unit* unit_manager::get(uint32_t id)
     return nullptr;
 }
 
-uint32_t unit_manager::get_next_id()
-{
-    return unit_counter;
-}
-
 target_handle unit_manager::add(unit_ptr unit, uint32_t id)
 {
     if (unit)
@@ -43,8 +37,7 @@ target_handle unit_manager::add(unit_ptr unit, uint32_t id)
 
         base_unit* temp_ptr = unit.get();
         units[type][id] = std::move(unit);
-        temp_ptr->set_id(type + unit_counter);
-        ++unit_counter;
+        temp_ptr->set_id(id);
         return target_handle{ this, temp_ptr };
     }
 
