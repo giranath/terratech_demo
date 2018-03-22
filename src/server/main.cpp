@@ -12,10 +12,6 @@
 
 #include <iostream>
 #include <csignal>
-#include "../common/crypto/aes.hpp"
-#include "../common/memory/heap_allocator.hpp"
-#include "../common/memory/malloc_allocator.hpp"
-#include "../common/memory/allocator.hpp"
 
 namespace {
     volatile std::sig_atomic_t g_signal_status = 0;
