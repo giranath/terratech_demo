@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(DISABLE_PROFILER "Disable profiling when ON" OFF)
 option(ENABLE_TOOLS "Enable tools compilation" OFF)
 option(DISABLE_SERVER "Disable server" OFF)
+option(ENABLE_CRYPTO "Enables cryptography" ON)
 
 find_package(terratech 0.6.0 REQUIRED)
 find_package(sdl2 REQUIRED)
@@ -17,7 +18,10 @@ find_package(glm REQUIRED)
 find_package(PythonInterp REQUIRED)
 find_package(Threads REQUIRED)
 find_package(sdl2_net REQUIRED)
+
+if(ENABLE_CRYPTO)
 find_package(Crypto++ REQUIRED)
+endif()
 
 if(WIN32)
     set(SOCKET_LIBRARIES wsock32 ws2_32)
@@ -27,6 +31,14 @@ endif()
 
 # Generates GL3W files
 execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/thirdparty/gl3w/gl3w_gen.py")
+
+set(SOURCE_CRYPTO "")
+if(ENABLE_CRYPTO)
+    set(SOURCE_CRYPTO
+        src/common/crypto/aes.cpp
+        src/common/crypto/aes.hpp
+        src/common/crypto/iterator_sink.hpp)
+endif()
 
 add_library(common
         src/common/world/world.cpp
@@ -77,13 +89,18 @@ add_library(common
         src/common/game/base_game.cpp
         src/common/game/base_game.hpp
         src/common/world/infinite_world.cpp
-        src/common/networking/packet.cpp src/common/crypto/aes.cpp src/common/crypto/aes.hpp src/common/crypto/iterator_sink.hpp)
+        src/common/networking/packet.cpp
+        ${SOURCE_CRYPTO}
+        )
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${SDL2_INCLUDE_DIRS}
         ${sdl2_net_INCLUDE_DIRS}
         ${terratech_INCLUDE_DIRS}
         ${GLM_INCLUDE_DIRS})
+if(NOT ENABLE_CRYPTO)
+    target_compile_definitions(common PRIVATE -DNCRYPTO)
+endif()
 
 add_executable(mmap_demo
         "${CMAKE_BINARY_DIR}/src/gl3w.c"
@@ -173,7 +190,6 @@ if (ENABLE_TOOLS)
 endif ()
 
 if (NOT DISABLE_SERVER)
-    MESSAGE("CRYPTO: ${CRYPTO++_LIBRARIES}")
     add_executable(server
             src/server/main.cpp src/server/authoritative_game.cpp src/server/authoritative_game.hpp)
     target_include_directories(server PRIVATE
