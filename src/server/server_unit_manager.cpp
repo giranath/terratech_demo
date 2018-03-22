@@ -10,3 +10,7 @@ target_handle server_unit_manager::add_unit_to(uint8_t player_id, unit_ptr unit)
 
     return add(std::move(unit), real_id.to_uint32_t());
 }
+
+void server_unit_manager::add_player(uint8_t player_id) {
+    player_counters.emplace(player_id, 0);
+}

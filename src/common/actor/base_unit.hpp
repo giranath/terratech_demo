@@ -9,6 +9,8 @@
 class base_unit : public actor
 {
     unit_flyweight* flyweight;
+    uint8_t flyweight_id;
+
     int current_health;
     uint32_t id;
 
@@ -16,6 +18,7 @@ public:
     base_unit(glm::vec3 position = {}, unit_flyweight* definition = nullptr, actor_type type = actor_type::MAX_ACTOR_TYPE)
     : actor(position, true, true, type)
     , flyweight(definition)
+    , flyweight_id(flyweight->id())
     , current_health(flyweight->get_max_health()) {
 
     }
@@ -44,7 +47,7 @@ public:
     }
 
     int get_type_id() const noexcept {
-        return flyweight->id();
+        return flyweight_id;
     }
 
 	float get_speed()

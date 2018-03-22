@@ -11,5 +11,5 @@ void from_json(const nlohmann::json& j, base_unit& u) {
     from_json(j, static_cast<actor&>(u));
     u.current_health = j["current_health"];
     u.id = j["id"];
-    // TODO: set flyweight id
+    u.flyweight_id = j["flyweight"];
 }
