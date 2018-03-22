@@ -6,17 +6,17 @@
 namespace rendering {
 
 world_renderer::chunk_rendering::chunk_rendering(const world_chunk &chunk)
-        : renderer{chunk}, pos{chunk.position()} {
+: renderer{chunk}, pos{chunk.position()} {
 
 };
 
 world_renderer::world_renderer(world &w) noexcept
-        : w{w} {
+: w{w} {
 
 }
 
 void world_renderer::show(int x, int z) noexcept {
-    chunk_renderers.emplace_back(w.chunk_at(x, z));
+    chunk_renderers.emplace_back(*w.chunk_at(x, z));
 }
 
 void world_renderer::render(mesh_rendering_system &rendering, glm::mat4 parent_model) noexcept {

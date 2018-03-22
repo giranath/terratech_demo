@@ -11,25 +11,22 @@
 #include "control/key_input_handler.hpp"
 #include "../common/actor/unit_manager.hpp"
 #include "../common/time/clock.hpp"
+#include "../common/game/base_game.hpp"
+#include "../common/networking/tcp_socket.hpp"
+#include "../common/networking/socket_set.hpp"
 
 #include <chrono>
 #include <array>
-#include <unordered_map>
+#include <map>
 
-class game {
+class game : public gameplay::base_game {
 public:
-    using clock = std::chrono::high_resolution_clock;
-    using frame_duration = clock::duration;
-    using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>;
-    using unit_mesh_collection = std::unordered_map<int, rendering::mesh>;
+    using unit_mesh_collection = std::map<int, rendering::mesh>;
 private:
     struct virtual_texture_value {
         int id;
         rendering::virtual_texture::area_type area;
     };
-
-    // Thread pool
-    async::task_executor tasks;
 
     // Inputs
     input::key_input_handler key_inputs;
@@ -43,8 +40,6 @@ private:
     world game_world;
 
     // Units
-    unit_manager units;
-    unit_flyweight_manager unit_flyweights;
     unit_mesh_collection unit_meshes;
 
     // Rendering
@@ -52,8 +47,7 @@ private:
     rendering::mesh_rendering_system mesh_rendering;
     rendering::camera game_camera;
 
-    // Game loop management
-    bool is_running;
+    // FPS
     std::vector<int> last_fps_durations;
     std::size_t last_fps_duration_index;
     int frame_count;
@@ -63,8 +57,12 @@ private:
     int next_unit_to_spawn = 106;
     bool can_move(base_unit* unit, glm::vec3 position) const;
 
+
+    //Networking
+    networking::tcp_socket& socket;
+    networking::socket_set socket_s;
+
     // Initialization functions
-    void load_flyweight(std::ifstream& stream);
     void load_flyweights();
     void setup_inputs();
     void setup_renderer();
@@ -75,17 +73,16 @@ private:
     void load_datas();
 
 public:
-    game();
-
-    void update(frame_duration last_frame_duration);
+    game(networking::tcp_socket& socket);
+    
+    void on_init() override;
+    void on_update(frame_duration last_frame) override;
+    void on_release() override;
 
     void render();
 
     void handle_event(SDL_Event event);
     void resize(int new_width, int new_height);
-
-    bool wants_to_die() const noexcept;
-    void kill() noexcept;
 
     int fps() const noexcept;
     float average_fps() const noexcept;

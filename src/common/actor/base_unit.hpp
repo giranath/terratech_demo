@@ -4,18 +4,28 @@
 #include "actor.hpp"
 #include "unit_flyweight.hpp"
 
+#include <json/json.hpp>
+
 class base_unit : public actor
 {
     unit_flyweight* flyweight;
+    int flyweight_id;
+
     int current_health;
     uint32_t id;
 
 public:
-    base_unit(glm::vec3 position, unit_flyweight* definition, actor_type type)
+    base_unit(glm::vec3 position = {}, unit_flyweight* definition = nullptr, actor_type type = actor_type::MAX_ACTOR_TYPE)
     : actor(position, true, true, type)
     , flyweight(definition)
-    , current_health(flyweight->get_max_health()) {
+    , flyweight_id(flyweight ? flyweight->id() : unit_flyweight::INVALID_ID)
+    , current_health(flyweight ? flyweight->get_max_health() : 0) {
 
+    }
+
+    void set_flyweight(unit_flyweight* new_flyweight) {
+        flyweight = new_flyweight;
+        current_health = flyweight->get_max_health();
     }
 
     void take_damage(unsigned int damage)
@@ -42,7 +52,7 @@ public:
     }
 
     int get_type_id() const noexcept {
-        return flyweight->id();
+        return flyweight_id;
     }
 
 	float get_speed()
@@ -53,5 +63,10 @@ public:
     const std::string& texture() const noexcept {
         return flyweight->texture();
     }
+
+    friend void from_json(const nlohmann::json& j, base_unit& u);
+    friend void to_json(nlohmann::json& j, const base_unit& u);
 };
+
+
 #endif

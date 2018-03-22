@@ -2,10 +2,17 @@
 #include "sdl/sdl.hpp"
 #include "debug/profiler.hpp"
 #include "../common/time/clock.hpp"
+#include "../common/networking/tcp_socket.hpp"
+#ifdef WIN32
+#include <SDL_net.h>
+#else
+#include <SDL2/SDL_net.h>
+#endif
 
 #include <iostream>
 #include <iterator>
 #include <chrono>
+
 
 void setup_opengl() {
     std::cout << "available extensions: " << std::endl;
@@ -26,13 +33,49 @@ void set_opengl_version(int major, int minor) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 }
 
+struct arguments {
+    std::string server_address = "localhost";
+    uint16_t port = 6426;
+
+    arguments() = default;
+
+    static arguments parse(int argc, char** argv) {
+        arguments args;
+
+        for(int i = 1; i < argc; ++i) {
+            if(i < argc - 1) {
+                if(std::strcmp(argv[i], "--server") == 0) {
+                    args.server_address = argv[i + 1];
+                    ++i;
+                }
+                else if(std::strcmp(argv[i], "--port") == 0) {
+                    args.port = static_cast<uint16_t>(std::stoul(argv[i + 1]));
+                    ++i;
+                }
+            }
+        }
+
+        return args;
+    }
+};
+
 int main(int argc, char* argv[]) {
+    arguments args = arguments::parse(argc, argv);
+
     sdl::context<>& sdl = sdl::context<>::instance();
     if(!sdl.good()) {
         std::cerr << "cannot initialize SDL: " << SDL_GetError() << std::endl;
         return 1;
     }
 
+    networking::tcp_socket sock;
+    std::cout << "trying to connect to " << args.server_address << ":" << args.port << "..." << std::endl;
+    if(!sock.try_connect(args.server_address.c_str(), args.port)) {
+        std::cerr << "cannot connect to server" << std::endl;
+        SDLNet_Quit();
+        return 1;
+    }
+    
     // Setup OpenGL attributes
     set_opengl_version(3, 3);
 
@@ -55,14 +98,17 @@ int main(int argc, char* argv[]) {
 
     game::frame_duration last_frame_duration = TARGET_FRAME_DURATION;
 
-    game game_state;
+    setup_opengl();
+
+    game game_state(sock);
     game_state.resize(800, 600);
 
-    setup_opengl();
+    // TODO: Init on another thread
+    game_state.init();
 
     // Game loop
     game_time::highres_clock frame_time;
-    while(!game_state.wants_to_die()) {
+    while(game_state.is_running()) {
         frame_time.restart();
 
         if(game_state.fps() > 0) {
@@ -81,7 +127,7 @@ int main(int argc, char* argv[]) {
             profiler_us p("events");
             for (auto event : sdl.poll_events()) {
                 if (event.type == SDL_QUIT) {
-                    game_state.kill();
+                    game_state.stop();
                 } else if (event.type == SDL_WINDOWEVENT) {
                     if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                         const int new_width = event.window.data1;
@@ -103,6 +149,8 @@ int main(int argc, char* argv[]) {
 
         last_frame_duration = frame_time.elapsed_time<game::frame_duration>();
     }
+
+    game_state.release();
 
     return 0;
 }

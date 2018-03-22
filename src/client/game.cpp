@@ -11,6 +11,10 @@
 #include "../common/datadriven/shader_list_record.hpp"
 #include "../common/datadriven/texture_list_record.hpp"
 #include "../common/datadriven/data_list.hpp"
+#include "../common/networking/packet.hpp"
+#include "../common/networking/world_map.hpp"
+#include "../common/networking/world_chunk.hpp"
+#include "../common/networking/networking_constant.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -18,8 +22,6 @@
 #include <numeric>
 #include <memory>
 #include <functional>
-
-// TODO: Include filesystem
 
 int G_TO_REMOVE_SCREEN_WIDTH = 0;
 int G_TO_REMOVE_SCREEN_HEIGHT = 0;
@@ -41,30 +43,9 @@ Shader load_shader(const std::string& path) {
     return shader;
 }
 
-void game::load_flyweight(std::ifstream& stream) {
-    using json = nlohmann::json;
-    json j = json::parse(stream);
-
-    int id = j["id"];
-
-    unit_flyweights[id] = unit_flyweight(j);
-}
-
 void game::load_flyweights() {
-    std::ifstream units_list_stream("asset/data/unit.list");
-    data::load_data_list<std::string>(units_list_stream, [this](const std::string& rel_path) {
-        std::string full_path = "asset/data/" + rel_path;
 
-        std::ifstream unit_stream(full_path);
-        if(unit_stream.is_open()) {
-            load_flyweight(unit_stream);
-        }
-        else {
-            std::cerr << "cannot open " << full_path << std::endl;
-        }
-    });
-
-    for(auto flyweight_iterator = std::begin(unit_flyweights); flyweight_iterator != std::end(unit_flyweights); ++flyweight_iterator) {
+    for(auto flyweight_iterator = std::begin(unit_flyweights()); flyweight_iterator != std::end(unit_flyweights()); ++flyweight_iterator) {
         const float half_width = flyweight_iterator->second.width() / 2.f;
         const float height = flyweight_iterator->second.height();
         auto it_value = virtual_textures.find(flyweight_iterator->second.texture());
@@ -201,7 +182,7 @@ bool game::can_move(base_unit* unit, glm::vec3 position) const {
         int chunk_x = position.x / CHUNK_WIDTH;
         int chunk_z = position.z / CHUNK_DEPTH;
 
-        const world_chunk* chunk = game_world.get_chunk(chunk_x, chunk_z);
+        const world_chunk* chunk = game_world.chunk_at(chunk_x, chunk_z);
         if(chunk) {
             const glm::vec3 chunk_space_position(position.x - chunk_x * CHUNK_WIDTH,
                                                  position.y,
@@ -210,9 +191,9 @@ bool game::can_move(base_unit* unit, glm::vec3 position) const {
             const int x_region = chunk_space_position.x / rendering::chunk_renderer::SQUARE_SIZE;
             const int z_region = chunk_space_position.z / rendering::chunk_renderer::SQUARE_SIZE;
 
-            int region = chunk->biome_at(x_region, 0, z_region);
+            //int region = chunk->biome_at(x_region, 0, z_region);
 
-            return region != BIOME_WATER;
+            return true;//region != BIOME_WATER;
         }
     }
 
@@ -227,20 +208,48 @@ void game::load_datas() {
     load_flyweights();
 }
 
-// TODO: REMOVE THIS !!!!!!
-target_handle G_TO_REMOVE_GOLEM_HANDLE;
-
-game::game()
-: tasks(std::thread::hardware_concurrency() - 1)
-, game_world(static_cast<uint32_t>(std::time(nullptr)))
+game::game(networking::tcp_socket& socket)
+: base_game(std::thread::hardware_concurrency() - 1, std::make_unique<unit_manager>())
+, game_world()
 , world_rendering(game_world)
 , game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)
 , is_scrolling(false)
-, is_running(true)
 , last_fps_duration_index(0)
-, frame_count(0) {
+, frame_count(0) 
+, socket(socket)
+, socket_s(1){
     last_fps_durations.reserve(10);
+}
 
+void game::on_init() {
+    auto packet = networking::receive_packet_from(socket);
+    if (packet)
+    {
+        auto manager_u = packet->as<std::unordered_map<std::string, unit_flyweight>>();
+        unit_flyweight_manager manager;
+        for (auto& v : manager_u)
+        {
+            manager.emplace(std::stoi(v.first), std::move(v.second));
+        }
+        set_flyweight_manager(manager);
+    }
+
+    packet = networking::receive_packet_from(socket);
+    if (packet)
+    {
+        auto chunks = packet->as<std::vector<networking::world_chunk>>();
+
+        for(networking::world_chunk& received_chunk : chunks) {
+            world_chunk& game_chunk = game_world.add(received_chunk.x, received_chunk.y);
+            game_chunk.set_biome_at(received_chunk.regions_biome);
+        }
+
+    }
+    else {
+        throw std::runtime_error("failed to load chunks");
+    }
+
+    socket_s.add(socket);
     // Setup controls
     setup_inputs();
 
@@ -255,16 +264,34 @@ game::game()
     game_camera.reset({-100.f, 10.f, -200.f});
 
     load_datas();
+}
 
-    G_TO_REMOVE_GOLEM_HANDLE = units.add(std::make_unique<unit>(glm::vec3{0.f, 0.f, 0.f}, glm::vec2{0.f, 0.f}, &unit_flyweights[106], &units));
+void game::on_release() {
 
 }
 
-void game::update(frame_duration last_frame_duration) {
+void game::on_update(frame_duration last_frame_duration) {
+
+    if (socket_s.check(std::chrono::milliseconds(0)) > 0)
+    {
+        auto packet = networking::receive_packet_from(socket);
+        
+        if (packet)
+        {
+            if (packet->head.packet_id == SPAWN_UNITS)
+            {
+                std::vector<unit> unit_v = packet->as < std::vector<unit>>();
+                for (unit& u : unit_v)
+                {
+                    add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
+                }
+            }
+        }
+    }
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
 
-    auto update_task = tasks.push(async::make_task([this, last_frame_ms]() {
-        for (auto u = units.begin_of_units(); u != units.end_of_units(); u++)
+    auto update_task = push_task(async::make_task([this, last_frame_ms]() {
+        for (auto u = units().begin_of_units(); u != units().end_of_units(); u++)
         {
             unit* actual_unit = static_cast<unit*>(u->second.get());
 
@@ -294,7 +321,7 @@ void game::render() {
     world_rendering.render(mesh_rendering);
 
     // TODO: Render every units
-    for(auto unit = units.begin_of_units(); unit != units.end_of_units(); ++unit) {
+    for(auto unit = units().begin_of_units(); unit != units().end_of_units(); ++unit) {
         rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
                                           glm::translate(glm::mat4{1.f}, unit->second->get_position()),
                                           virtual_textures[unit->second->texture()].id , PROGRAM_BILLBOARD);
@@ -352,15 +379,14 @@ void game::handle_event(SDL_Event event) {
             // clicked outside the map
             if (inside_world_bound(test))
             {
-                units.add(std::make_unique<unit>(test, glm::vec2{ 0.f, 0.f }, &unit_flyweights[next_unit_to_spawn], &units));
+                //add_unit(test, glm::vec2{0.f, 0.f}, next_unit_to_spawn);
 
-                for (auto u = units.begin_of_units(); u != units.end_of_units(); u++)
+                for (auto u = units().begin_of_units(); u != units().end_of_units(); u++)
                 {
                     unit* actual_unit = static_cast<unit*>(u->second.get());
                     actual_unit->set_target_position({ test.x, test.z });
                 }
             }
-
         }
     }
     else if(event.type == SDL_MOUSEBUTTONUP) {
@@ -396,14 +422,6 @@ void game::resize(int new_width, int new_height) {
 
     G_TO_REMOVE_SCREEN_WIDTH = new_width;
     G_TO_REMOVE_SCREEN_HEIGHT = new_height;
-}
-
-bool game::wants_to_die() const noexcept {
-    return !is_running;
-}
-
-void game::kill() noexcept {
-    is_running = false;
 }
 
 int game::fps() const noexcept {

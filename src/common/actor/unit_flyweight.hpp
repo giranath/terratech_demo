@@ -12,6 +12,8 @@
 
 class unit_flyweight
 {
+public:
+    static const int INVALID_ID = std::numeric_limits<int>::max();
 private:
     std::vector<ressource_type> ressource_gathering_type;
     std::vector<ressource_type> ressource_drop_off;
@@ -36,6 +38,7 @@ private:
 
 public:
     unit_flyweight() = default;
+
     explicit unit_flyweight(const nlohmann::json& data) {
         load_unit_from_json(data);
     }
@@ -113,6 +116,40 @@ public:
         texture_handle = json["Texture"];
     }
 
+    static std::vector<std::string> ressource_enum_to_string(std::vector<ressource_type> v)
+    {
+        std::vector<std::string> str_vec;
+        str_vec.reserve(v.size());
+
+        std::transform(std::begin(v), std::end(v), std::back_inserter(str_vec), [](const ressource_type name)
+        {
+            if (name == ressource_type::food ) return"Food";
+            if (name == ressource_type::gold) return"Gold";
+            if (name == ressource_type::stone) return"Stone";
+            if (name == ressource_type::wood) return"Wood";
+            if (name == ressource_type::magic_essence) return"MagicEssence";
+            return "Unknown";
+        });
+        return str_vec;
+    }
+
+    static std::vector<std::string> biome_enum_to_string(std::vector<biome_type> v)
+    {
+        std::vector<std::string> str_vec;
+        str_vec.reserve(v.size());
+
+        std::transform(std::begin(v), std::end(v), std::back_inserter(str_vec), [](const biome_type name)
+        {
+            if (name == biome_type::grass) return"Grass";
+            if (name == biome_type::rock) return"Rock";
+            if (name == biome_type::snow) return"Snow";
+            if (name == biome_type::water) return"Water";
+            if (name == biome_type::desert) return"Desert";
+            return "Unknown";
+        });
+        return str_vec;
+    }
+
     const std::string& texture() const noexcept {
         return texture_handle;
     }
@@ -128,5 +165,10 @@ public:
     int id() const noexcept {
         return unit_id;
     }
+
+    friend void to_json(nlohmann::json& j, const unit_flyweight& uf);
 };
+
+void from_json(const nlohmann::json& j, unit_flyweight& uf);
+
 #endif
