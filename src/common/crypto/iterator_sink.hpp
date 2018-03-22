@@ -10,6 +10,12 @@
 
 namespace crypto {
 
+#ifdef CRYPTOPP_NO_GLOBAL_BYTE
+using crypto_byte = CryptoPP::byte;
+#else
+using crypto_byte = byte;
+#endif
+
 template<typename It>
 class iterator_sink : public CryptoPP::Bufferless<CryptoPP::Sink> {
     It iterator;
@@ -18,7 +24,7 @@ public:
 
     }
 
-    std::size_t Put2(const CryptoPP::byte* byte, std::size_t length, int /*messageEnd*/, bool /*blocking*/) {
+    std::size_t Put2(const crypto_byte* byte, std::size_t length, int /*messageEnd*/, bool /*blocking*/) {
         iterator = std::copy(byte, byte + length, iterator);
 
         return 0;
