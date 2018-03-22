@@ -2,6 +2,8 @@
 #include "../common/actor/unit.hpp"
 #include "../common/datadriven/data_list.hpp"
 #include "../common/networking/packet.hpp"
+#include "../common/networking/world_map.hpp"
+#include "../common/networking/world_chunk.hpp"
 
 #include <thread>
 #include <string>
@@ -85,10 +87,55 @@ void authoritative_game::on_init() {
 }
 
 void authoritative_game::on_connection() {
+    // Get client socket
+    networking::tcp_socket connecting_socket = connection_listener.accept();
+
+    // Send the flyweights
+    std::cout << "sending flyweights..." << std::endl;
+    std::unordered_map<std::string, unit_flyweight> serialized_flyweights;
+    for(auto it = unit_flyweights().begin(); it != unit_flyweights().end(); ++it) {
+        serialized_flyweights.emplace(std::to_string(it->first), it->second);
+    }
+
+    if(!networking::send_packet(connecting_socket, networking::packet::make(serialized_flyweights))) {
+        std::cerr << "failed to send flyweights" << std::endl;
+        return;
+    }
+
+    // Send the map
+    std::cout << "sending map..." << std::endl;
+    networking::world_map map_infos(20, 20);
+    if(networking::send_packet(connecting_socket, networking::packet::make(map_infos))) {
+        for(const world_chunk& chunk : world) {
+            std::vector<uint8_t> biomes;
+            biomes.reserve(world::CHUNK_WIDTH * world::CHUNK_HEIGHT * world::CHUNK_DEPTH);
+
+            // SETUP BIOMES
+            for(int y = 0; y < world::CHUNK_HEIGHT; ++y) {
+                for(int z = 0; z < world::CHUNK_DEPTH; ++z) {
+                    for(int x = 0; x < world::CHUNK_WIDTH; ++x) {
+                        biomes.push_back(chunk.biome_at(x, y, z));
+                    }
+                }
+            }
+
+            networking::world_chunk chunk_info(chunk.position().x, chunk.position().y, biomes);
+            if(!networking::send_packet(connecting_socket, networking::packet::make(chunk_info))) {
+                return;
+            }
+        }
+    }
+
     // TODO: Reserve a place to current connection
     // TODO: CRYPTO: Send public key to client
     // TODO: CRYPTO: Wait for symetric key from client
     // TODO: Send this client the flyweights
+
+    std::cout << "adding new client" << std::endl;
+    // Add the client
+    sockets.add(connecting_socket);
+    connected_clients.push_back(std::move(connecting_socket));
+
 }
 
 void authoritative_game::on_client_data(const client& c) {

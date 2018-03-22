@@ -14,7 +14,7 @@ namespace networking
 
         std::vector<uint8_t> regions_biome;
 
-        world_chunk(uint32_t x, uint32_t y, const std::vector<uint8_t>& regions_biome) :
+        world_chunk(uint32_t x = 0, uint32_t y = 0, const std::vector<uint8_t>& regions_biome = {}) :
             x{ x },
             y{ y },
             regions_biome{ regions_biome } {

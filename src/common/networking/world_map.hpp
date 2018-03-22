@@ -11,7 +11,7 @@ namespace networking
         uint16_t chunk_width;
         uint16_t chunk_height;
 
-        world_map(uint16_t chunk_width, uint16_t chunk_height):
+        world_map(uint16_t chunk_width=0, uint16_t chunk_height=0):
             chunk_width{chunk_width},
             chunk_height{chunk_height}{
         }

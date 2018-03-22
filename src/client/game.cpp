@@ -11,6 +11,9 @@
 #include "../common/datadriven/shader_list_record.hpp"
 #include "../common/datadriven/texture_list_record.hpp"
 #include "../common/datadriven/data_list.hpp"
+#include "../common/networking/packet.hpp"
+#include "../common/networking/world_map.hpp"
+#include "../common/networking/world_chunk.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -40,18 +43,6 @@ Shader load_shader(const std::string& path) {
 }
 
 void game::load_flyweights() {
-    std::ifstream units_list_stream("asset/data/unit.list");
-    data::load_data_list<std::string>(units_list_stream, [this](const std::string& rel_path) {
-        std::string full_path = "asset/data/" + rel_path;
-
-        std::ifstream unit_stream(full_path);
-        if(unit_stream.is_open()) {
-            load_flyweight(nlohmann::json::parse(unit_stream));
-        }
-        else {
-            std::cerr << "cannot open " << full_path << std::endl;
-        }
-    });
 
     for(auto flyweight_iterator = std::begin(unit_flyweights()); flyweight_iterator != std::end(unit_flyweights()); ++flyweight_iterator) {
         const float half_width = flyweight_iterator->second.width() / 2.f;
@@ -216,19 +207,51 @@ void game::load_datas() {
     load_flyweights();
 }
 
-game::game()
+game::game(networking::tcp_socket& socket)
 : base_game(std::thread::hardware_concurrency() - 1)
-, game_world(static_cast<uint32_t>(std::time(nullptr)))
+, game_world()
 , world_rendering(game_world)
 , game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)
 , is_scrolling(false)
 , last_fps_duration_index(0)
-, frame_count(0) {
+, frame_count(0) 
+, socket(socket){
     last_fps_durations.reserve(10);
-
 }
 
 void game::on_init() {
+    auto packet = networking::receive_packet_from(socket);
+    if (packet)
+    {
+        auto manager_u = packet->as<std::unordered_map<std::string, unit_flyweight>>();
+        unit_flyweight_manager manager;
+        for (auto& v : manager_u)
+        {
+            manager.emplace(std::stoi(v.first), std::move(v.second));
+        }
+        set_flyweight_manager(manager);
+    }
+
+    packet = networking::receive_packet_from(socket);
+    if (packet)
+    {
+        networking::world_map map = packet->as<networking::world_map>();
+
+        for (size_t i = 0; i < map.chunk_width * map.chunk_height; ++i)
+        {
+            packet = networking::receive_packet_from(socket);
+            if (packet)
+            {
+                networking::world_chunk chunk = packet->as<networking::world_chunk>();
+                world_chunk& game_chunk = game_world.add(chunk.x, chunk.y);
+                game_chunk.set_biome_at(std::move(chunk.regions_biome));
+                
+            }
+            
+        }
+    }
+
+
     // Setup controls
     setup_inputs();
 

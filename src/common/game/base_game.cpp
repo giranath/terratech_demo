@@ -60,4 +60,12 @@ void base_game::load_flyweight(const nlohmann::json& json) {
     unit_flyweights_[id] = unit_flyweight(json);
 }
 
+void base_game::set_flyweight_manager(const unit_flyweight_manager& manager)
+{
+    unit_flyweights_ = manager;
+}
+void base_game::set_flyweight_manager(unit_flyweight_manager&& manager)
+{
+    unit_flyweights_ = manager;
+}
 }

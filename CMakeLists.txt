@@ -5,6 +5,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(MSVC)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
+endif(MSVC)
+
 option(DISABLE_PROFILER "Disable profiling when ON" OFF)
 option(ENABLE_TOOLS "Enable tools compilation" OFF)
 option(DISABLE_SERVER "Disable server" OFF)
@@ -41,6 +45,8 @@ if(ENABLE_CRYPTO)
 endif()
 
 add_library(common
+        src/common/bounding_box.hpp
+
         src/common/world/world.cpp
         src/common/world/world.hpp
         src/common/world/world_generator.cpp
@@ -49,7 +55,9 @@ add_library(common
         src/common/world/world_chunk.hpp
         src/common/world/site.cpp
         src/common/world/site.hpp
-        src/common/bounding_box.hpp
+        src/common/world/infinite_world.cpp
+        src/common/world/biome_type.hpp
+
         src/common/actor/actor.hpp
         src/common/actor/base_unit.hpp
         src/common/actor/building.hpp
@@ -61,17 +69,21 @@ add_library(common
         src/common/actor/unit_flyweight.hpp
         src/common/actor/unit_manager.hpp
         src/common/actor/unit_manager.cpp
+        src/common/actor/unit_flyweight.cpp
+
         src/common/async/task_executor.cpp
         src/common/async/task_executor.hpp
         src/common/async/task.hpp
+
         src/common/time/clock.hpp
+
         src/common/collision/circle_shape.cpp
         src/common/collision/circle_shape.hpp
         src/common/collision/aabb_shape.cpp
         src/common/collision/aabb_shape.hpp
         src/common/collision/collision_detector.cpp
         src/common/collision/collision_detector.hpp
-        src/common/world/biome_type.hpp
+
         src/common/datadriven/virtual_texture_list_record.hpp
         src/common/datadriven/virtual_texture_list_record.cpp
         src/common/datadriven/shader_list_record.cpp
@@ -79,19 +91,19 @@ add_library(common
         src/common/datadriven/texture_list_record.cpp
         src/common/datadriven/texture_list_record.hpp
         src/common/datadriven/data_list.hpp
+
         src/common/networking/packet.hpp
+        src/common/networking/packet.cpp
         src/common/networking/tcp_socket.cpp
         src/common/networking/tcp_socket.hpp
         src/common/networking/socket_set.cpp
         src/common/networking/socket_set.hpp
         src/common/networking/world_chunk.hpp
         src/common/networking/world_map.hpp
-        src/common/game/base_game.cpp
+
+        src/common/game/base_game.cpp 
         src/common/game/base_game.hpp
-        src/common/world/infinite_world.cpp
-        src/common/networking/packet.cpp
-        ${SOURCE_CRYPTO}
-        )
+        ${SOURCE_CRYPTO})
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${SDL2_INCLUDE_DIRS}
@@ -105,9 +117,9 @@ endif()
 add_executable(mmap_demo
         "${CMAKE_BINARY_DIR}/src/gl3w.c"
         src/client/main.cpp
-        src/client/sdl/sdl.hpp
         src/client/game.cpp
         src/client/game.hpp
+
         src/client/opengl/opengl.hpp
         src/client/opengl/shader.cpp
         src/client/opengl/shader.hpp
@@ -118,43 +130,48 @@ add_executable(mmap_demo
         src/client/opengl/vertex_array.hpp
         src/client/opengl/buffer.cpp
         src/client/opengl/buffer.hpp
+        src/client/opengl/uniform.hpp
+        src/client/opengl/debug.cpp
+        src/client/opengl/debug.hpp
+        src/client/opengl/texture.cpp
+        src/client/opengl/texture.hpp
+
+        src/client/sdl/sdl.hpp
         src/client/sdl/poll_event_iterator.cpp
         src/client/sdl/poll_event_iterator.hpp
         src/client/sdl/window.cpp
         src/client/sdl/window.hpp
         src/client/sdl/context.hpp
+        src/client/sdl/istream_rwops.cpp
+        src/client/sdl/istream_rwops.hpp
+
         src/client/rendering/camera.cpp
         src/client/rendering/camera.hpp
-        src/client/opengl/uniform.hpp
         src/client/rendering/chunk_renderer.cpp
         src/client/rendering/chunk_renderer.hpp
-        src/client/control/all_commands.hpp
-        src/client/control/command.hpp
-        src/client/control/key_input_handler.hpp
-        src/client/rendering/chunk_renderer.cpp
-        src/client/rendering/chunk_renderer.hpp
-        src/client/debug/profiler.hpp
-        src/client/debug/profiler_administrator.hpp
-        src/client/opengl/debug.cpp
-        src/client/opengl/debug.hpp
         src/client/rendering/world_renderer.cpp
         src/client/rendering/world_renderer.hpp
         src/client/rendering/mesh.cpp
         src/client/rendering/mesh.hpp
-        src/client/opengl/texture.cpp
-        src/client/opengl/texture.hpp
-        src/client/sdl/istream_rwops.cpp
-        src/client/sdl/istream_rwops.hpp
         src/client/rendering/rendering_manager.cpp
         src/client/rendering/rendering_manager.hpp
+        src/client/rendering/virtual_texture.cpp
+        src/client/rendering/virtual_texture.hpp
+
+        src/client/control/all_commands.hpp
+        src/client/control/command.hpp
+        src/client/control/key_input_handler.hpp
         src/client/control/key_input_handler.cpp
         src/client/control/camera_commands.hpp
-        src/client/constant/rendering.hpp
         src/client/control/change_unit_command.cpp
         src/client/control/change_unit_command.hpp
         src/client/control/generic_command.hpp
-        src/client/rendering/virtual_texture.cpp
-        src/client/rendering/virtual_texture.hpp)
+
+        src/client/debug/profiler.hpp
+        src/client/debug/profiler_administrator.hpp
+
+        src/client/constant/rendering.hpp
+        )
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
@@ -191,17 +208,19 @@ endif ()
 
 if (NOT DISABLE_SERVER)
     add_executable(server
-            src/server/main.cpp src/server/authoritative_game.cpp src/server/authoritative_game.hpp)
+            src/server/main.cpp
+            src/server/authoritative_game.cpp
+            src/server/authoritative_game.hpp)
     target_include_directories(server PRIVATE
             ${terratech_INCLUDE_DIRS}
-			${CRYPTO++_INCLUDE_DIR}
+            ${CRYPTO++_INCLUDE_DIR}
             ${SDL2_INCLUDE_DIRS}
             ${sdl2_net_INCLUDE_DIRS}
             ${GLM_INCLUDE_DIRS}
             "${CMAKE_SOURCE_DIR}/thirdparty")
     target_link_libraries(server
             common
-			${CRYPTO++_LIBRARIES}
+            ${CRYPTO++_LIBRARIES}
             ${SOCKET_LIBRARIES}
             ${terratech_LIBRARIES}
             ${SDL2_LIBRARIES}

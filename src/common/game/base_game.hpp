@@ -55,6 +55,9 @@ public:
     target_handle add_unit(glm::vec3 position, glm::vec2 target, int flyweight_id);
 
     void load_flyweight(const nlohmann::json& json);
+
+    void set_flyweight_manager(const unit_flyweight_manager& manager);
+    void set_flyweight_manager(unit_flyweight_manager&& manager);
 };
 
 }
