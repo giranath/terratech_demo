@@ -25,31 +25,6 @@ extern "C" void sign_handler(int signo) {
 }
 
 int main(int argc, const char** argv) {
-    std::string message = "Hello world!";
-    crypto::aes::key key(16, 1024);
-
-    std::vector<uint8_t> raw_bytes(message.size(), 0);
-    std::transform(std::begin(message), std::end(message), std::begin(raw_bytes), [](char letter) {
-       return static_cast<uint8_t>(letter);
-    });
-
-    auto cipher_bytes = crypto::aes::encrypt(raw_bytes, key);
-
-    std::string cipher;
-    std::transform(std::begin(cipher_bytes), std::end(cipher_bytes), std::back_inserter(cipher), [](uint8_t byte) {
-        return static_cast<char>(byte);
-    });
-
-    auto decrypted = crypto::aes::decrypt(cipher_bytes, key);
-
-    std::string decrypted_text;
-    std::transform(std::begin(decrypted), std::end(decrypted), std::back_inserter(decrypted_text), [](uint8_t byte) {
-        return static_cast<char>(byte);
-    });
-
-    std::cout << message << " to " << cipher << " to " << decrypted_text << std::endl;
-
-
     if(SDL_Init(0) == -1) {
         std::cerr << "cannot initialize SDL: " << SDL_GetError() << std::endl;
         return 1;

@@ -77,7 +77,7 @@ add_library(common
         src/common/game/base_game.cpp
         src/common/game/base_game.hpp
         src/common/world/infinite_world.cpp
-        src/common/networking/packet.cpp src/common/crypto/aes.cpp src/common/crypto/aes.hpp)
+        src/common/networking/packet.cpp src/common/crypto/aes.cpp src/common/crypto/aes.hpp src/common/crypto/iterator_sink.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${SDL2_INCLUDE_DIRS}
