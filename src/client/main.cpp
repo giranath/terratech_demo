@@ -33,15 +33,44 @@ void set_opengl_version(int major, int minor) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 }
 
-int main(int argc, char* argv[]) {    
+struct arguments {
+    std::string server_address = "localhost";
+    uint16_t port = 6426;
+
+    arguments() = default;
+
+    static arguments parse(int argc, char** argv) {
+        arguments args;
+
+        for(int i = 1; i < argc; ++i) {
+            if(i < argc - 1) {
+                if(std::strcmp(argv[i], "--server") == 0) {
+                    args.server_address = argv[i + 1];
+                    ++i;
+                }
+                else if(std::strcmp(argv[i], "--port") == 0) {
+                    args.port = static_cast<uint16_t>(std::stoul(argv[i + 1]));
+                    ++i;
+                }
+            }
+        }
+
+        return args;
+    }
+};
+
+int main(int argc, char* argv[]) {
+    arguments args = arguments::parse(argc, argv);
+
     sdl::context<>& sdl = sdl::context<>::instance();
     if(!sdl.good()) {
         std::cerr << "cannot initialize SDL: " << SDL_GetError() << std::endl;
         return 1;
     }
-    SDLNet_Init();
+
     networking::tcp_socket sock;
-    if(!sock.try_connect("192.192.192.1", 6426)) {
+    std::cout << "trying to connect to " << args.server_address << ":" << args.port << "..." << std::endl;
+    if(!sock.try_connect(args.server_address.c_str(), args.port)) {
         std::cerr << "cannot connect to server" << std::endl;
         SDLNet_Quit();
         return 1;
@@ -122,6 +151,6 @@ int main(int argc, char* argv[]) {
     }
 
     game_state.release();
-    SDLNet_Quit();
+
     return 0;
 }

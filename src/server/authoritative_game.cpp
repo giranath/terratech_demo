@@ -105,26 +105,27 @@ void authoritative_game::on_connection() {
 
     // Send the map
     std::cout << "sending map..." << std::endl;
-    networking::world_map map_infos(20, 20);
-    if(networking::send_packet(connecting_socket, networking::packet::make(map_infos, SETUP_WORLD_SIZE))) {
-        for(const world_chunk& chunk : world) {
-            std::vector<uint8_t> biomes;
-            biomes.reserve(world::CHUNK_WIDTH * world::CHUNK_HEIGHT * world::CHUNK_DEPTH);
+    std::vector<networking::world_chunk> chunks_to_send;
+    chunks_to_send.reserve(std::distance(world.begin(), world.end()));
 
-            // SETUP BIOMES
-            for(int y = 0; y < world::CHUNK_HEIGHT; ++y) {
-                for(int z = 0; z < world::CHUNK_DEPTH; ++z) {
-                    for(int x = 0; x < world::CHUNK_WIDTH; ++x) {
-                        biomes.push_back(chunk.biome_at(x, y, z));
-                    }
+    std::transform(world.begin(), world.end(), std::back_inserter(chunks_to_send), [](const world_chunk& chunk) {
+        std::vector<uint8_t> biomes;
+        biomes.reserve(world::CHUNK_WIDTH * world::CHUNK_HEIGHT * world::CHUNK_DEPTH);
+
+        // SETUP BIOMES
+        for(int y = 0; y < world::CHUNK_HEIGHT; ++y) {
+            for(int z = 0; z < world::CHUNK_DEPTH; ++z) {
+                for(int x = 0; x < world::CHUNK_WIDTH; ++x) {
+                    biomes.push_back(chunk.biome_at(x, y, z));
                 }
             }
-
-            networking::world_chunk chunk_info(chunk.position().x, chunk.position().y, biomes);
-            if(!networking::send_packet(connecting_socket, networking::packet::make(chunk_info, SETUP_CHUNK))) {
-                return;
-            }
         }
+
+        return networking::world_chunk(chunk.position().x, chunk.position().y, biomes);
+    });
+
+    if(!networking::send_packet(connecting_socket, networking::packet::make(chunks_to_send, SETUP_CHUNK))) {
+        return;
     }
 
     // TODO: Reserve a place to current connection

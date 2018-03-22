@@ -236,20 +236,16 @@ void game::on_init() {
     packet = networking::receive_packet_from(socket);
     if (packet)
     {
-        networking::world_map map = packet->as<networking::world_map>();
+        auto chunks = packet->as<std::vector<networking::world_chunk>>();
 
-        for (size_t i = 0; i < map.chunk_width * map.chunk_height; ++i)
-        {
-            packet = networking::receive_packet_from(socket);
-            if (packet)
-            {
-                networking::world_chunk chunk = packet->as<networking::world_chunk>();
-                world_chunk& game_chunk = game_world.add(chunk.x, chunk.y);
-                game_chunk.set_biome_at(std::move(chunk.regions_biome));
-                
-            }
-            
+        for(networking::world_chunk& received_chunk : chunks) {
+            world_chunk& game_chunk = game_world.add(received_chunk.x, received_chunk.y);
+            game_chunk.set_biome_at(received_chunk.regions_biome);
         }
+
+    }
+    else {
+        throw std::runtime_error("failed to load chunks");
     }
 
     socket_s.add(socket);
