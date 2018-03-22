@@ -138,8 +138,7 @@ void authoritative_game::on_connection() {
     std::cout << "adding new client" << std::endl;
     // Add the client
     sockets.add(connecting_socket);
-    connected_clients.push_back(std::move(connecting_socket));
-
+    connected_clients.emplace_back(std::move(connecting_socket));
 }
 
 void authoritative_game::on_client_data(const client& c) {
@@ -191,6 +190,21 @@ void authoritative_game::check_sockets() {
                     on_client_data(c);
                 }
             });
+        }
+    }
+}
+
+void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id) {
+    auto created_unit = add_unit(position, target, flyweight_id);
+
+    std::vector<unit> units_to_spawn;
+    units_to_spawn.push_back(*static_cast<unit*>(created_unit.get()));
+
+    // Send the command to all players
+    auto packet = networking::packet::make(units_to_spawn, SPAWN_UNITS);
+    for(auto it = connected_clients.begin(); it != connected_clients.end(); ++it) {
+        if(!networking::send_packet(it->socket, packet)) {
+            // TODO: This client has disconnected
         }
     }
 }

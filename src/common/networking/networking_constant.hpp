@@ -5,6 +5,7 @@ enum
 {
     SETUP_WORLD_SIZE,
     SETUP_CHUNK,
-    SETUP_FLYWEIGHTS
+    SETUP_FLYWEIGHTS,
+    SPAWN_UNITS
 };
 #endif

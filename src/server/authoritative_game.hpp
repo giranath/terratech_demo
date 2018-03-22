@@ -39,6 +39,8 @@ class authoritative_game : public gameplay::base_game {
     void on_client_disconnection(const client& c);
     void check_sockets();
 
+    void spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id);
+
 public:
     authoritative_game();
 

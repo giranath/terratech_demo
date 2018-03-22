@@ -109,7 +109,7 @@ add_library(common
 		
         src/common/game/base_game.cpp 
         src/common/game/base_game.hpp
-        ${SOURCE_CRYPTO})
+        ${SOURCE_CRYPTO} src/common/networking/spawn_unit_event.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${SDL2_INCLUDE_DIRS}
