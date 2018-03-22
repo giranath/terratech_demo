@@ -1,5 +1,7 @@
 #include "aes.hpp"
 
+#ifndef NCRYPTO
+
 namespace crypto { namespace aes {
 
 bytes encrypt(bytes plaintext, key key) {
@@ -37,3 +39,5 @@ bytes decrypt(bytes ciphertex, key key) {
 }
 
 }}
+
+#endif

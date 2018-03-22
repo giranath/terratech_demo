@@ -1,6 +1,8 @@
 #ifndef MMAP_DEMO_ITERATOR_SINK_HPP
 #define MMAP_DEMO_ITERATOR_SINK_HPP
 
+#ifndef NCRYPTO
+
 #if defined(__APPLE__)
 #include <cryptopp/filters.h>
 #elif defined(WIN32)
@@ -33,4 +35,5 @@ public:
 
 }
 
+#endif
 #endif //MMAP_DEMO_HEADER_HPP

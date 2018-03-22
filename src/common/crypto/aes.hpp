@@ -1,6 +1,8 @@
 #ifndef MMAP_DEMO_AES_HPP
 #define MMAP_DEMO_AES_HPP
 
+#ifndef NCRYPTO
+
 #include <cstdint>
 #include <vector>
 
@@ -73,5 +75,5 @@ key make_key(random& rd) {
 }
 
 }}
-
+#endif
 #endif //MMAP_DEMO_AES_HPP
