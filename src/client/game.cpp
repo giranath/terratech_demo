@@ -215,7 +215,8 @@ game::game(networking::tcp_socket& socket)
 , is_scrolling(false)
 , last_fps_duration_index(0)
 , frame_count(0) 
-, socket(socket){
+, socket(socket)
+, socket_s(1){
     last_fps_durations.reserve(10);
 }
 
@@ -251,7 +252,7 @@ void game::on_init() {
         }
     }
 
-
+    socket_s.add(socket);
     // Setup controls
     setup_inputs();
 
@@ -273,6 +274,16 @@ void game::on_release() {
 }
 
 void game::on_update(frame_duration last_frame_duration) {
+
+    if (socket_s.check(std::chrono::milliseconds(0)) > 0)
+    {
+        auto packet = networking::receive_packet_from(socket);
+        if (packet)
+        {
+            //packet->as<>()
+
+        }
+    }
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
 
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {
@@ -364,7 +375,7 @@ void game::handle_event(SDL_Event event) {
             // clicked outside the map
             if (inside_world_bound(test))
             {
-                add_unit(test, glm::vec2{0.f, 0.f}, next_unit_to_spawn);
+                //add_unit(test, glm::vec2{0.f, 0.f}, next_unit_to_spawn);
 
                 for (auto u = units().begin_of_units(); u != units().end_of_units(); u++)
                 {

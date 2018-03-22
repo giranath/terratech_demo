@@ -13,6 +13,7 @@
 #include "../common/time/clock.hpp"
 #include "../common/game/base_game.hpp"
 #include "../common/networking/tcp_socket.hpp"
+#include "../common/networking/socket_set.hpp"
 
 #include <chrono>
 #include <array>
@@ -59,6 +60,7 @@ private:
 
     //Networking
     networking::tcp_socket& socket;
+    networking::socket_set socket_s;
 
     // Initialization functions
     void load_flyweights();
