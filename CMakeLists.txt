@@ -100,7 +100,8 @@ add_library(common
         src/common/networking/socket_set.hpp
         src/common/networking/world_chunk.hpp
         src/common/networking/world_map.hpp
-
+		src/common/networking/networking_constant.hpp
+		
         src/common/game/base_game.cpp 
         src/common/game/base_game.hpp
         ${SOURCE_CRYPTO})
