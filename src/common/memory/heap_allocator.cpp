@@ -20,7 +20,7 @@ raw_memory_ptr heap_allocator::allocate(std::size_t size) {
     for(it = root; it != nullptr && (it->used || it->allocation_size < size) ;it = it->next);
 
     if(!it) {
-        throw std::bad_alloc{};
+        return nullptr;
     }
 
     header* after = it + 1;

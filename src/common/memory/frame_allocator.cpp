@@ -15,7 +15,7 @@ raw_memory_ptr frame_allocator::allocate(std::size_t size) {
     const std::size_t available_space = std::distance(next_allocation_ptr, base_memory + size);
 
     if(available_space < size) {
-        throw std::bad_alloc{};
+        return nullptr;
     }
 
     raw_memory_ptr allocated_mem = next_allocation_ptr;

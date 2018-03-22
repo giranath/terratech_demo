@@ -15,6 +15,7 @@
 #include "../common/crypto/aes.hpp"
 #include "../common/memory/heap_allocator.hpp"
 #include "../common/memory/malloc_allocator.hpp"
+#include "../common/memory/allocator.hpp"
 
 namespace {
     volatile std::sig_atomic_t g_signal_status = 0;
@@ -27,19 +28,6 @@ extern "C" void sign_handler(int signo) {
 }
 
 int main(int argc, char* argv[]) {
-    memory::malloc_allocator backbone_allocator;
-    memory::raw_memory_ptr heap_memory = backbone_allocator.allocate(1024);
-
-    memory::heap_allocator heap_allocator(heap_memory, 1024);
-    uint64_t* temp = static_cast<uint64_t*>(heap_allocator.allocate(sizeof(temp)));
-    uint64_t* temp2 = static_cast<uint64_t*>(heap_allocator.allocate(sizeof(temp2)));
-
-    //heap_allocator.free(reinterpret_cast<void*>(temp2), sizeof(uint64_t));
-    heap_allocator.free(reinterpret_cast<void*>(temp), sizeof(uint64_t));
-
-    backbone_allocator.free(heap_memory, 1024);
-
-
     if(SDL_Init(0) == -1) {
         std::cerr << "cannot initialize SDL: " << SDL_GetError() << std::endl;
         return 1;
