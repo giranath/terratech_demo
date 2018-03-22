@@ -27,9 +27,8 @@ raw_memory_ptr heap_allocator::allocate(std::size_t size) {
     uint8_t* alloc_spot = reinterpret_cast<uint8_t*>(after);
     uint8_t* end_of_alloc = alloc_spot + size;
 
-    // TODO: Only split if there is enough space to store another header + 1 byte
+    // Calculer s'il est plus payant de ne pas diviser
 
-    // TODO: Split if enough
     header* next_header = reinterpret_cast<header*>(end_of_alloc);
     next_header->allocation_size = it->allocation_size - size - sizeof(header);
     next_header->prev = it;

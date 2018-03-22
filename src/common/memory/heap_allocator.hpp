@@ -26,6 +26,14 @@ public:
     void free(raw_memory_ptr memory, std::size_t s);
 };
 
+template<>
+struct allocator_traits<heap_allocator> {
+    static const bool use_fixed_size_allocation = false;
+    static const bool can_allocate = true;
+    static const bool can_free = true;
+    static const bool can_clear = false;
+};
+
 }
 
 #endif //MMAP_DEMO_HEAP_ALLOCATOR_HPP
