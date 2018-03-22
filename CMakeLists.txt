@@ -41,7 +41,9 @@ if(ENABLE_CRYPTO)
     set(SOURCE_CRYPTO
         src/common/crypto/aes.cpp
         src/common/crypto/aes.hpp
-        src/common/crypto/iterator_sink.hpp)
+        src/common/crypto/iterator_sink.hpp
+        src/common/crypto/rsa.cpp
+        src/common/crypto/rsa.hpp)
 endif()
 
 add_library(common
@@ -59,13 +61,16 @@ add_library(common
         src/common/world/biome_type.hpp
 
         src/common/actor/actor.hpp
+        src/common/actor/actor.cpp
         src/common/actor/base_unit.hpp
+        src/common/actor/base_unit.cpp
         src/common/actor/building.hpp
         src/common/actor/ressource.hpp
         src/common/actor/ressource_type.hpp
         src/common/actor/target_handle.hpp
         src/common/actor/target_handle.cpp
         src/common/actor/unit.hpp
+        src/common/actor/unit.cpp
         src/common/actor/unit_flyweight.hpp
         src/common/actor/unit_manager.hpp
         src/common/actor/unit_manager.cpp

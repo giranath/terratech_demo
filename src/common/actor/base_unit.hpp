@@ -4,6 +4,8 @@
 #include "actor.hpp"
 #include "unit_flyweight.hpp"
 
+#include <json/json.hpp>
+
 class base_unit : public actor
 {
     unit_flyweight* flyweight;
@@ -53,5 +55,10 @@ public:
     const std::string& texture() const noexcept {
         return flyweight->texture();
     }
+
+    friend void from_json(const nlohmann::json& j, base_unit& u);
+    friend void to_json(nlohmann::json& j, const base_unit& u);
 };
+
+
 #endif
