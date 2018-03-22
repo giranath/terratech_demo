@@ -28,7 +28,8 @@ class actor
     actor_type type;
 public:
 
-    explicit actor(actor_type type) : actor({}, true, true, type) {
+    explicit actor(actor_type type = actor_type::MAX_ACTOR_TYPE)
+    : actor({}, true, true, type) {
 
     }
 

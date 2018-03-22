@@ -51,8 +51,8 @@ async::task_executor::task_future base_game::push_task(async::task_executor::tas
     return tasks.push(std::move(task));
 }
 
-target_handle base_game::add_unit(glm::vec3 position, glm::vec2 target, int flyweight_id) {
-    return target_handle{};//units_.add();
+target_handle base_game::add_unit(uint32_t id, glm::vec3 position, glm::vec2 target, int flyweight_id) {
+    return units_->add(make_unit(position, target, flyweight_id), id);
 }
 
 unit_manager::unit_ptr base_game::make_unit(glm::vec3 position, glm::vec2 target, int flyweight_id) {

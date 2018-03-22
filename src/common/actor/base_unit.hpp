@@ -13,7 +13,7 @@ class base_unit : public actor
     uint32_t id;
 
 public:
-    base_unit(glm::vec3 position, unit_flyweight* definition, actor_type type)
+    base_unit(glm::vec3 position = {}, unit_flyweight* definition = nullptr, actor_type type = actor_type::MAX_ACTOR_TYPE)
     : actor(position, true, true, type)
     , flyweight(definition)
     , current_health(flyweight->get_max_health()) {
