@@ -8,7 +8,21 @@
 #include "../common/networking/packet.hpp"
 
 class authoritative_game : public gameplay::base_game {
-    using client = networking::tcp_socket;
+    struct client {
+        static uint8_t next_id;
+        networking::tcp_socket socket;
+        uint8_t id;
+
+        explicit client(networking::tcp_socket&& socket)
+        : socket(std::move(socket))
+        , id(++next_id) {
+
+        }
+
+        bool operator==(const client& other) const noexcept {
+            return id == other.id;
+        }
+    };
 
     infinite_world world;
     networking::socket_set sockets;

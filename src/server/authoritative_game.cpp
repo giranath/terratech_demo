@@ -16,6 +16,8 @@
 //  - lobby
 //  - gameplay
 
+uint8_t authoritative_game::client::next_id = 0;
+
 authoritative_game::authoritative_game()
 : base_game(std::thread::hardware_concurrency() - 1)
 , world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()))
@@ -142,7 +144,7 @@ void authoritative_game::on_connection() {
 
 void authoritative_game::on_client_data(const client& c) {
     // TODO: Handle request in worker thread
-    auto received_packet = networking::receive_packet_from(c);
+    auto received_packet = networking::receive_packet_from(c.socket);
 
     if(received_packet) {
         try {
@@ -165,7 +167,7 @@ void authoritative_game::on_client_data(const client& c) {
 }
 
 void authoritative_game::on_client_disconnection(const client& c) {
-    sockets.remove(c);
+    sockets.remove(c.socket);
 
     // Remove the client from the connected clients
     auto it = std::find(std::begin(connected_clients), std::end(connected_clients), c);
@@ -185,7 +187,7 @@ void authoritative_game::check_sockets() {
         }
         else {
             std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const client& c) {
-                if(sockets.is_ready(c)) {
+                if(sockets.is_ready(c.socket)) {
                     on_client_data(c);
                 }
             });
@@ -223,8 +225,8 @@ void authoritative_game::on_update(frame_duration last_frame) {
 
 void authoritative_game::on_release() {
     std::cout << "releasing..." << std::endl;
-    std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const networking::tcp_socket& socket) {
-        sockets.remove(socket);
+    std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const client& client) {
+        sockets.remove(client.socket);
     });
 
     connected_clients.clear();
