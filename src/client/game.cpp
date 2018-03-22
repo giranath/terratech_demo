@@ -191,9 +191,9 @@ bool game::can_move(base_unit* unit, glm::vec3 position) const {
             const int x_region = chunk_space_position.x / rendering::chunk_renderer::SQUARE_SIZE;
             const int z_region = chunk_space_position.z / rendering::chunk_renderer::SQUARE_SIZE;
 
-            int region = chunk->biome_at(x_region, 0, z_region);
+            //int region = chunk->biome_at(x_region, 0, z_region);
 
-            return region != BIOME_WATER;
+            return true;//region != BIOME_WATER;
         }
     }
 
@@ -281,7 +281,10 @@ void game::on_update(frame_duration last_frame_duration) {
             if (packet->head.packet_id == SPAWN_UNITS)
             {
                 std::vector<unit> unit_v = packet->as < std::vector<unit>>();
-
+                for (unit& u : unit_v)
+                {
+                    add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
+                }
             }
         }
     }
