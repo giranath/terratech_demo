@@ -28,6 +28,7 @@ struct allocator_traits<frame_allocator> {
     static const bool can_allocate = true;
     static const bool can_free = false;
     static const bool can_clear = true;
+    static const bool can_random_free = false;
 };
 
 }

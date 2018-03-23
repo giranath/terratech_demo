@@ -11,6 +11,7 @@ struct allocator_traits {
     static const bool can_allocate = false;
     static const bool can_free = false;
     static const bool can_clear = false;
+    static const bool can_random_free = false;
 };
 
 }

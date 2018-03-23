@@ -23,25 +23,7 @@ public:
     memory_pool(raw_memory_ptr memory, std::size_t size)
     : base_memory{memory}
     , capacity{size} {
-        const std::size_t BLOCK_COUNT = capacity / sizeof(T);
-
-        if(BLOCK_COUNT > 0) {
-            T* blocks = static_cast<T *>(base_memory);
-
-            for (int i = 0; i < BLOCK_COUNT - 1; ++i) {
-                T* current_block = blocks + i;
-                T* next_block = current_block + 1;
-
-                free_block* to_free_block = reinterpret_cast<free_block*>(current_block);
-                to_free_block->next = reinterpret_cast<free_block*>(next_block);
-            }
-            next_free_block = reinterpret_cast<free_block*>(blocks);
-
-            free_block* last_block = reinterpret_cast<free_block*>(blocks[BLOCK_COUNT - 1]);
-            if(last_block) {
-                last_block->next = nullptr;
-            }
-        }
+        clear();
     }
 
     raw_memory_ptr allocate(std::size_t size = sizeof(T)) {
@@ -66,6 +48,28 @@ public:
             next_free_block = free;
         }
     }
+
+    void clear() {
+        const std::size_t BLOCK_COUNT = capacity / sizeof(T);
+
+        if(BLOCK_COUNT > 0) {
+            T* blocks = static_cast<T *>(base_memory);
+
+            for (int i = 0; i < BLOCK_COUNT - 1; ++i) {
+                T* current_block = blocks + i;
+                T* next_block = current_block + 1;
+
+                free_block* to_free_block = reinterpret_cast<free_block*>(current_block);
+                to_free_block->next = reinterpret_cast<free_block*>(next_block);
+            }
+            next_free_block = reinterpret_cast<free_block*>(blocks);
+
+            free_block* last_block = reinterpret_cast<free_block*>(blocks[BLOCK_COUNT - 1]);
+            if(last_block) {
+                last_block->next = nullptr;
+            }
+        }
+    }
 };
 
 template<typename T>
@@ -74,6 +78,7 @@ struct allocator_traits<memory_pool<T>> {
     static const bool can_allocate = true;
     static const bool can_free = true;
     static const bool can_clear = true;
+    static const bool can_random_free = true;
 };
 
 

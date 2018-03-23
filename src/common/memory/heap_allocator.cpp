@@ -43,6 +43,8 @@ raw_memory_ptr heap_allocator::allocate(std::size_t size) {
 }
 
 void heap_allocator::free(raw_memory_ptr memory, std::size_t /*s*/) {
+    if(memory == nullptr) return;
+
     header* head = static_cast<header*>(memory) - 1;
 
     // Mark the space as not used anymore

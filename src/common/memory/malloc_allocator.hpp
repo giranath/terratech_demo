@@ -20,6 +20,7 @@ struct allocator_traits<malloc_allocator> {
     static const bool can_allocate = true;
     static const bool can_free = true;
     static const bool can_clear = false;
+    static const bool can_random_free = true;
 };
 
 }
