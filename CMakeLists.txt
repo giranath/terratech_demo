@@ -45,6 +45,8 @@ if(ENABLE_CRYPTO)
 endif()
 
 add_library(common
+        ${SOURCE_CRYPTO}
+
         src/common/bounding_box.hpp
 
         src/common/world/world.cpp
@@ -107,7 +109,12 @@ add_library(common
 
         src/common/game/base_game.cpp 
         src/common/game/base_game.hpp
-        ${SOURCE_CRYPTO})
+
+        src/common/memory/allocator_traits.hpp
+        src/common/memory/malloc_allocator.cpp
+        src/common/memory/malloc_allocator.hpp
+        src/common/memory/frame_allocator.cpp
+        src/common/memory/frame_allocator.hpp src/common/memory/heap_allocator.cpp src/common/memory/heap_allocator.hpp src/common/memory/allocator.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${SDL2_INCLUDE_DIRS}

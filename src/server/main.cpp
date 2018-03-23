@@ -12,7 +12,6 @@
 
 #include <iostream>
 #include <csignal>
-#include "../common/crypto/aes.hpp"
 
 namespace {
     volatile std::sig_atomic_t g_signal_status = 0;
