@@ -22,7 +22,9 @@ class base_game {
 public:
     using clock = std::chrono::high_resolution_clock;
     using frame_duration = clock::duration;
-    using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>; // TODO: Custom allocator
+    using unit_flyweight_manager = std::unordered_map<int, unit_flyweight,
+                                                      std::hash<int>, std::equal_to<int>,
+                                                      memory::container_heap_allocator<std::pair<const int, unit_flyweight>>>;
 private:
     static const std::size_t MANAGED_HEAP_SIZE = memory::gigabits(2);
 

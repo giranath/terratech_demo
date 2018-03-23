@@ -13,6 +13,7 @@ base_game::base_game(memory::stack_allocator& allocator,
 , managed_heap(managed_heap_memory, MANAGED_HEAP_SIZE)
 , tasks(managed_heap, thread_count)
 , units_(std::move(units))
+, unit_flyweights_(memory::container_heap_allocator<std::pair<const int, unit_flyweight>>(managed_heap))
 , will_loop(true) {
 
 }

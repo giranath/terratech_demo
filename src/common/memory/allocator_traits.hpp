@@ -1,6 +1,8 @@
 #ifndef MMAP_DEMO_ALLOCATOR_TRAITS_HPP
 #define MMAP_DEMO_ALLOCATOR_TRAITS_HPP
 
+#include <cstddef>
+
 namespace memory {
 
 using raw_memory_ptr = void*;
