@@ -11,22 +11,10 @@ base_game::base_game(memory::stack_allocator& allocator,
 : memory(allocator)
 , managed_heap_memory(allocator.allocate(MANAGED_HEAP_SIZE))
 , managed_heap(managed_heap_memory, MANAGED_HEAP_SIZE)
-, managed_heap_allocator(managed_heap)
-, allocation_reservations(managed_heap_allocator)
 , tasks(thread_count)
 , units_(std::move(units))
 , will_loop(true) {
 
-}
-
-base_game::~base_game() {
-    // Free game services
-    for(auto it = std::rbegin(allocation_reservations); it != std::rend(allocation_reservations); ++it) {
-        memory.free(it->first, it->second);
-    }
-
-    // Free the managed heap memory
-    memory.free(managed_heap_memory, MANAGED_HEAP_SIZE);
 }
 
 void base_game::init() {
@@ -92,18 +80,19 @@ void base_game::set_flyweight_manager(unit_flyweight_manager&& manager) {
     unit_flyweights_ = manager;
 }
 
-memory::raw_memory_ptr base_game::reserve_memory_space(std::size_t size) {
-    memory::raw_memory_ptr reserved_space = memory.allocate(size);
-
-    if(reserved_space) {
-        allocation_reservations.emplace_back(reserved_space, size);
-    }
-
-    return reserved_space;
+memory::raw_memory_ptr base_game::reserve_memory_space(std::size_t size, uint16_t tag) {
+    std::lock_guard<std::mutex> lock(stack_allocator_mutex);
+    return memory.allocate(size);
 }
 
-memory::heap_allocator& base_game::heap_allocator() {
-    return managed_heap;
+memory::raw_memory_ptr base_game::allocate_on_heap(std::size_t size, uint16_t tag) {
+    std::lock_guard<std::mutex> lock(heap_allocator_mutex);
+    return managed_heap.allocate(size);
+}
+
+void base_game::free_from_heap(memory::raw_memory_ptr ptr, std::size_t size) {
+    std::lock_guard<std::mutex> lock(heap_allocator_mutex);
+    managed_heap.free(ptr, size);
 }
 
 }

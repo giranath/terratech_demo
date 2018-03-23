@@ -10,6 +10,7 @@
 #include "../memory/utils.hpp"
 #include "../memory/allocator.hpp"
 
+#include <mutex>
 #include <chrono>
 #include <unordered_map>
 #include <memory>
@@ -22,22 +23,26 @@ public:
     using clock = std::chrono::high_resolution_clock;
     using frame_duration = clock::duration;
     using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>;
-    using allocation_request = std::pair<memory::raw_memory_ptr, std::size_t>;
-    using allocation_reserve_stack = std::vector<allocation_request, memory::container_heap_allocator<allocation_request>>;
 private:
     static const std::size_t MANAGED_HEAP_SIZE = memory::gigabits(2);
 
+    // TODO: Simplify here
     memory::stack_allocator& memory;
     memory::raw_memory_ptr managed_heap_memory;
     memory::heap_allocator managed_heap;
-    memory::container_heap_allocator<allocation_request> managed_heap_allocator;
-    allocation_reserve_stack allocation_reservations;
+    std::mutex stack_allocator_mutex;
+    std::mutex heap_allocator_mutex;
 
     // Thread pool
+
+    // TODO: Use custom allocator
     async::task_executor tasks;
 
     // Units
+    // TODO: Use custom allocator
     std::unique_ptr<unit_manager> units_;
+
+    // TODO: Use custom allocator
     unit_flyweight_manager unit_flyweights_;
 
     // Game loop management
@@ -53,7 +58,6 @@ public:
     explicit base_game(memory::stack_allocator& allocator,
                        std::size_t thread_count,
                        std::unique_ptr<unit_manager> units);
-    virtual ~base_game();
 
     void init();
     void release();
@@ -79,8 +83,19 @@ public:
     void set_flyweight_manager(const unit_flyweight_manager& manager);
     void set_flyweight_manager(unit_flyweight_manager&& manager);
 
-    memory::raw_memory_ptr reserve_memory_space(std::size_t size);
-    memory::heap_allocator& heap_allocator();
+    memory::raw_memory_ptr reserve_memory_space(std::size_t size, uint16_t tag = 0);
+    memory::raw_memory_ptr allocate_on_heap(std::size_t size, uint16_t tag = 0);
+    void free_from_heap(memory::raw_memory_ptr ptr, std::size_t size);
+
+    template<typename T>
+    T* allocate(std::size_t size = 1, uint16_t tag = 0) {
+        return static_cast<T*>(allocate_on_heap(sizeof(T) * size, tag));
+    }
+
+    template<typename T>
+    void free(T* memory, std::size_t size = 1) {
+        free_from_heap(memory, sizeof(T) * size);
+    }
 };
 
 }
