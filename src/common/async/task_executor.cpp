@@ -36,8 +36,10 @@ task_executor::queue_element task_executor::wait_for_next() {
     return queue_element(0, task_value{});
 }
 
-task_executor::task_executor(std::size_t worker_count)
+task_executor::task_executor(memory::heap_allocator& allocator, std::size_t worker_count)
 : is_running(true)
+, workers(memory::container_heap_allocator<std::thread>(allocator))
+, waiting_queue(memory::container_heap_allocator<queue_element>(allocator))
 , last_handle(0) {
     for(std::size_t i = 0; i < worker_count; ++i) {
         workers.emplace_back(worker_thread, this);

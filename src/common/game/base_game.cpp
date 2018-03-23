@@ -11,7 +11,7 @@ base_game::base_game(memory::stack_allocator& allocator,
 : memory(allocator)
 , managed_heap_memory(allocator.allocate(MANAGED_HEAP_SIZE))
 , managed_heap(managed_heap_memory, MANAGED_HEAP_SIZE)
-, tasks(thread_count)
+, tasks(managed_heap, thread_count)
 , units_(std::move(units))
 , will_loop(true) {
 

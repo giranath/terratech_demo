@@ -2,6 +2,7 @@
 #define MMAP_DEMO_ALLOCATOR_HPP
 
 #include "allocator_traits.hpp"
+#include "heap_allocator.hpp"
 
 #include <cstdint>
 #include <new>
@@ -14,9 +15,19 @@ struct container_heap_allocator {
 
     heap_allocator& heap;
 
-    explicit container_heap_allocator(heap_allocator& alloc) : heap{alloc} {}
-    //allocator(const allocator&) = default;
-    //allocator(const allocator&&) = default;
+    explicit container_heap_allocator(heap_allocator& alloc)
+    : heap{alloc} {
+
+    }
+
+    container_heap_allocator(const container_heap_allocator&) = default;
+    container_heap_allocator(container_heap_allocator&&) = default;
+
+    template<typename U>
+    container_heap_allocator(const container_heap_allocator<U>& other)
+    : heap(other.heap) {
+
+    }
 
     value_type* allocate(std::size_t size) {
         auto p = reinterpret_cast<value_type*>(heap.allocate(size * sizeof(value_type)));

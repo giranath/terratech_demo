@@ -1,7 +1,9 @@
 #ifndef MMAP_DEMO_THREAD_POOL_HPP
 #define MMAP_DEMO_THREAD_POOL_HPP
 
+#include "../memory/allocator.hpp"
 #include "task.hpp"
+#include "../memory/heap_allocator.hpp"
 
 #include <vector>
 #include <queue>
@@ -51,10 +53,11 @@ private:
     using queue_element = std::pair<task_handle, task_value>;
 
     std::atomic<bool> is_running;
-    std::vector<std::thread> workers; // TODO: Custom allocator
+    std::vector<std::thread, memory::container_heap_allocator<std::thread>> workers;
 
     // Store the task waiting to be processed
-    std::queue<queue_element> waiting_queue; // TODO: Custom allocator
+    using element_queue = std::queue<queue_element, std::deque<queue_element, memory::container_heap_allocator<queue_element>>>;
+    element_queue waiting_queue;
     std::mutex waiting_mutex;
 
     task_handle last_handle;
@@ -65,7 +68,7 @@ private:
     queue_element wait_for_next();
 
 public:
-    explicit task_executor(std::size_t worker_count);
+    explicit task_executor(memory::heap_allocator& allocator, std::size_t worker_count);
     ~task_executor();
 
     task_future push(task_ptr new_task);
