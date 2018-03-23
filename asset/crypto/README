@@ -1,0 +1,4 @@
+How to generate a RSA key pair with OpenSSL
+openssl genrsa 2048 >privkey.pem
+openssl pkcs8 -in privkey.pem -out privkey.p8 -topk8 -nocrypt -outform der
+openssl rsa -in privkey.pem -pubout -out pubkey.der -outform der

@@ -41,7 +41,7 @@ if(ENABLE_CRYPTO)
     set(SOURCE_CRYPTO
         src/common/crypto/aes.cpp
         src/common/crypto/aes.hpp
-        src/common/crypto/iterator_sink.hpp)
+        src/common/crypto/iterator_sink.hpp src/common/crypto/rsa.cpp src/common/crypto/rsa.hpp)
 endif()
 
 add_library(common
