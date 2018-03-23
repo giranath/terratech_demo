@@ -17,7 +17,7 @@ namespace async {
 class task_executor {
 public:
     using task_handle = uint32_t;
-    using task_ptr = std::unique_ptr<base_task>;
+    using task_ptr = std::unique_ptr<base_task>; // TODO: Custom allocator
     using task_future = std::future<task_ptr>;
 private:
     struct task_value {
@@ -51,10 +51,10 @@ private:
     using queue_element = std::pair<task_handle, task_value>;
 
     std::atomic<bool> is_running;
-    std::vector<std::thread> workers;
+    std::vector<std::thread> workers; // TODO: Custom allocator
 
     // Store the task waiting to be processed
-    std::queue<queue_element> waiting_queue;
+    std::queue<queue_element> waiting_queue; // TODO: Custom allocator
     std::mutex waiting_mutex;
 
     task_handle last_handle;

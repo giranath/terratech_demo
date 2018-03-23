@@ -29,10 +29,10 @@ struct unit_id
 class unit_manager
 {
 public:
-    using unit_ptr = std::unique_ptr<base_unit>;
+    using unit_ptr = std::unique_ptr<base_unit>; // TODO: Custom allocator
     using iterator = std::unordered_map<uint32_t, unit_ptr>::iterator;
 private:
-    std::vector<std::unordered_map<uint32_t, unit_ptr>> units;
+    std::vector<std::unordered_map<uint32_t, unit_ptr>> units; // TODO: Custom allocator
 
 public:
     unit_manager();

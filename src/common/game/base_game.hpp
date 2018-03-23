@@ -22,11 +22,10 @@ class base_game {
 public:
     using clock = std::chrono::high_resolution_clock;
     using frame_duration = clock::duration;
-    using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>;
+    using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>; // TODO: Custom allocator
 private:
     static const std::size_t MANAGED_HEAP_SIZE = memory::gigabits(2);
 
-    // TODO: Simplify here
     memory::stack_allocator& memory;
     memory::raw_memory_ptr managed_heap_memory;
     memory::heap_allocator managed_heap;
@@ -34,15 +33,11 @@ private:
     std::mutex heap_allocator_mutex;
 
     // Thread pool
-
-    // TODO: Use custom allocator
     async::task_executor tasks;
 
     // Units
-    // TODO: Use custom allocator
-    std::unique_ptr<unit_manager> units_;
+    std::unique_ptr<unit_manager> units_; // TODO: Custom allocator
 
-    // TODO: Use custom allocator
     unit_flyweight_manager unit_flyweights_;
 
     // Game loop management
