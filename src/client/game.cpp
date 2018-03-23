@@ -208,8 +208,8 @@ void game::load_datas() {
     load_flyweights();
 }
 
-game::game(networking::tcp_socket& socket)
-: base_game(std::thread::hardware_concurrency() - 1, std::make_unique<unit_manager>())
+game::game(memory::stack_allocator& allocator, networking::tcp_socket& socket)
+: base_game(allocator, std::thread::hardware_concurrency() - 1, std::make_unique<unit_manager>())
 , game_world()
 , world_rendering(game_world)
 , game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)

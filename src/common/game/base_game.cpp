@@ -3,11 +3,18 @@
 
 namespace gameplay {
 
-base_game::base_game(std::size_t thread_count, std::unique_ptr<unit_manager> units)
-: tasks(thread_count)
+base_game::base_game(memory::stack_allocator& allocator,
+                     std::size_t thread_count,
+                     std::unique_ptr<unit_manager> units)
+: memory(allocator)
+, tasks(thread_count)
 , units_(std::move(units))
 , will_loop(true) {
 
+}
+
+base_game::~base_game() {
+    // TODO: Free allocated memory
 }
 
 void base_game::init() {

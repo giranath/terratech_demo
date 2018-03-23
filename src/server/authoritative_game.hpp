@@ -42,7 +42,7 @@ class authoritative_game : public gameplay::base_game {
     void spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id);
 
 public:
-    authoritative_game();
+    authoritative_game(memory::stack_allocator& allocator);
 
     void on_init() override;
     void on_update(frame_duration last_frame) override;

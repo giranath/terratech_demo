@@ -19,8 +19,8 @@
 
 uint8_t authoritative_game::client::next_id = 0;
 
-authoritative_game::authoritative_game()
-: base_game(std::thread::hardware_concurrency() - 1, std::make_unique<server_unit_manager>())
+authoritative_game::authoritative_game(memory::stack_allocator& allocator)
+: base_game(allocator, std::thread::hardware_concurrency() - 1, std::make_unique<server_unit_manager>())
 , world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()))
 , sockets(3) {
 

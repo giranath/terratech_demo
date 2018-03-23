@@ -3,6 +3,10 @@
 #include "debug/profiler.hpp"
 #include "../common/time/clock.hpp"
 #include "../common/networking/tcp_socket.hpp"
+#include "../common/memory/malloc_allocator.hpp"
+#include "../common/memory/stack_allocator.hpp"
+#include "../common/memory/utils.hpp"
+
 #ifdef WIN32
 #include <SDL_net.h>
 #else
@@ -100,10 +104,14 @@ int main(int argc, char* argv[]) {
 
     setup_opengl();
 
-    game game_state(sock);
+    std::size_t MAX_ALLOCATION_SIZE_GB = memory::gigabits(4);
+    memory::malloc_allocator backbone_allocator;
+    memory::raw_memory_ptr game_allocated_memory = backbone_allocator.allocate(MAX_ALLOCATION_SIZE_GB);
+    memory::stack_allocator game_allocator(game_allocated_memory, MAX_ALLOCATION_SIZE_GB);
+
+    game game_state(game_allocator, sock);
     game_state.resize(800, 600);
 
-    // TODO: Init on another thread
     game_state.init();
 
     // Game loop
@@ -151,6 +159,9 @@ int main(int argc, char* argv[]) {
     }
 
     game_state.release();
+
+    // Release the memory used by the game
+    backbone_allocator.free(game_allocated_memory, MAX_ALLOCATION_SIZE_GB);
 
     return 0;
 }

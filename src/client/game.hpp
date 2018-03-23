@@ -73,7 +73,7 @@ private:
     void load_datas();
 
 public:
-    game(networking::tcp_socket& socket);
+    game(memory::stack_allocator& allocator, networking::tcp_socket& socket);
     
     void on_init() override;
     void on_update(frame_duration last_frame) override;

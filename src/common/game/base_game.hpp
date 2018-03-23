@@ -5,6 +5,7 @@
 #include "../async/task_executor.hpp"
 #include "../actor/unit_manager.hpp"
 #include "../time/clock.hpp"
+#include "../memory/stack_allocator.hpp"
 
 #include <chrono>
 #include <unordered_map>
@@ -17,6 +18,8 @@ public:
     using frame_duration = clock::duration;
     using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>;
 private:
+    memory::stack_allocator& memory;
+
     // Thread pool
     async::task_executor tasks;
 
@@ -34,7 +37,10 @@ protected:
     virtual void on_stop() {};
 
 public:
-    explicit base_game(std::size_t thread_count, std::unique_ptr<unit_manager> units);
+    explicit base_game(memory::stack_allocator& allocator,
+                       std::size_t thread_count,
+                       std::unique_ptr<unit_manager> units);
+    virtual ~base_game();
 
     void init();
     void release();

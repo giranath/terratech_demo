@@ -1,7 +1,9 @@
-#include "../common/time/clock.hpp"
-
 #include "authoritative_game.hpp"
-#include "../common/memory/memory_pool.hpp"
+
+#include "../common/time/clock.hpp"
+#include "../common/memory/stack_allocator.hpp"
+#include "../common/memory/malloc_allocator.hpp"
+#include "../common/memory/utils.hpp"
 
 #ifdef WIN32
 #include <SDL.h>
@@ -36,7 +38,12 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    authoritative_game game;
+    std::size_t MAX_ALLOCATION_SIZE_GB = memory::gigabits(4);
+    memory::malloc_allocator backbone_allocator;
+    memory::raw_memory_ptr game_allocated_memory = backbone_allocator.allocate(MAX_ALLOCATION_SIZE_GB);
+    memory::stack_allocator game_allocator(game_allocated_memory, MAX_ALLOCATION_SIZE_GB);
+
+    authoritative_game game(game_allocator);
     game.init();
 
     if(std::signal(SIGTERM, sign_handler) == SIG_ERR) {
@@ -54,6 +61,8 @@ int main(int argc, char* argv[]) {
     }
 
     game.release();
+
+    backbone_allocator.free(game_allocated_memory, MAX_ALLOCATION_SIZE_GB);
 
     SDLNet_Quit();
     SDL_Quit();
