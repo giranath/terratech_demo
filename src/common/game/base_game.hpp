@@ -6,9 +6,14 @@
 #include "../actor/unit_manager.hpp"
 #include "../time/clock.hpp"
 #include "../memory/stack_allocator.hpp"
+#include "../memory/heap_allocator.hpp"
+#include "../memory/utils.hpp"
+#include "../memory/allocator.hpp"
 
 #include <chrono>
 #include <unordered_map>
+#include <memory>
+#include <vector>
 
 namespace gameplay {
 
@@ -17,8 +22,16 @@ public:
     using clock = std::chrono::high_resolution_clock;
     using frame_duration = clock::duration;
     using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>;
+    using allocation_request = std::pair<memory::raw_memory_ptr, std::size_t>;
+    using allocation_reserve_stack = std::vector<allocation_request, memory::container_heap_allocator<allocation_request>>;
 private:
+    static const std::size_t MANAGED_HEAP_SIZE = memory::gigabits(2);
+
     memory::stack_allocator& memory;
+    memory::raw_memory_ptr managed_heap_memory;
+    memory::heap_allocator managed_heap;
+    memory::container_heap_allocator<allocation_request> managed_heap_allocator;
+    allocation_reserve_stack allocation_reservations;
 
     // Thread pool
     async::task_executor tasks;
@@ -65,6 +78,9 @@ public:
 
     void set_flyweight_manager(const unit_flyweight_manager& manager);
     void set_flyweight_manager(unit_flyweight_manager&& manager);
+
+    memory::raw_memory_ptr reserve_memory_space(std::size_t size);
+    memory::heap_allocator& heap_allocator();
 };
 
 }

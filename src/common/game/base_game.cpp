@@ -1,12 +1,18 @@
 #include "base_game.hpp"
 #include "../actor/unit.hpp"
 
+#include <iostream>
+
 namespace gameplay {
 
 base_game::base_game(memory::stack_allocator& allocator,
                      std::size_t thread_count,
                      std::unique_ptr<unit_manager> units)
 : memory(allocator)
+, managed_heap_memory(allocator.allocate(MANAGED_HEAP_SIZE))
+, managed_heap(managed_heap_memory, MANAGED_HEAP_SIZE)
+, managed_heap_allocator(managed_heap)
+, allocation_reservations(managed_heap_allocator)
 , tasks(thread_count)
 , units_(std::move(units))
 , will_loop(true) {
@@ -14,7 +20,13 @@ base_game::base_game(memory::stack_allocator& allocator,
 }
 
 base_game::~base_game() {
-    // TODO: Free allocated memory
+    // Free game services
+    for(auto it = std::rbegin(allocation_reservations); it != std::rend(allocation_reservations); ++it) {
+        memory.free(it->first, it->second);
+    }
+
+    // Free the managed heap memory
+    memory.free(managed_heap_memory, MANAGED_HEAP_SIZE);
 }
 
 void base_game::init() {
@@ -72,12 +84,26 @@ void base_game::load_flyweight(const nlohmann::json& json) {
     unit_flyweights_[id] = unit_flyweight(json);
 }
 
-void base_game::set_flyweight_manager(const unit_flyweight_manager& manager)
-{
+void base_game::set_flyweight_manager(const unit_flyweight_manager& manager) {
     unit_flyweights_ = manager;
 }
-void base_game::set_flyweight_manager(unit_flyweight_manager&& manager)
-{
+
+void base_game::set_flyweight_manager(unit_flyweight_manager&& manager) {
     unit_flyweights_ = manager;
 }
+
+memory::raw_memory_ptr base_game::reserve_memory_space(std::size_t size) {
+    memory::raw_memory_ptr reserved_space = memory.allocate(size);
+
+    if(reserved_space) {
+        allocation_reservations.emplace_back(reserved_space, size);
+    }
+
+    return reserved_space;
+}
+
+memory::heap_allocator& base_game::heap_allocator() {
+    return managed_heap;
+}
+
 }
