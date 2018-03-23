@@ -1,6 +1,7 @@
 #include "../common/time/clock.hpp"
 
 #include "authoritative_game.hpp"
+#include "../common/memory/memory_pool.hpp"
 
 #ifdef WIN32
 #include <SDL.h>
