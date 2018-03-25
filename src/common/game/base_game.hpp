@@ -25,6 +25,7 @@ public:
     using unit_flyweight_manager = std::unordered_map<int, unit_flyweight,
                                                       std::hash<int>, std::equal_to<int>,
                                                       memory::container_heap_allocator<std::pair<const int, unit_flyweight>>>;
+    //using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>;
 private:
     static const std::size_t MANAGED_HEAP_SIZE = memory::gigabits(2);
 
@@ -84,15 +85,7 @@ public:
     memory::raw_memory_ptr allocate_on_heap(std::size_t size, uint16_t tag = 0);
     void free_from_heap(memory::raw_memory_ptr ptr, std::size_t size);
 
-    template<typename T>
-    T* allocate(std::size_t size = 1, uint16_t tag = 0) {
-        return static_cast<T*>(allocate_on_heap(sizeof(T) * size, tag));
-    }
-
-    template<typename T>
-    void free(T* memory, std::size_t size = 1) {
-        free_from_heap(memory, sizeof(T) * size);
-    }
+    memory::heap_allocator& heap_allocator();
 };
 
 }

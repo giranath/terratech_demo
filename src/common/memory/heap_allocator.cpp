@@ -1,6 +1,7 @@
 #include "heap_allocator.hpp"
 
 #include <algorithm>
+#include <cassert>
 
 namespace memory {
 
@@ -27,25 +28,31 @@ raw_memory_ptr heap_allocator::allocate(std::size_t size) {
     uint8_t* alloc_spot = reinterpret_cast<uint8_t*>(after);
     uint8_t* end_of_alloc = alloc_spot + size;
 
-    // Calculer s'il est plus payant de ne pas diviser
+    // If allocation_size > size create a new, else reuse
+    if(it->allocation_size > size + sizeof(header)) {
+        header* next_header = reinterpret_cast<header *>(end_of_alloc);
+        next_header->allocation_size = it->allocation_size - size - sizeof(header);
+        next_header->prev = it;
+        next_header->used = false;
+        next_header->next = it->next;
 
-    header* next_header = reinterpret_cast<header*>(end_of_alloc);
-    next_header->allocation_size = it->allocation_size - size - sizeof(header);
-    next_header->prev = it;
-    next_header->used = false;
-    next_header->next = it->next;
+        it->next = next_header;
+        it->allocation_size = size;
+    }
 
-    it->next = next_header;
-    it->allocation_size = size;
     it->used = true;
 
     return alloc_spot;
 }
 
-void heap_allocator::free(raw_memory_ptr memory, std::size_t /*s*/) {
+void heap_allocator::free(raw_memory_ptr memory, std::size_t s) {
+    // TODO: Fix this function
     if(memory == nullptr) return;
 
     header* head = static_cast<header*>(memory) - 1;
+
+    assert(head->allocation_size >= s);
+    assert(head->used);
 
     // Mark the space as not used anymore
     head->used = false;

@@ -98,7 +98,9 @@ void authoritative_game::on_connection() {
     std::cout << "sending flyweights..." << std::endl;
     std::unordered_map<std::string, unit_flyweight> serialized_flyweights;
     for(auto it = unit_flyweights().begin(); it != unit_flyweights().end(); ++it) {
-        serialized_flyweights.emplace(std::to_string(it->first), it->second);
+        std::cout << it->first << std::endl;
+        serialized_flyweights[std::to_string(it->first)] = it->second;
+        //serialized_flyweights.emplace(std::to_string(it->first), it->second);
     }
 
     if(!networking::send_packet(connecting_socket, networking::packet::make(serialized_flyweights, SETUP_FLYWEIGHTS))) {
@@ -242,6 +244,7 @@ void authoritative_game::on_update(frame_duration last_frame) {
     }));
 
     update_task.wait();
+    stop();
 }
 
 void authoritative_game::on_release() {

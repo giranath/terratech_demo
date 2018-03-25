@@ -30,7 +30,7 @@ struct container_heap_allocator {
     }
 
     value_type* allocate(std::size_t size) {
-        auto p = reinterpret_cast<value_type*>(heap.allocate(size * sizeof(value_type)));
+        auto p = static_cast<value_type*>(heap.allocate(size * sizeof(value_type)));
 
         if(!p) throw std::bad_alloc{};
 
@@ -39,6 +39,14 @@ struct container_heap_allocator {
 
     void deallocate(value_type* p, std::size_t size) {
         heap.free(p, sizeof(value_type) * size);
+    }
+
+    bool operator==(const container_heap_allocator& other) const {
+        return true;
+    }
+
+    bool operator!=(const container_heap_allocator& other) const {
+        return false;
     }
 };
 

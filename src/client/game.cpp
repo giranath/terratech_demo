@@ -226,12 +226,13 @@ void game::on_init() {
     if (packet)
     {
         auto manager_u = packet->as<std::unordered_map<std::string, unit_flyweight>>();
-        unit_flyweight_manager manager;
+        memory::container_heap_allocator<std::pair<const int, unit_flyweight>> manager_allocator{heap_allocator()};
+        unit_flyweight_manager unserialized_manager{manager_allocator};
         for (auto& v : manager_u)
         {
-            manager.emplace(std::stoi(v.first), std::move(v.second));
+            unserialized_manager.emplace(std::stoi(v.first), std::move(v.second));
         }
-        set_flyweight_manager(manager);
+        set_flyweight_manager(unserialized_manager);
     }
 
     packet = networking::receive_packet_from(socket);

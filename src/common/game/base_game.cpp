@@ -70,7 +70,7 @@ unit_manager::unit_ptr base_game::make_unit(glm::vec3 position, glm::vec2 target
 void base_game::load_flyweight(const nlohmann::json& json) {
     int id = json["id"];
 
-    unit_flyweights_[id] = unit_flyweight(json);
+    unit_flyweights_[id] = unit_flyweight{json};
 }
 
 void base_game::set_flyweight_manager(const unit_flyweight_manager& manager) {
@@ -94,6 +94,10 @@ memory::raw_memory_ptr base_game::allocate_on_heap(std::size_t size, uint16_t ta
 void base_game::free_from_heap(memory::raw_memory_ptr ptr, std::size_t size) {
     std::lock_guard<std::mutex> lock(heap_allocator_mutex);
     managed_heap.free(ptr, size);
+}
+
+memory::heap_allocator& base_game::heap_allocator() {
+    return managed_heap;
 }
 
 }
