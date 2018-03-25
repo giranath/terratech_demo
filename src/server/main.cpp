@@ -43,24 +43,26 @@ int main(int argc, char* argv[]) {
     memory::raw_memory_ptr game_allocated_memory = backbone_allocator.allocate(MAX_ALLOCATION_SIZE_GB);
     memory::stack_allocator game_allocator(game_allocated_memory, MAX_ALLOCATION_SIZE_GB);
 
-    authoritative_game game(game_allocator);
-    game.init();
+    {
+        authoritative_game game(game_allocator);
+        game.init();
 
-    if(std::signal(SIGTERM, sign_handler) == SIG_ERR) {
-        std::cerr << "can't catch SIGTERM" << std::endl;
-    }
+        if (std::signal(SIGTERM, sign_handler) == SIG_ERR) {
+            std::cerr << "can't catch SIGTERM" << std::endl;
+        }
 
-    game_time::highres_clock frame_time;
-    while(game.is_running() && g_signal_status == 0) {
-        game.update(frame_time.elapsed_time<gameplay::base_game::frame_duration>());
-        frame_time.restart();
-    }
-    // If exiting game loop because of signal, call stop
-    if(game.is_running()) {
-        game.stop();
-    }
+        game_time::highres_clock frame_time;
+        while (game.is_running() && g_signal_status == 0) {
+            game.update(frame_time.elapsed_time<gameplay::base_game::frame_duration>());
+            frame_time.restart();
+        }
+        // If exiting game loop because of signal, call stop
+        if (game.is_running()) {
+            game.stop();
+        }
 
-    game.release();
+        game.release();
+    }
 
     backbone_allocator.free(game_allocated_memory, MAX_ALLOCATION_SIZE_GB);
 

@@ -25,7 +25,6 @@ public:
     using unit_flyweight_manager = std::unordered_map<int, unit_flyweight,
                                                       std::hash<int>, std::equal_to<int>,
                                                       memory::container_heap_allocator<std::pair<const int, unit_flyweight>>>;
-    //using unit_flyweight_manager = std::unordered_map<int, unit_flyweight>;
 private:
     static const std::size_t MANAGED_HEAP_SIZE = memory::gigabits(2);
 
@@ -56,6 +55,7 @@ public:
     explicit base_game(memory::stack_allocator& allocator,
                        std::size_t thread_count,
                        std::unique_ptr<unit_manager> units);
+    virtual ~base_game();
 
     void init();
     void release();

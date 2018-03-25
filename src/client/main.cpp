@@ -109,56 +109,58 @@ int main(int argc, char* argv[]) {
     memory::raw_memory_ptr game_allocated_memory = backbone_allocator.allocate(MAX_ALLOCATION_SIZE_GB);
     memory::stack_allocator game_allocator(game_allocated_memory, MAX_ALLOCATION_SIZE_GB);
 
-    game game_state(game_allocator, sock);
-    game_state.resize(800, 600);
+    {
+        game game_state(game_allocator, sock);
+        game_state.resize(800, 600);
 
-    game_state.init();
+        game_state.init();
 
-    // Game loop
-    game_time::highres_clock frame_time;
-    while(game_state.is_running()) {
-        frame_time.restart();
+        // Game loop
+        game_time::highres_clock frame_time;
+        while (game_state.is_running()) {
+            frame_time.restart();
 
-        if(game_state.fps() > 0) {
-            std::cout << game_state.fps() << " : " << game_state.average_fps() << std::endl;
-        }
-        // Render last frame on screen
-        {
-            profiler_us p("rendering");
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            game_state.render();
-            window.gl_swap();
-        }
+            if (game_state.fps() > 0) {
+                std::cout << game_state.fps() << " : " << game_state.average_fps() << std::endl;
+            }
+            // Render last frame on screen
+            {
+                profiler_us p("rendering");
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                game_state.render();
+                window.gl_swap();
+            }
 
-        // Handle events from user here
-        {
-            profiler_us p("events");
-            for (auto event : sdl.poll_events()) {
-                if (event.type == SDL_QUIT) {
-                    game_state.stop();
-                } else if (event.type == SDL_WINDOWEVENT) {
-                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                        const int new_width = event.window.data1;
-                        const int new_height = event.window.data2;
+            // Handle events from user here
+            {
+                profiler_us p("events");
+                for (auto event : sdl.poll_events()) {
+                    if (event.type == SDL_QUIT) {
+                        game_state.stop();
+                    } else if (event.type == SDL_WINDOWEVENT) {
+                        if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                            const int new_width = event.window.data1;
+                            const int new_height = event.window.data2;
 
-                        game_state.resize(new_width, new_height);
+                            game_state.resize(new_width, new_height);
+                        }
+                    } else {
+                        game_state.handle_event(event);
                     }
-                } else {
-                    game_state.handle_event(event);
                 }
             }
-        }
-        
-        // Update state here
-        {
-            profiler_us p("update");
-            game_state.update(last_frame_duration);
+
+            // Update state here
+            {
+                profiler_us p("update");
+                game_state.update(last_frame_duration);
+            }
+
+            last_frame_duration = frame_time.elapsed_time<game::frame_duration>();
         }
 
-        last_frame_duration = frame_time.elapsed_time<game::frame_duration>();
+        game_state.release();
     }
-
-    game_state.release();
 
     // Release the memory used by the game
     backbone_allocator.free(game_allocated_memory, MAX_ALLOCATION_SIZE_GB);

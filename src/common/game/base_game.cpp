@@ -18,6 +18,10 @@ base_game::base_game(memory::stack_allocator& allocator,
 
 }
 
+base_game::~base_game() {
+    memory.free(managed_heap_memory, MANAGED_HEAP_SIZE);
+}
+
 void base_game::init() {
     on_init();
 }

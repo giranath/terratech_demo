@@ -244,7 +244,6 @@ void authoritative_game::on_update(frame_duration last_frame) {
     }));
 
     update_task.wait();
-    stop();
 }
 
 void authoritative_game::on_release() {
