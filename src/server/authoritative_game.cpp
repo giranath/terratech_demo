@@ -23,7 +23,7 @@ authoritative_game::authoritative_game(memory::stack_allocator& allocator)
 : base_game(allocator, std::thread::hardware_concurrency() - 1, nullptr/*std::make_unique<server_unit_manager>(heap_allocator())*/)
 , world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()))
 , sockets(3) {
-    set_units(std::make_unique<server_unit_manager>(heap_allocator()));
+    set_units(memory::make_unique<server_unit_manager>(heap_allocator(), heap_allocator()));
 }
 
 void authoritative_game::load_flyweights() {

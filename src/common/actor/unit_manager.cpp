@@ -1,6 +1,5 @@
 #include "unit_manager.hpp"
 
-
 unit_manager::unit_manager(memory::heap_allocator& allocator)
 : units{memory::container_heap_allocator<unit_collection>(allocator)} {
     for(uint32_t i = 0; i < static_cast<uint32_t>(actor_type::MAX_ACTOR_TYPE); ++i) {
@@ -17,7 +16,6 @@ uint32_t unit_manager::actor_type_to_uint32_t(base_unit* unit)
 {
     return static_cast<uint32_t>(unit->get_type()) << 16;
 }
-
 
 base_unit* unit_manager::get(uint32_t id)
 {

@@ -209,7 +209,7 @@ void game::load_datas() {
 }
 
 game::game(memory::stack_allocator& allocator, networking::tcp_socket& socket)
-: base_game(allocator, std::thread::hardware_concurrency() - 1, std::make_unique<unit_manager>())
+: base_game(allocator, std::thread::hardware_concurrency() - 1, nullptr)
 , game_world()
 , world_rendering(game_world)
 , game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)
@@ -218,6 +218,7 @@ game::game(memory::stack_allocator& allocator, networking::tcp_socket& socket)
 , frame_count(0) 
 , socket(socket)
 , socket_s(1){
+    set_units(memory::make_unique<unit_manager>(heap_allocator(), heap_allocator()));
     last_fps_durations.reserve(10);
 }
 

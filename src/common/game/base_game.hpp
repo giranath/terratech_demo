@@ -9,6 +9,7 @@
 #include "../memory/heap_allocator.hpp"
 #include "../memory/utils.hpp"
 #include "../memory/allocator.hpp"
+#include "../memory/unique_ptr.hpp"
 
 #include <mutex>
 #include <chrono>
@@ -38,7 +39,8 @@ private:
     async::task_executor tasks;
 
     // Units
-    std::unique_ptr<unit_manager> units_; // TODO: Custom allocator
+    //std::unique_ptr<unit_manager> units_; // TODO: Custom allocator
+    memory::unique_ptr<unit_manager> units_;
 
     unit_flyweight_manager unit_flyweights_;
 
@@ -54,7 +56,7 @@ protected:
 public:
     explicit base_game(memory::stack_allocator& allocator,
                        std::size_t thread_count,
-                       std::unique_ptr<unit_manager> units);
+                       memory::unique_ptr<unit_manager> units);
     virtual ~base_game();
 
     void init();
@@ -86,7 +88,7 @@ public:
     void free_from_heap(memory::raw_memory_ptr ptr, std::size_t size);
 
     memory::heap_allocator& heap_allocator();
-    void set_units(std::unique_ptr<unit_manager> units);
+    void set_units(memory::unique_ptr<unit_manager> units);
 };
 
 }

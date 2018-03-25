@@ -5,7 +5,7 @@ namespace gameplay {
 
 base_game::base_game(memory::stack_allocator& allocator,
                      std::size_t thread_count,
-                     std::unique_ptr<unit_manager> units)
+                     memory::unique_ptr<unit_manager> units)
 : memory(allocator)
 , managed_heap_memory(allocator.allocate(MANAGED_HEAP_SIZE))
 , managed_heap(managed_heap_memory, MANAGED_HEAP_SIZE)
@@ -101,7 +101,7 @@ memory::heap_allocator& base_game::heap_allocator() {
     return managed_heap;
 }
 
-void base_game::set_units(std::unique_ptr<unit_manager> units) {
+void base_game::set_units(memory::unique_ptr<unit_manager> units) {
     units_ = std::move(units);
 }
 

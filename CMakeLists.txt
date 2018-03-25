@@ -118,7 +118,7 @@ add_library(common
         src/common/memory/heap_allocator.cpp
         src/common/memory/heap_allocator.hpp
         src/common/memory/allocator.hpp
-        src/common/memory/memory_pool.hpp src/common/memory/stack_allocator.cpp src/common/memory/stack_allocator.hpp src/common/memory/utils.hpp)
+        src/common/memory/memory_pool.hpp src/common/memory/stack_allocator.cpp src/common/memory/stack_allocator.hpp src/common/memory/utils.hpp src/common/memory/unique_ptr.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${SDL2_INCLUDE_DIRS}
