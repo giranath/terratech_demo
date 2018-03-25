@@ -6,9 +6,10 @@
 namespace memory {
 
 heap_allocator::heap_allocator(raw_memory_ptr base, std::size_t size)
-: base_memory(base)
-, root(static_cast<header*>(base_memory))
-, capacity(size) {
+: base_allocator()
+, base_memory(base)
+, capacity(size)
+, root(static_cast<header*>(base_memory)){
     root->next = nullptr;
     root->prev = nullptr;
     root->allocation_size = size - sizeof(header);
@@ -41,12 +42,12 @@ raw_memory_ptr heap_allocator::allocate(std::size_t size) {
     }
 
     it->used = true;
+    used_space += size;
 
     return alloc_spot;
 }
 
 void heap_allocator::free(raw_memory_ptr memory, std::size_t s) {
-    // TODO: Fix this function
     if(memory == nullptr) return;
 
     header* head = static_cast<header*>(memory) - 1;
@@ -79,6 +80,8 @@ void heap_allocator::free(raw_memory_ptr memory, std::size_t s) {
             head->next->prev = head;
         }
     }
+
+    used_space -= s;
 }
 
 }

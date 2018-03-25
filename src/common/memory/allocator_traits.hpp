@@ -7,6 +7,17 @@ namespace memory {
 
 using raw_memory_ptr = void*;
 
+class base_allocator {
+protected:
+    mutable std::size_t used_space{};
+public:
+    base_allocator() = default;
+
+    std::size_t allocated_space() const noexcept {
+        return used_space;
+    }
+};
+
 template<typename T>
 struct allocator_traits {
     static const bool use_fixed_size_allocation = false;

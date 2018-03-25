@@ -15,6 +15,8 @@ raw_memory_ptr stack_allocator::allocate(std::size_t size) {
     std::size_t available_space = static_cast<std::size_t>(std::distance(next_allocation, base_memory + capacity));
     if(available_space < size) return nullptr;
 
+    used_space += size;
+
     raw_memory_ptr start = next_allocation;
     next_allocation += size;
 
@@ -24,11 +26,13 @@ raw_memory_ptr stack_allocator::allocate(std::size_t size) {
 void stack_allocator::free(raw_memory_ptr ptr, std::size_t size) {
     if(ptr) {
         next_allocation = static_cast<uint8_t *>(ptr);
+        used_space -= size;
     }
 }
 
 void stack_allocator::clear() {
     next_allocation = base_memory;
+    used_space = 0;
 }
 
 }

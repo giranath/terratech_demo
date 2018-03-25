@@ -8,7 +8,7 @@ namespace memory {
 
 // Doesn't own the memory
 // You must free in the inverse order of allocation
-class stack_allocator {
+class stack_allocator : public base_allocator {
     uint8_t* base_memory;
     uint8_t* next_allocation;
     std::size_t capacity;

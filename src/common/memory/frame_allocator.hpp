@@ -9,7 +9,7 @@ namespace memory {
 
 // Doesn't own base_memory
 // Clear invalidates all previous allocations
-class frame_allocator {
+class frame_allocator : public base_allocator {
     uint8_t* base_memory;
     uint8_t* next_allocation_ptr;
     std::size_t capacity;

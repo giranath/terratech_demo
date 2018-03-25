@@ -20,12 +20,14 @@ raw_memory_ptr frame_allocator::allocate(std::size_t size) {
 
     raw_memory_ptr allocated_mem = next_allocation_ptr;
     next_allocation_ptr += size;
+    used_space += size;
 
     return allocated_mem;
 }
 
 void frame_allocator::clear() {
     next_allocation_ptr = base_memory;
+    used_space = 0;
 }
 
 }

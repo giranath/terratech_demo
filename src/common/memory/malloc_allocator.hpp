@@ -7,7 +7,7 @@
 
 namespace memory {
 
-class malloc_allocator {
+class malloc_allocator : public base_allocator {
 public:
     raw_memory_ptr allocate(std::size_t size) const;
 

@@ -7,7 +7,7 @@
 namespace memory {
 
 // Doesn't own it's memory
-class heap_allocator {
+class heap_allocator : public base_allocator {
     struct header {
         header* prev;
         header* next;

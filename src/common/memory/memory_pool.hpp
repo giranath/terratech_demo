@@ -3,12 +3,13 @@
 
 #include "allocator_traits.hpp"
 #include <cstdint>
+#include <cassert>
 
 namespace memory {
 
 // Doesn't own it's memory block
 template<typename T>
-class memory_pool {
+class memory_pool : public base_allocator {
     struct free_block {
         free_block* next;
     };
@@ -29,6 +30,8 @@ public:
     raw_memory_ptr allocate(std::size_t size = sizeof(T)) {
         assert(size == sizeof(T));
 
+        used_space += size;
+
         if(next_free_block == nullptr) {
             return nullptr;
         }
@@ -46,6 +49,8 @@ public:
             free_block *free = static_cast<free_block *>(memory);
             free->next = next_free_block;
             next_free_block = free;
+
+            used_space -= size;
         }
     }
 
@@ -69,6 +74,8 @@ public:
                 last_block->next = nullptr;
             }
         }
+
+        used_space = 0;
     }
 };
 
