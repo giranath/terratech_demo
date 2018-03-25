@@ -1,5 +1,13 @@
 #include "unit_manager.hpp"
 
+
+unit_manager::unit_manager(memory::heap_allocator& allocator)
+: units{memory::container_heap_allocator<unit_collection>(allocator)} {
+    for(uint32_t i = 0; i < static_cast<uint32_t>(actor_type::MAX_ACTOR_TYPE); ++i) {
+        units.emplace_back(memory::container_heap_allocator<std::pair<const uint32_t, unit_ptr>>(allocator));
+    }
+}
+
 uint32_t unit_manager::get_unit_type(uint32_t id)
 {
     return id & 0x0ff0000;
@@ -10,9 +18,6 @@ uint32_t unit_manager::actor_type_to_uint32_t(base_unit* unit)
     return static_cast<uint32_t>(unit->get_type()) << 16;
 }
 
-unit_manager::unit_manager() :
-    units{ static_cast<uint32_t>(actor_type::MAX_ACTOR_TYPE) }
-{}
 
 base_unit* unit_manager::get(uint32_t id)
 {

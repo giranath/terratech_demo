@@ -3,6 +3,7 @@
 
 #include "base_unit.hpp"
 #include "target_handle.hpp"
+#include "../memory/allocator.hpp"
 
 #include <vector>
 #include <cstdint>
@@ -30,12 +31,15 @@ class unit_manager
 {
 public:
     using unit_ptr = std::unique_ptr<base_unit>; // TODO: Custom allocator
-    using iterator = std::unordered_map<uint32_t, unit_ptr>::iterator;
+    using unit_collection = std::unordered_map<uint32_t, unit_ptr,
+                                               std::hash<int>, std::equal_to<int>,
+                                               memory::container_heap_allocator<std::pair<const uint32_t, unit_ptr>>>;
+    using iterator = unit_collection::iterator;
 private:
-    std::vector<std::unordered_map<uint32_t, unit_ptr>> units; // TODO: Custom allocator
+    std::vector<unit_collection, memory::container_heap_allocator<unit_collection>> units;
 
 public:
-    unit_manager();
+    unit_manager(memory::heap_allocator& allocator);
 
     uint32_t get_unit_type(uint32_t id);
 

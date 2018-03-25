@@ -20,10 +20,10 @@
 uint8_t authoritative_game::client::next_id = 0;
 
 authoritative_game::authoritative_game(memory::stack_allocator& allocator)
-: base_game(allocator, std::thread::hardware_concurrency() - 1, std::make_unique<server_unit_manager>())
+: base_game(allocator, std::thread::hardware_concurrency() - 1, nullptr/*std::make_unique<server_unit_manager>(heap_allocator())*/)
 , world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()))
 , sockets(3) {
-
+    set_units(std::make_unique<server_unit_manager>(heap_allocator()));
 }
 
 void authoritative_game::load_flyweights() {
@@ -98,9 +98,7 @@ void authoritative_game::on_connection() {
     std::cout << "sending flyweights..." << std::endl;
     std::unordered_map<std::string, unit_flyweight> serialized_flyweights;
     for(auto it = unit_flyweights().begin(); it != unit_flyweights().end(); ++it) {
-        std::cout << it->first << std::endl;
-        serialized_flyweights[std::to_string(it->first)] = it->second;
-        //serialized_flyweights.emplace(std::to_string(it->first), it->second);
+        serialized_flyweights.emplace(std::to_string(it->first), it->second);
     }
 
     if(!networking::send_packet(connecting_socket, networking::packet::make(serialized_flyweights, SETUP_FLYWEIGHTS))) {

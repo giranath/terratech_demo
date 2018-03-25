@@ -86,6 +86,7 @@ public:
     void free_from_heap(memory::raw_memory_ptr ptr, std::size_t size);
 
     memory::heap_allocator& heap_allocator();
+    void set_units(std::unique_ptr<unit_manager> units);
 };
 
 }

@@ -1,5 +1,10 @@
 #include "server_unit_manager.hpp"
 
+server_unit_manager::server_unit_manager(memory::heap_allocator& allocator)
+: unit_manager(allocator) {
+
+}
+
 target_handle server_unit_manager::add_unit_to(uint8_t player_id, unit_ptr unit) {
     if(!unit) { return {}; }
 

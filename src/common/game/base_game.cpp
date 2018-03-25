@@ -1,8 +1,6 @@
 #include "base_game.hpp"
 #include "../actor/unit.hpp"
 
-#include <iostream>
-
 namespace gameplay {
 
 base_game::base_game(memory::stack_allocator& allocator,
@@ -15,7 +13,6 @@ base_game::base_game(memory::stack_allocator& allocator,
 , units_(std::move(units))
 , unit_flyweights_(memory::container_heap_allocator<std::pair<const int, unit_flyweight>>(managed_heap))
 , will_loop(true) {
-
 }
 
 base_game::~base_game() {
@@ -102,6 +99,10 @@ void base_game::free_from_heap(memory::raw_memory_ptr ptr, std::size_t size) {
 
 memory::heap_allocator& base_game::heap_allocator() {
     return managed_heap;
+}
+
+void base_game::set_units(std::unique_ptr<unit_manager> units) {
+    units_ = std::move(units);
 }
 
 }
