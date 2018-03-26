@@ -52,10 +52,10 @@ void unit_manager::remove(uint32_t id)
     units[type].erase(id);
 }
 
-unit_manager::iterator unit_manager::begin_of_units() {
+unit_manager::unit_iterator unit_manager::begin_of_units() {
     return units[static_cast<std::size_t>(actor_type::unit)].begin();
 }
 
-unit_manager::iterator unit_manager::end_of_units() {
+unit_manager::unit_iterator unit_manager::end_of_units() {
     return units[static_cast<std::size_t>(actor_type::unit)].end();
 }

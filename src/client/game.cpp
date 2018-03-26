@@ -293,7 +293,7 @@ void game::on_update(frame_duration last_frame_duration) {
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {
         for (auto u = units().begin_of_units(); u != units().end_of_units(); u++)
         {
-            unit* actual_unit = static_cast<unit*>(u->second.get());
+            unit* actual_unit = static_cast<unit*>(u->unit);
 
             glm::vec2 target = actual_unit->get_target_position();
             glm::vec3 target3D = { target.x, 0, target.y };
@@ -322,9 +322,9 @@ void game::render() {
 
     // TODO: Render every units
     for(auto unit = units().begin_of_units(); unit != units().end_of_units(); ++unit) {
-        rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
-                                          glm::translate(glm::mat4{1.f}, unit->second->get_position()),
-                                          virtual_textures[unit->second->texture()].id , PROGRAM_BILLBOARD);
+        rendering::mesh_renderer renderer(&unit_meshes[unit->unit->get_type_id()],
+                                          glm::translate(glm::mat4{1.f}, unit->unit->get_position()),
+                                          virtual_textures[unit->unit->texture()].id , PROGRAM_BILLBOARD);
         mesh_rendering.push(std::move(renderer));
     }
 
@@ -383,7 +383,7 @@ void game::handle_event(SDL_Event event) {
 
                 for (auto u = units().begin_of_units(); u != units().end_of_units(); u++)
                 {
-                    unit* actual_unit = static_cast<unit*>(u->second.get());
+                    unit* actual_unit = static_cast<unit*>(u->unit);
                     actual_unit->set_target_position({ test.x, test.z });
                 }
             }
