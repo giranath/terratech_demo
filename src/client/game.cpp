@@ -208,7 +208,7 @@ void game::load_datas() {
     load_flyweights();
 }
 
-game::game(networking::tcp_socket& socket)
+game::game(networking::network_manager& manager)
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<unit_manager>())
 , game_world()
 , world_rendering(game_world)
@@ -216,12 +216,18 @@ game::game(networking::tcp_socket& socket)
 , is_scrolling(false)
 , last_fps_duration_index(0)
 , frame_count(0) 
-, socket(socket)
-, socket_s(1){
+, network{manager} {
     last_fps_durations.reserve(10);
 }
 
 void game::on_init() {
+    // TODO: [CRYPTO] Receive public key
+    // TODO: [CRYPTO] Generate random aes key
+    // TODO: [CRYPTO] Save key
+    // TODO: [CRYPTO] Encrypt with public key the aes key
+    // TODO: [CRYPTO] Send encrypted aes key
+
+    /*
     auto packet = networking::receive_packet_from(socket);
     if (packet)
     {
@@ -250,6 +256,7 @@ void game::on_init() {
     }
 
     socket_s.add(socket);
+     */
     // Setup controls
     setup_inputs();
 
@@ -272,6 +279,7 @@ void game::on_release() {
 
 void game::on_update(frame_duration last_frame_duration) {
 
+    /*
     if (socket_s.check(std::chrono::milliseconds(0)) > 0)
     {
         auto packet = networking::receive_packet_from(socket);
@@ -288,6 +296,8 @@ void game::on_update(frame_duration last_frame_duration) {
             }
         }
     }
+     */
+
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
 
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {

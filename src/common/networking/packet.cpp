@@ -16,6 +16,12 @@ packet::packet(header head)
 
 }
 
+packet::packet(header h, byte_collection&& bytes)
+: head(h)
+, bytes(std::move(bytes)) {
+
+}
+
 optional_packet receive_packet_from(const tcp_socket& socket) {
     header::size_type packet_size;
     int recv_size = socket.receive(reinterpret_cast<uint8_t*>(&packet_size), sizeof(packet_size));

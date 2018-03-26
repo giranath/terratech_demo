@@ -12,8 +12,7 @@
 #include "../common/actor/unit_manager.hpp"
 #include "../common/time/clock.hpp"
 #include "../common/game/base_game.hpp"
-#include "../common/networking/tcp_socket.hpp"
-#include "../common/networking/socket_set.hpp"
+#include "../common/networking/network_manager.hpp"
 
 #include <chrono>
 #include <array>
@@ -57,10 +56,8 @@ private:
     int next_unit_to_spawn = 106;
     bool can_move(base_unit* unit, glm::vec3 position) const;
 
-
     //Networking
-    networking::tcp_socket& socket;
-    networking::socket_set socket_s;
+    networking::network_manager& network;
 
     // Initialization functions
     void load_flyweights();
@@ -73,7 +70,7 @@ private:
     void load_datas();
 
 public:
-    game(networking::tcp_socket& socket);
+    game(networking::network_manager& manager);
     
     void on_init() override;
     void on_update(frame_duration last_frame) override;

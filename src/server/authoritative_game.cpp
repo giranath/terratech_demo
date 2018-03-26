@@ -17,12 +17,12 @@
 //  - lobby
 //  - gameplay
 
-uint8_t authoritative_game::client::next_id = 0;
+//uint8_t authoritative_game::client::next_id = 0;
 
 authoritative_game::authoritative_game()
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<server_unit_manager>())
 , world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()))
-, sockets(3) {
+, network(3) {
 
 }
 
@@ -67,6 +67,7 @@ void authoritative_game::generate_world() {
     //                        then, try to find two biomes with similar scores at a certain distance
 }
 
+/*
 void authoritative_game::setup_listener() {
     std::cout << "binding to port 6426..." << std::endl;
     for(int i = 0; i < 10 && !connection_listener.try_bind(6426); ++i) {
@@ -82,14 +83,18 @@ void authoritative_game::setup_listener() {
         throw std::runtime_error("failed to bind port");
     }
 }
+ */
 
 void authoritative_game::on_init() {
     load_assets();
     generate_world();
 
-    setup_listener();
+    //setup_listener();
+    network.load_rsa_keys("asset/crypto/privkey.p8", "asset/crypto/pubkey.der");
+    network.try_bind(6427);
 }
 
+/*
 void authoritative_game::on_connection() {
     // Get client socket
     networking::tcp_socket connecting_socket = connection_listener.accept();
@@ -198,6 +203,7 @@ void authoritative_game::check_sockets() {
         }
     }
 }
+ */
 
 void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id) {
     unit_manager& manager = units();
@@ -207,6 +213,7 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
     std::vector<unit> units_to_spawn;
     units_to_spawn.push_back(*static_cast<unit*>(created_unit.get()));
 
+    /*
     // Send the command to all players
     auto packet = networking::packet::make(units_to_spawn, SPAWN_UNITS);
     for(auto it = connected_clients.begin(); it != connected_clients.end(); ++it) {
@@ -214,13 +221,14 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
             // TODO: This client has disconnected
         }
     }
+     */
 }
 
 void authoritative_game::on_update(frame_duration last_frame) {
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame);
 
     // Handle data reception from clients
-    check_sockets();
+    //check_sockets();
 
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {
         for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {
@@ -245,10 +253,12 @@ void authoritative_game::on_update(frame_duration last_frame) {
 }
 
 void authoritative_game::on_release() {
+    /*
     std::cout << "releasing..." << std::endl;
     std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const client& client) {
         sockets.remove(client.socket);
     });
 
     connected_clients.clear();
+     */
 }

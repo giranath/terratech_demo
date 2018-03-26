@@ -117,7 +117,7 @@ add_library(common
         src/common/memory/malloc_allocator.cpp
         src/common/memory/malloc_allocator.hpp
         src/common/memory/frame_allocator.cpp
-        src/common/memory/frame_allocator.hpp src/common/memory/heap_allocator.cpp src/common/memory/heap_allocator.hpp src/common/memory/allocator.hpp src/common/async/spinlock.cpp src/common/async/spinlock.hpp)
+        src/common/memory/frame_allocator.hpp src/common/memory/heap_allocator.cpp src/common/memory/heap_allocator.hpp src/common/memory/allocator.hpp src/common/async/spinlock.cpp src/common/async/spinlock.hpp src/common/networking/network_manager.cpp src/common/networking/network_manager.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${SDL2_INCLUDE_DIRS}

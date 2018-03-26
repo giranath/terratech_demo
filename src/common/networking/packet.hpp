@@ -33,6 +33,7 @@ struct packet {
     byte_collection bytes;
 
     explicit packet(header head);
+    packet(header, byte_collection&& bytes);
 
     template<class T>
     static packet make(const T& obj, const header::packet_id_type& packet_id) {
