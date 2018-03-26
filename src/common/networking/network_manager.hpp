@@ -6,6 +6,7 @@
 #include "packet.hpp"
 #include "../crypto/rsa.hpp"
 #include "../crypto/aes.hpp"
+#include "../async/event.hpp"
 
 #include <thread>
 #include <atomic>
@@ -33,6 +34,8 @@ void from_json(const nlohmann::json& json, client_aes_key& key);
 class network_manager {
 public:
     using socket_handle = int;
+    using connection_event = async::event<socket_handle>;
+    connection_event on_connection;
 
 private:
     std::thread network_thread;

@@ -91,7 +91,13 @@ void authoritative_game::on_init() {
 
     //setup_listener();
     network.load_rsa_keys("asset/crypto/privkey.p8", "asset/crypto/pubkey.der");
-    network.try_bind(6427);
+    network.on_connection.attach([this](networking::network_manager::socket_handle connected) {
+        std::cout << "on connection" << std::endl;
+    });
+
+    if(!network.try_bind(6427)) {
+        throw std::runtime_error{"cannot bind port"};
+    }
 }
 
 /*

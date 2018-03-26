@@ -102,12 +102,10 @@ void network_manager::thread_work() {
 }
 
 void network_manager::handle_connection(tcp_socket socket) {
-    std::cout << "new connection" << std::endl;
     std::promise<std::pair<bool, socket_handle>> connection_promise;
     connected_socket connected(next_handle++, std::move(socket), std::move(connection_promise));
 
 #ifndef NCRYPTO
-    std::cout << "sending public key ..." << std::endl;
     server_public_key k;
     CryptoPP::StringSink ss(k.public_key);
     rsa_pub.Save(ss);
@@ -136,7 +134,6 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
         switch (connection.current_state) {
             case connected_socket::state::waiting_public_key:
                 if(p->head.packet_id == PACKET_SERVER_PUBLIC_KEY) {
-                    std::cout << "received public key from server" << std::endl;
                     server_public_key server_key = p->as<server_public_key>();
                     CryptoPP::StringSource ss(server_key.public_key, true);
                     rsa_pub.Load(ss);
@@ -149,7 +146,6 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                     client_key.key.clear();
                     std::copy(std::begin(connection.aes_key), std::end(connection.aes_key), std::back_inserter(client_key.key));
 
-                    std::cout << "sending aes key..." << std::endl;
                     if(send_packet(connection.socket, encrypt(rsa_pub, packet::make(client_key, PACKET_SETUP_ENCRYPTION_KEY)))) {
                         connection.current_state = connected_socket::state::connected;
                         connection.connection_promise.set_value(std::make_pair(true, connection.handle));
@@ -161,19 +157,18 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                 break;
             case connected_socket::state::sending_key:
                 if(p->head.packet_id == PACKET_SETUP_ENCRYPTION_KEY) {
-                    std::cout << "received aes key" << std::endl;
-
                     auto decrypted_p = decrypt(rsa_priv, *p);
                     client_aes_key k = decrypted_p.as<client_aes_key>();
 
                     connection.aes_key.clear();
                     std::copy(std::begin(k.key), std::end(k.key), std::back_inserter(connection.aes_key));
 
-                    // TODO: Mark client as connected
                     connection.current_state = connected_socket::state::connected;
+                    on_connection.call(connection.handle);
                 }
                 break;
             case connected_socket::state::connected:
+                // TODO: Get data
                 break;
         }
     }
@@ -182,8 +177,11 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
     }
 }
 
-void network_manager::handle_disconnection(connected_socket& socket) {
-
+void network_manager::handle_disconnection(connected_socket& connection) {
+    active_sockets.remove(connection.socket);
+    std::swap(connection, connected_sockets.back());
+    connected_sockets.pop_back();
+    std::cerr << "a client has disconnected!" << std::endl;
 }
 
 network_manager::network_manager(int max_socket_count)
