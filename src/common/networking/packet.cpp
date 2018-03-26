@@ -76,8 +76,13 @@ bool send_packet(const tcp_socket& socket, const packet& packet) {
     packet_size = SDL_Swap64(packet_size);
 #endif
 
-    socket.send(reinterpret_cast<const uint8_t*>(&packet_size), sizeof(packet_size));
-    socket.send(reinterpret_cast<const uint8_t*>(&packet.head.packet_id), sizeof(packet.head.packet_id));
+    if(socket.send(reinterpret_cast<const uint8_t*>(&packet_size), sizeof(packet_size)) <= 0) {
+        return false;
+    }
+
+    if(socket.send(reinterpret_cast<const uint8_t*>(&packet.head.packet_id), sizeof(packet.head.packet_id)) <= 0) {
+        return false;
+    }
 
     header::size_type to_send_size = packet.head.size;
     const header::size_type PER_ITERATION_MAXLEN = std::numeric_limits<int>::max();

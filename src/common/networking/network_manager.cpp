@@ -86,6 +86,28 @@ void network_manager::network_thread_work_fn(network_manager* manager) {
 
 void network_manager::thread_work() {
     while(is_running) {
+        std::vector<std::pair<socket_handle, packet>> packets_to_send;
+        {
+            std::lock_guard<async::spinlock> lock(waiting_spin_lock);
+            packets_to_send.swap(waiting_queue);
+        }
+
+        std::for_each(std::begin(packets_to_send), std::end(packets_to_send), [this](const std::pair<socket_handle, packet>& p) {
+            auto socket_it = std::find_if(std::begin(connected_sockets), std::end(connected_sockets), [=](connected_socket& connection) {
+                return connection.handle == p.first && connection.current_state == connected_socket::state::connected;
+            });
+
+            if(socket_it != connected_sockets.end()) {
+                auto encrypted_packet = encrypt(socket_it->aes_key, p.second);
+
+                if(!send_packet(socket_it->socket, encrypted_packet)) {
+                    // Failed to send data
+                    handle_disconnection(*socket_it);
+                }
+            }
+        });
+
+        // Check if a socket has received data
         if(active_sockets.check(30ms) > 0) {
             if(active_sockets.is_ready(connection_listener)) {
                 handle_connection(connection_listener.accept());
@@ -204,7 +226,9 @@ bool network_manager::try_bind(uint16_t port) {
     return false;
 }
 
-
+bool network_manager::is_bound() const noexcept {
+    return connection_listener.is_bound();
+}
 
 std::future<std::pair<bool, network_manager::socket_handle>> network_manager::try_connect(const char* address, uint16_t port) {
     tcp_socket connecting_socket;
@@ -233,7 +257,8 @@ void network_manager::load_rsa_keys(const char* private_key, const char *public_
 }
 
 void network_manager::send_to(const packet& p, socket_handle dest) {
-
+    std::lock_guard<async::spinlock> lock(waiting_spin_lock);
+    waiting_queue.emplace_back(dest, p);
 }
 
 }

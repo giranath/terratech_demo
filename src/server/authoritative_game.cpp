@@ -67,55 +67,41 @@ void authoritative_game::generate_world() {
     //                        then, try to find two biomes with similar scores at a certain distance
 }
 
-/*
 void authoritative_game::setup_listener() {
     std::cout << "binding to port 6426..." << std::endl;
-    for(int i = 0; i < 10 && !connection_listener.try_bind(6426); ++i) {
+    network.load_rsa_keys("asset/crypto/privkey.p8", "asset/crypto/pubkey.der");
+    network.on_connection.attach([this](networking::network_manager::socket_handle connected) {
+        on_connection(connected);
+    });
+
+    for(int i = 0; i < 10 && !network.try_bind(6426); ++i) {
         std::cerr << " attempt # " << i + 1 << " to bind port failed because: " << SDLNet_GetError() << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    if(connection_listener.is_bound()) {
+    if(network.is_bound()) {
         std::cout << "waiting for connections on port 6426" << std::endl;
-        sockets.add(connection_listener);
     }
     else {
         throw std::runtime_error("failed to bind port");
     }
 }
- */
 
 void authoritative_game::on_init() {
     load_assets();
     generate_world();
 
-    //setup_listener();
-    network.load_rsa_keys("asset/crypto/privkey.p8", "asset/crypto/pubkey.der");
-    network.on_connection.attach([this](networking::network_manager::socket_handle connected) {
-        std::cout << "on connection" << std::endl;
-    });
-
-    if(!network.try_bind(6427)) {
-        throw std::runtime_error{"cannot bind port"};
-    }
+    setup_listener();
 }
 
-/*
-void authoritative_game::on_connection() {
-    // Get client socket
-    networking::tcp_socket connecting_socket = connection_listener.accept();
-
+void authoritative_game::on_connection(networking::network_manager::socket_handle handle) {
     // Send the flyweights
     std::cout << "sending flyweights..." << std::endl;
     std::unordered_map<std::string, unit_flyweight> serialized_flyweights;
     for(auto it = unit_flyweights().begin(); it != unit_flyweights().end(); ++it) {
         serialized_flyweights.emplace(std::to_string(it->first), it->second);
     }
-
-    if(!networking::send_packet(connecting_socket, networking::packet::make(serialized_flyweights, SETUP_FLYWEIGHTS))) {
-        std::cerr << "failed to send flyweights" << std::endl;
-        return;
-    }
+    network.send_to(networking::packet::make(serialized_flyweights, PACKET_SETUP_FLYWEIGHTS), handle);
 
     // Send the map
     std::cout << "sending map..." << std::endl;
@@ -138,25 +124,10 @@ void authoritative_game::on_connection() {
         return networking::world_chunk(chunk.position().x, chunk.position().y, biomes);
     });
 
-    if(!networking::send_packet(connecting_socket, networking::packet::make(chunks_to_send, SETUP_CHUNK))) {
-        return;
-    }
-
-    // TODO: Reserve a place to current connection
-    // TODO: CRYPTO: Send public key to client
-    // TODO: CRYPTO: Wait for symetric key from client
-    // TODO: Send this client the flyweights
-
-    std::cout << "adding new client" << std::endl;
-    // Add the client
-    sockets.add(connecting_socket);
-
-    client connecting_client(std::move(connecting_socket));
-    uint8_t client_id = connecting_client.id;
-    connected_clients.push_back(std::move(connecting_client));
-    spawn_unit(client_id, glm::vec3{10.f, 0.f, 10.f}, glm::vec2{0.f, 0.f}, 106);
+    network.send_to(networking::packet::make(chunks_to_send, PACKET_SETUP_CHUNK), handle);
 }
 
+/*
 void authoritative_game::on_client_data(const client& c) {
     // TODO: Handle request in worker thread
     auto received_packet = networking::receive_packet_from(c.socket);

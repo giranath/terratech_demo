@@ -36,7 +36,7 @@ class authoritative_game : public gameplay::base_game {
     void generate_world();
     void setup_listener();
 
-    //void on_connection();
+    void on_connection(networking::network_manager::socket_handle handle);
     //void on_client_data(const client& c);
     //void on_client_disconnection(const client& c);
     //void check_sockets();

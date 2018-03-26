@@ -7,6 +7,7 @@
 #include "../crypto/rsa.hpp"
 #include "../crypto/aes.hpp"
 #include "../async/event.hpp"
+#include "../async/spinlock.hpp"
 
 #include <thread>
 #include <atomic>
@@ -77,6 +78,9 @@ private:
     crypto::rsa::private_key rsa_priv;
 #endif
 
+    std::vector<std::pair<socket_handle, packet>> waiting_queue;
+    async::spinlock waiting_spin_lock;
+
     static socket_handle next_handle;
 
     static void network_thread_work_fn(network_manager* manager);
@@ -96,6 +100,7 @@ public:
     ~network_manager();
 
     bool try_bind(uint16_t port);
+    bool is_bound() const noexcept;
 
     void load_rsa_keys(const char* private_key, const char* public_key);
 
