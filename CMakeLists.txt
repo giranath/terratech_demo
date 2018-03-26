@@ -41,7 +41,10 @@ if(ENABLE_CRYPTO)
     set(SOURCE_CRYPTO
         src/common/crypto/aes.cpp
         src/common/crypto/aes.hpp
-        src/common/crypto/iterator_sink.hpp src/common/crypto/rsa.cpp src/common/crypto/rsa.hpp)
+        src/common/crypto/iterator_sink.hpp
+        src/common/crypto/rsa.cpp
+        src/common/crypto/rsa.hpp)
+
 endif()
 
 add_library(common
@@ -114,7 +117,7 @@ add_library(common
         src/common/memory/malloc_allocator.cpp
         src/common/memory/malloc_allocator.hpp
         src/common/memory/frame_allocator.cpp
-        src/common/memory/frame_allocator.hpp src/common/memory/heap_allocator.cpp src/common/memory/heap_allocator.hpp src/common/memory/allocator.hpp)
+        src/common/memory/frame_allocator.hpp src/common/memory/heap_allocator.cpp src/common/memory/heap_allocator.hpp src/common/memory/allocator.hpp src/common/async/spinlock.cpp src/common/async/spinlock.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${SDL2_INCLUDE_DIRS}

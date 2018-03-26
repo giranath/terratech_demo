@@ -1,6 +1,8 @@
 #ifndef DEF_PROFILIER_ADMINISTRATOR_HPP
 #define DEF_PROFILIER_ADMINISTRATOR_HPP
 
+#include "../../common/async/spinlock.hpp"
+
 #include <memory>
 #include <chrono>
 #include <fstream>
@@ -74,7 +76,7 @@ class profiler_administrator
     };
 
     std::vector<log_record> records;
-    std::mutex records_mutex;
+    async::spinlock records_mutex;
     std::thread background_thread;
     std::atomic<bool> is_running;
 
@@ -87,10 +89,13 @@ class profiler_administrator
 
             // Swap records from admin
             std::vector<log_record> temp_records;
+            temp_records.reserve(30000); // Measured value
             {
-                std::lock_guard<std::mutex> lock(admin->records_mutex);
+                std::lock_guard<async::spinlock> lock(admin->records_mutex);
                 temp_records.swap(admin->records);
             }
+
+            std::cout << "dumping " << temp_records.size() << " profiling records" << std::endl;
 
             for(const log_record& record : temp_records) {
                 admin->write_row(out_stream, record.name, record.time, record.duration);
@@ -136,7 +141,7 @@ public:
     void log_time(const std::string& name, const TimePoint& begin, const TimePoint& end)
     {
 #ifndef NPROFILER
-        std::lock_guard<std::mutex> lock(records_mutex);
+        std::lock_guard<async::spinlock> lock(records_mutex);
         records.emplace_back(name, get_current_time(), std::chrono::duration_cast<T>(end - begin).count());
 #endif
     }
