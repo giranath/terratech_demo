@@ -6,8 +6,8 @@ namespace memory {
 
 heap_allocator::heap_allocator(raw_memory_ptr base, std::size_t size)
 : base_memory(base)
-, root(static_cast<header*>(base_memory))
-, capacity(size) {
+, capacity(size)
+, root(static_cast<header*>(base_memory)) {
     root->next = nullptr;
     root->prev = nullptr;
     root->allocation_size = size - sizeof(header);

@@ -179,17 +179,17 @@ bool game::can_move(base_unit* unit, glm::vec3 position) const {
     const float CHUNK_DEPTH = world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE;
 
     if(unit) {
-        int chunk_x = position.x / CHUNK_WIDTH;
-        int chunk_z = position.z / CHUNK_DEPTH;
+        int chunk_x = static_cast<int>(position.x / CHUNK_WIDTH);
+        int chunk_z = static_cast<int>(position.z / CHUNK_DEPTH);
 
         const world_chunk* chunk = game_world.chunk_at(chunk_x, chunk_z);
         if(chunk) {
-            const glm::vec3 chunk_space_position(position.x - chunk_x * CHUNK_WIDTH,
-                                                 position.y,
-                                                 position.z - chunk_z * CHUNK_DEPTH);
+            //const glm::vec3 chunk_space_position(position.x - chunk_x * CHUNK_WIDTH,
+            //                                     position.y,
+            //                                     position.z - chunk_z * CHUNK_DEPTH);
 
-            const int x_region = chunk_space_position.x / rendering::chunk_renderer::SQUARE_SIZE;
-            const int z_region = chunk_space_position.z / rendering::chunk_renderer::SQUARE_SIZE;
+            //const int x_region = chunk_space_position.x / rendering::chunk_renderer::SQUARE_SIZE;
+            //const int z_region = chunk_space_position.z / rendering::chunk_renderer::SQUARE_SIZE;
 
             //int region = chunk->biome_at(x_region, 0, z_region);
 
@@ -210,10 +210,10 @@ void game::load_datas() {
 
 game::game(networking::network_manager& manager)
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<unit_manager>())
+, is_scrolling(false)
 , game_world()
 , world_rendering(game_world)
 , game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)
-, is_scrolling(false)
 , last_fps_duration_index(0)
 , frame_count(0) 
 , network{manager} {

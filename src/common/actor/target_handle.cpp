@@ -3,21 +3,20 @@
 #include "base_unit.hpp"
 
 target_handle::target_handle() :
-    id{},
-    manager{nullptr} {
+    manager{nullptr},
+    id{}
+{
 
 }
 
 target_handle::target_handle(unit_manager* manager) :
-    id{},
-    manager{manager}
+    manager{manager},
+    id{}
 {}
 
 target_handle::target_handle(unit_manager* manager, base_unit* unit) :
-    
     manager{ manager },
     id{unit->get_id()}
-
 {}
 
 void target_handle::set_unit_manager(unit_manager* _manager)
