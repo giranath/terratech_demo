@@ -208,7 +208,7 @@ void game::load_datas() {
     load_flyweights();
 }
 
-game::game(networking::network_manager& manager)
+game::game(networking::network_manager& manager, networking::network_manager::socket_handle socket)
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<unit_manager>())
 , is_scrolling(false)
 , game_world()
@@ -216,12 +216,13 @@ game::game(networking::network_manager& manager)
 , game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)
 , last_fps_duration_index(0)
 , frame_count(0) 
-, network{manager} {
+, network{manager}
+, socket(socket) {
     last_fps_durations.reserve(10);
 }
 
 void game::on_init() {
-    auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, 0);
+    auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, socket);
 
     if(flyweights_packet.first) {
         auto manager_u = flyweights_packet.second.as<std::unordered_map<std::string, unit_flyweight>>();
@@ -232,7 +233,7 @@ void game::on_init() {
         }
         set_flyweight_manager(manager);
 
-        auto chunks_packet = network.wait_packet_from(PACKET_SETUP_CHUNK, 0);
+        auto chunks_packet = network.wait_packet_from(PACKET_SETUP_CHUNK, socket);
         if(chunks_packet.first) {
             auto chunks = chunks_packet.second.as<std::vector<networking::world_chunk>>();
 
@@ -271,7 +272,7 @@ void game::on_release() {
 }
 
 void game::on_update(frame_duration last_frame_duration) {
-    auto p = network.poll_packet_from(PACKET_SPAWN_UNITS, 0); // TODO: Get socket id
+    auto p = network.poll_packet_from(PACKET_SPAWN_UNITS, socket);
     if(p.first) {
         std::vector<unit> units = p.second.as<std::vector<unit>>();
         for(const unit& u : units) {

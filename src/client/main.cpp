@@ -70,15 +70,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    /*
-    networking::tcp_socket sock;
-    std::cout << "trying to connect to " << args.server_address << ":" << args.port << "..." << std::endl;
-    if(!sock.try_connect(args.server_address.c_str(), args.port)) {
-        std::cerr << "cannot connect to server" << std::endl;
-        SDLNet_Quit();
-        return 1;
-    }
-     */
     networking::network_manager network(1);
     auto connection = network.try_connect(args.server_address.c_str(), args.port);
 
@@ -112,7 +103,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    game game_state(network);
+    game game_state(network, connection_result.second);
     game_state.resize(800, 600);
 
     // TODO: Init on another thread
