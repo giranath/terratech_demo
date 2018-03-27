@@ -222,7 +222,10 @@ void network_manager::handle_disconnection(connected_socket& connection) {
     active_sockets.remove(connection.socket);
     std::swap(connection, connected_sockets.back());
     connected_sockets.pop_back();
-    std::cerr << "a client has disconnected!" << std::endl;
+
+    if(connection.current_state == connected_socket::state::connected) {
+        on_disconnection.call(connection.handle);
+    }
 }
 
 network_manager::network_manager(int max_socket_count)

@@ -38,6 +38,7 @@ public:
     using socket_handle = int;
     using connection_event = async::event<socket_handle>;
     connection_event on_connection;
+    connection_event on_disconnection;
 
 private:
     std::thread network_thread;

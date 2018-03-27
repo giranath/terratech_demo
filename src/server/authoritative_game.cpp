@@ -71,7 +71,11 @@ void authoritative_game::setup_listener() {
     std::cout << "binding to port 6426..." << std::endl;
     network.load_rsa_keys("asset/crypto/privkey.p8", "asset/crypto/pubkey.der");
     network.on_connection.attach([this](networking::network_manager::socket_handle connected) {
+        std::cout << connected << " has connected" << std::endl;
         on_connection(connected);
+    });
+    network.on_disconnection.attach([this](networking::network_manager::socket_handle disconnected) {
+        std::cout << disconnected << " has disconnected" << std::endl;
     });
 
     for(int i = 0; i < 10 && !network.try_bind(6426); ++i) {
