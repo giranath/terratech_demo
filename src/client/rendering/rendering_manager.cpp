@@ -6,7 +6,10 @@
 namespace rendering {
 
 mesh_renderer::mesh_renderer(const rendering::mesh *m, glm::mat4 model, texture_handle texture, program_handle prog)
-        : rendering_mesh{m}, model{model}, texture{texture}, program{prog} {
+: rendering_mesh{m}
+, texture{texture}
+, program{prog}
+, model{model} {
 
 }
 

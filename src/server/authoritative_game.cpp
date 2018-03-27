@@ -132,10 +132,10 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
         biomes.reserve(world::CHUNK_WIDTH * world::CHUNK_HEIGHT * world::CHUNK_DEPTH);
 
         // SETUP BIOMES
-        for(int y = 0; y < world::CHUNK_HEIGHT; ++y) {
-            for(int z = 0; z < world::CHUNK_DEPTH; ++z) {
-                for(int x = 0; x < world::CHUNK_WIDTH; ++x) {
-                    biomes.push_back(chunk.biome_at(x, y, z));
+        for(uint32_t y = 0; y < world::CHUNK_HEIGHT; ++y) {
+            for(uint32_t z = 0; z < world::CHUNK_DEPTH; ++z) {
+                for(uint32_t x = 0; x < world::CHUNK_WIDTH; ++x) {
+                    biomes.push_back(static_cast<uint8_t>(chunk.biome_at(static_cast<int>(x), static_cast<int>(y), static_cast<int>(z))));
                 }
             }
         }

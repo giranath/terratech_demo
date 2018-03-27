@@ -23,7 +23,7 @@ extern "C" void sign_handler(int signo) {
     }
 }
 
-int main(int argc, char* argv[]) {
+int main(int /*argc*/, char* /*argv*/[]) {
     if(SDL_Init(0) == -1) {
         std::cerr << "cannot initialize SDL: " << SDL_GetError() << std::endl;
         return 1;

@@ -93,7 +93,7 @@ std::ostream& print_opengl_source(std::ostream& os, GLenum source) {
 }
 
 void opengl_message_cb(GLenum source, GLenum type, GLuint id, GLenum severity,
-                       GLsizei len, const GLchar* message, const void* user_params) {
+                       GLsizei /*len*/, const GLchar* message, const void* /*user_params*/) {
     std::cerr << "[GL:" << id << "]";
 
     std::cerr << "[";

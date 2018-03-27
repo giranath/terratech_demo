@@ -54,8 +54,8 @@ void key_input_handler::multiple_key_handler::execute() {
 }
 
 key_input_handler::state_key_handler::state_key_handler(std::unique_ptr<command>&& c)
-: command_to_execute{std::move(c)}
-, is_pressed(false) {
+: is_pressed(false)
+, command_to_execute{std::move(c)}{
 
 }
 
@@ -73,9 +73,9 @@ void key_input_handler::state_key_handler::execute() {
 }
 
 key_input_handler::action_key_handler::action_key_handler(std::unique_ptr<command>&& c)
-: command_to_execute(std::move(c))
-, should_execute(false)
-, can_be_repeated(true){
+: should_execute(false)
+, can_be_repeated(true)
+, command_to_execute(std::move(c)){
 
 }
 

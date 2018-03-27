@@ -36,7 +36,7 @@ optional_packet receive_packet_from(const tcp_socket& socket) {
 #endif
 
     // The client has disconnected
-    if(recv_size < sizeof(header::size_type)) {
+    if(static_cast<header::size_type>(recv_size) < sizeof(header::size_type)) {
         return {};
     }
 
@@ -44,7 +44,7 @@ optional_packet receive_packet_from(const tcp_socket& socket) {
     recv_size = socket.receive(reinterpret_cast<uint8_t*>(&packet_id), sizeof(packet_id));
 
     // The client has disconnected
-    if (recv_size < sizeof(header::packet_id)) {
+    if (static_cast<header::packet_id_type>(recv_size) < sizeof(header::packet_id)) {
         return {};
     }
 

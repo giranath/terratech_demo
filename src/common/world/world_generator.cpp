@@ -39,7 +39,7 @@ world_generator::~world_generator() {
     terra_map_destroy(map_generator);
 }
 
-world_generator_chunk world_generator::generate_chunk(int x, int y, int z) const noexcept {
+world_generator_chunk world_generator::generate_chunk(int x, int /*y*/, int z) const noexcept {
     terra_chunk* chunk = terra_map_generate_chunk(map_generator, x, z);
 
     return world_generator_chunk{chunk};

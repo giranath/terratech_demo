@@ -15,7 +15,7 @@ void get_extensions(OutIt iterator) noexcept {
     GLint extension_count = 0;
     glGetIntegerv(GL_NUM_EXTENSIONS, &extension_count);
 
-    for(GLuint i = 0; i < extension_count; ++i) {
+    for(GLint i = 0; i < extension_count; ++i) {
         const char* extension = reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, i));
         *iterator = extension;
         ++iterator;

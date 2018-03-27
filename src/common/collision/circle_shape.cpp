@@ -3,8 +3,8 @@
 namespace collision {
 
 circle_shape::circle_shape(glm::vec2 center, float radius)
-: center_(center)
-, radius_(radius) {
+: radius_(radius)
+, center_(center) {
 
 }
 
