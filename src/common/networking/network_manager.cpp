@@ -5,7 +5,13 @@
 #include <iterator>
 #include <chrono>
 #include <random>
+
+#if defined(__APPLE__)
+#include <cryptopp/base64.h>
+#elif defined(WIN32)
+#else
 #include <crypto++/base64.h>
+#endif
 
 #if defined(__APPLE__)
 #elif defined(WIN32)

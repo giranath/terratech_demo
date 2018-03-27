@@ -4,13 +4,14 @@
 #ifndef NCRYPTO
 
 #if defined(__APPLE__)
-
+#include <cryptopp/rsa.h>
+#include <cryptopp/osrng.h>
+#include <cryptopp/files.h>
 #elif defined(WIN32)
 #else
 #include <crypto++/rsa.h>
 #include <crypto++/osrng.h>
 #include <crypto++/files.h>
-
 #endif
 
 #include "iterator_sink.hpp"
