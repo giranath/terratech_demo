@@ -14,6 +14,7 @@
 #include <vector>
 #include <future>
 #include <list>
+#include <chrono>
 
 namespace networking {
 
@@ -117,21 +118,9 @@ private:
         }
     };
 
-    struct waiting_receive_request {
-        socket_handle src;
-        int type;
-        std::promise<std::pair<bool, packet>> promise;
-
-        waiting_receive_request(socket_handle src, int type)
-        : src(src)
-        , type(type) {
-
-        }
-    };
-
     std::list<receive_request> received_requests;
-    std::list<waiting_receive_request> waiting_recv_requests;
-    async::spinlock received_lock;
+    std::mutex received_lock;
+    std::condition_variable received_request_cv;
 
 public:
     network_manager(int max_socket_count);
@@ -147,7 +136,57 @@ public:
     void send_to(const packet& p, socket_handle dest);
     void broadcast(const packet& p);
 
-    std::future<std::pair<bool, packet>> receive_from(int packet_type, socket_handle src);
+    std::pair<bool, packet> wait_packet_from(int packet_type, socket_handle src);
+
+    std::pair<bool, packet> poll_packet_from(int packet_type, socket_handle src);
+
+    template<typename TimeoutDuration>
+    std::pair<bool, packet> wait_packet_from_for(int packet_type, socket_handle src, TimeoutDuration duration) {
+        std::unique_lock<std::mutex> lock(received_lock);
+
+        auto it = std::begin(received_requests);
+        received_request_cv.wait_for(lock, duration, [this, &it, src, packet_type]() {
+            it = std::find_if(std::begin(received_requests), std::end(received_requests), [src, packet_type](receive_request& req) {
+                return req.src == src && req.content.head.packet_id == packet_type;
+            });
+
+            return it != std::end(received_requests);
+        });
+
+        if(it != std::end(received_requests)) {
+            auto pair = std::make_pair(true, it->content);
+
+            received_requests.erase(it);
+
+            return pair;
+        }
+
+        return std::make_pair(false, packet{});
+    }
+
+    template<typename TimeoutDuration>
+    std::pair<bool, packet> wait_packet_from_until(int packet_type, socket_handle src, TimeoutDuration duration) {
+        std::unique_lock<std::mutex> lock(received_lock);
+
+        auto it = std::begin(received_requests);
+        received_request_cv.wait_until(lock, duration, [this, &it, src, packet_type]() {
+            it = std::find_if(std::begin(received_requests), std::end(received_requests), [src, packet_type](receive_request& req) {
+                return req.src == src && req.content.head.packet_id == packet_type;
+            });
+
+            return it != std::end(received_requests);
+        });
+
+        if(it != std::end(received_requests)) {
+            auto pair = std::make_pair(true, it->content);
+
+            received_requests.erase(it);
+
+            return pair;
+        }
+
+        return std::make_pair(false, packet{});
+    }
 };
 
 }

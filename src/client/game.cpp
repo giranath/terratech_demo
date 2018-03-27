@@ -221,12 +221,10 @@ game::game(networking::network_manager& manager)
 }
 
 void game::on_init() {
-    auto flyweights_packet = network.receive_from(PACKET_SETUP_FLYWEIGHTS, 0); // TODO: Get connected socket id
-    auto chunks_packet = network.receive_from(PACKET_SETUP_CHUNK, 0);
+    auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, 0);
 
-    auto pair = flyweights_packet.get();
-    if(pair.first) {
-        auto manager_u = pair.second.as<std::unordered_map<std::string, unit_flyweight>>();
+    if(flyweights_packet.first) {
+        auto manager_u = flyweights_packet.second.as<std::unordered_map<std::string, unit_flyweight>>();
         unit_flyweight_manager manager;
         for (auto& v : manager_u)
         {
@@ -234,9 +232,9 @@ void game::on_init() {
         }
         set_flyweight_manager(manager);
 
-        auto chunk_pair = chunks_packet.get();
-        if(chunk_pair.first) {
-            auto chunks = chunk_pair.second.as<std::vector<networking::world_chunk>>();
+        auto chunks_packet = network.wait_packet_from(PACKET_SETUP_CHUNK, 0);
+        if(chunks_packet.first) {
+            auto chunks = chunks_packet.second.as<std::vector<networking::world_chunk>>();
 
             for(networking::world_chunk& received_chunk : chunks) {
                 world_chunk& game_chunk = game_world.add(received_chunk.x, received_chunk.y);
@@ -273,26 +271,13 @@ void game::on_release() {
 }
 
 void game::on_update(frame_duration last_frame_duration) {
-    // TODO: Get notified when
-
-    /*
-    if (socket_s.check(std::chrono::milliseconds(0)) > 0)
-    {
-        auto packet = networking::receive_packet_from(socket);
-        
-        if (packet)
-        {
-            if (packet->head.packet_id == SPAWN_UNITS)
-            {
-                std::vector<unit> unit_v = packet->as < std::vector<unit>>();
-                for (unit& u : unit_v)
-                {
-                    add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
-                }
-            }
+    auto p = network.poll_packet_from(PACKET_SPAWN_UNITS, 0); // TODO: Get socket id
+    if(p.first) {
+        std::vector<unit> units = p.second.as<std::vector<unit>>();
+        for(const unit& u : units) {
+            add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
         }
     }
-     */
 
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
 

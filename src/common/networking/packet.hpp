@@ -32,6 +32,8 @@ struct packet {
     header head;
     byte_collection bytes;
 
+    packet();
+
     explicit packet(header head);
     packet(header, byte_collection&& bytes);
 

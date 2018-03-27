@@ -10,6 +10,12 @@ header::header(size_type size, packet_id_type packet_id)
 
 }
 
+packet::packet()
+: head(0, 0)
+, bytes() {
+
+}
+
 packet::packet(header head)
 : head(head)
 , bytes(head.size, 0){

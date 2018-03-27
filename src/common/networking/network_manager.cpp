@@ -220,24 +220,14 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                 const packet& decrypted_packet = *p;
 #endif
                 {
-                    std::lock_guard<async::spinlock> lock(received_lock);
+                    std::lock_guard<std::mutex> lock(received_lock);
 
-                    auto it = std::find_if(std::begin(waiting_recv_requests), std::end(waiting_recv_requests),
-                                           [&connection, &decrypted_packet](const waiting_receive_request &req) {
-                                               return req.src == connection.handle
-                                                      && req.type == decrypted_packet.head.packet_id;
-                                           });
-                    if(it != std::end(waiting_recv_requests)) {
-                        it->promise.set_value(std::make_pair(true, decrypted_packet));
-                        waiting_recv_requests.erase(it);
-                    }
-                    else {
 #ifndef NCRYPTO
-                        received_requests.emplace_back(connection.handle, std::move(decrypted_packet));
+                    received_requests.emplace_back(connection.handle, std::move(decrypted_packet));
 #else
-                        received_requests.emplace_back(connection.handle, decrypted_packet);
+                    received_requests.emplace_back(connection.handle, decrypted_packet);
 #endif
-                    }
+                    received_request_cv.notify_all();
                 }
             }
                 break;
@@ -327,26 +317,45 @@ void network_manager::broadcast(const packet& p) {
     });
 }
 
-std::future<std::pair<bool, packet>> network_manager::receive_from(int packet_type, socket_handle src) {
-    std::lock_guard<async::spinlock> lock(received_lock);
-    auto it = std::find_if(std::begin(received_requests), std::end(received_requests), [=](receive_request &req) {
+std::pair<bool, packet> network_manager::wait_packet_from(int packet_type, socket_handle src) {
+    std::unique_lock<std::mutex> lock(received_lock);
+
+    auto it = std::begin(received_requests);
+    received_request_cv.wait(lock, [this, &it, src, packet_type]() {
+        it = std::find_if(std::begin(received_requests), std::end(received_requests), [src, packet_type](receive_request& req) {
+            return req.src == src && req.content.head.packet_id == packet_type;
+        });
+
+        return it != std::end(received_requests);
+    });
+
+    if(it != std::end(received_requests)) {
+        auto pair = std::make_pair(true, it->content);
+
+        received_requests.erase(it);
+
+        return pair;
+    }
+
+    return std::make_pair(false, packet{});
+}
+
+std::pair<bool, packet> network_manager::poll_packet_from(int packet_type, socket_handle src) {
+    std::lock_guard<std::mutex> lock(received_lock);
+
+    auto it = std::find_if(std::begin(received_requests), std::end(received_requests), [src, packet_type](receive_request& req) {
         return req.src == src && req.content.head.packet_id == packet_type;
     });
 
-    if (it != std::end(received_requests)) {
-        std::promise<std::pair<bool, packet>> promise;
-        auto future = promise.get_future();
+    if(it != std::end(received_requests)) {
+        auto p = std::make_pair(true, it->content);
 
-        promise.set_value(std::make_pair(true, it->content));
         received_requests.erase(it);
 
-        return future;
+        return p;
     }
 
-    waiting_receive_request req(src, packet_type);
-    auto future = req.promise.get_future();
-    waiting_recv_requests.push_back(std::move(req));
-    return future;
-}
+    return std::make_pair(false, packet{});
+};
 
 }
