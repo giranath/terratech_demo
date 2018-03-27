@@ -162,6 +162,9 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
 void authoritative_game::on_update(frame_duration last_frame) {
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame);
 
+    auto received_packets = network.poll_packets();
+    // TODO: Handle received packets
+
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {
         for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {
             unit* actual_unit = static_cast<unit*>(u->second.get());

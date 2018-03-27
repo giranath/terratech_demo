@@ -376,6 +376,20 @@ std::pair<bool, packet> network_manager::poll_packet_from(int packet_type, socke
     }
 
     return std::make_pair(false, packet{});
-};
+}
+
+std::vector<std::pair<network_manager::socket_handle, packet>> network_manager::poll_packets() {
+    std::lock_guard<std::mutex> lock(received_lock);
+
+    std::vector<std::pair<socket_handle, packet>> received_vect;
+    received_vect.reserve(received_requests.size());
+
+    std::transform(std::begin(received_requests), std::end(received_requests), std::back_inserter(received_vect), [](const receive_request& req) {
+       return std::make_pair(req.src, req.content);
+    });
+    received_requests.clear();
+
+    return received_vect;
+}
 
 }

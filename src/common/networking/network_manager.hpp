@@ -177,6 +177,7 @@ public:
     std::pair<bool, packet> wait_packet_from(int packet_type, socket_handle src);
 
     std::pair<bool, packet> poll_packet_from(int packet_type, socket_handle src);
+    std::vector<std::pair<socket_handle, packet>> poll_packets();
 
     template<typename TimeoutDuration>
     std::pair<bool, packet> wait_packet_from_for(int packet_type, socket_handle src, TimeoutDuration duration) {
