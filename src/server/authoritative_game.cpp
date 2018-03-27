@@ -145,7 +145,7 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
 
     network.send_to(networking::packet::make(chunks_to_send, PACKET_SETUP_CHUNK), handle);
 
-    spawn_unit(connected_client.id, glm::vec3(0.f, 0.f, 0.f), glm::vec2{0.f, 0.f}, 106);
+    spawn_unit(connected_client.id, glm::vec3(0.f, 0.f, 0.f), glm::vec2{1000.f, 1000.f}, 106);
 }
 
 void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id) {
@@ -160,6 +160,7 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
 }
 
 void authoritative_game::on_update(frame_duration last_frame) {
+    static frame_duration acc;
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame);
 
     auto received_packets = network.poll_packets();
@@ -185,6 +186,21 @@ void authoritative_game::on_update(frame_duration last_frame) {
     }));
 
     update_task.wait();
+
+    acc += last_frame;
+
+    if(acc > std::chrono::seconds(1)) {
+        std::vector<unit> updated_units;
+        std::transform(units().begin_of_units(), units().end_of_units(), std::back_inserter(updated_units),
+                       [](const auto &p) {
+                           return *static_cast<unit *>(p.second.get());
+                       });
+        // Send unit update every frame
+        if(updated_units.size() > 0) {
+            network.broadcast(networking::packet::make(updated_units, PACKET_UPDATE_UNITS));
+        }
+        acc = std::chrono::seconds(0);
+    }
 }
 
 void authoritative_game::on_release() {

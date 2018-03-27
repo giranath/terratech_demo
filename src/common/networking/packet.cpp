@@ -48,8 +48,6 @@ optional_packet receive_packet_from(const tcp_socket& socket) {
         return {};
     }
 
-    std::cout << " receiving " << packet_size << std::endl;
-
     networking::packet received_packet(header{ packet_size, packet_id });
 
     header::size_type to_receive_size = packet_size;
@@ -70,6 +68,8 @@ optional_packet receive_packet_from(const tcp_socket& socket) {
             current_it = std::next(current_it, recv_size);
         }
     }
+
+    assert(received_packet.head.size == received_packet.bytes.size());
 
     return {std::move(received_packet)};
 }
