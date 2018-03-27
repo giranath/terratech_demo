@@ -96,6 +96,21 @@ void network_manager::network_thread_work_fn(network_manager* manager) {
 
 void network_manager::thread_work() {
     while(is_running) {
+        // Disconnect clients
+        {
+            std::scoped_lock<async::spinlock, async::spinlock> lock(to_disconnect_lock, connections_lock);
+            std::for_each(std::begin(to_disconnect), std::end(to_disconnect), [this](socket_handle handle) {
+                auto it = std::find_if(std::begin(connected_sockets), std::end(connected_sockets), [handle](const connected_socket& socket) {
+                   return socket.handle == handle;
+                });
+
+                if(it != std::end(connected_sockets)) {
+                    connected_sockets.erase(it);
+                }
+            });
+        }
+
+        // Send queued packets
         std::vector<std::pair<socket_handle, packet>> packets_to_send;
         {
             std::lock_guard<async::spinlock> lock(waiting_spin_lock);
@@ -127,6 +142,7 @@ void network_manager::thread_work() {
                 handle_connection(connection_listener.accept());
             }
             else {
+                std::lock_guard<async::spinlock> lock(connections_lock);
                 std::for_each(std::begin(connected_sockets), std::end(connected_sockets), [this](connected_socket& connection) {
                     if(active_sockets.is_ready(connection.socket)) {
                         handle_connected_socket(connection);
@@ -161,8 +177,11 @@ void network_manager::handle_connection(tcp_socket socket) {
     on_connection.call(connected.handle);
 #endif
 
-    active_sockets.add(connected.socket);
-    connected_sockets.push_back(std::move(connected));
+    {
+        std::lock_guard<async::spinlock> lock(connections_lock);
+        active_sockets.add(connected.socket);
+        connected_sockets.push_back(std::move(connected));
+    }
 }
 
 void network_manager::handle_connected_socket(connected_socket& connection) {
@@ -189,6 +208,7 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                         connection.connection_promise.set_value(std::make_pair(true, connection.handle));
                     }
                     else {
+                        // TODO: Fix deadlock
                         handle_disconnection(connection);
                     }
 #else
@@ -239,10 +259,10 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
 }
 
 void network_manager::handle_disconnection(connected_socket& connection) {
-    active_sockets.remove(connection.socket);
-    std::swap(connection, connected_sockets.back());
-    connected_sockets.pop_back();
+    std::lock_guard<async::spinlock> lock(to_disconnect_lock);
 
+    active_sockets.remove(connection.socket);
+    to_disconnect.push_back(connection.handle);
     if(connection.current_state == connected_socket::state::connected) {
         on_disconnection.call(connection.handle);
     }

@@ -74,9 +74,44 @@ private:
         {
 
         }
+
+        connected_socket(connected_socket&& other)
+        : socket(std::move(other.socket))
+        , handle(other.handle)
+        , current_state(other.current_state)
+        , connection_promise(std::move(other.connection_promise))
+#ifndef NCRYPTO
+        , aes_key(std::move(other.aes_key))
+#endif
+        {
+
+        }
+
+        connected_socket& operator=(connected_socket&& other) {
+            std::swap(socket, other.socket);
+            std::swap(handle, other.handle);
+            std::swap(current_state, other.current_state);
+            std::swap(connection_promise, other.connection_promise);
+#ifndef NCRYPTO
+            std::swap(aes_key, other.aes_key);
+#endif
+
+            return *this;
+        }
+
+        void swap(connected_socket& other) noexcept {
+            std::swap(socket, other.socket);
+            std::swap(handle, other.handle);
+            std::swap(current_state, other.current_state);
+            std::swap(connection_promise, other.connection_promise);
+#ifndef NCRYPTO
+            std::swap(aes_key, other.aes_key);
+#endif
+        }
     };
 
     std::vector<connected_socket> connected_sockets;
+    async::spinlock connections_lock;
 #ifndef NCRYPTO
     crypto::rsa::public_key rsa_pub;
     crypto::rsa::private_key rsa_priv;
@@ -84,6 +119,9 @@ private:
 
     std::vector<std::pair<socket_handle, packet>> waiting_queue;
     async::spinlock waiting_spin_lock;
+
+    std::vector<socket_handle> to_disconnect;
+    async::spinlock to_disconnect_lock;
 
     static socket_handle next_handle;
 

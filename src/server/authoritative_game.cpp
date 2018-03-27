@@ -17,7 +17,7 @@
 //  - lobby
 //  - gameplay
 
-//uint8_t authoritative_game::client::next_id = 0;
+uint8_t authoritative_game::client::next_id = 0;
 
 authoritative_game::authoritative_game()
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<server_unit_manager>())
@@ -76,6 +76,15 @@ void authoritative_game::setup_listener() {
     });
     network.on_disconnection.attach([this](networking::network_manager::socket_handle disconnected) {
         std::cout << disconnected << " has disconnected" << std::endl;
+
+        std::lock_guard<std::mutex> lock(clients_mutex);
+        auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [disconnected](const client& c) {
+            return c.socket == disconnected;
+        });
+
+        if(it != std::end(connected_clients)) {
+            connected_clients.erase(it);
+        }
     });
 
     for(int i = 0; i < 10 && !network.try_bind(6426); ++i) {
@@ -99,6 +108,12 @@ void authoritative_game::on_init() {
 }
 
 void authoritative_game::on_connection(networking::network_manager::socket_handle handle) {
+    client connected_client(handle);
+    {
+        std::lock_guard<std::mutex> lock(clients_mutex);
+        connected_clients.push_back(connected_client);
+    }
+
     // Send the flyweights
     std::cout << "sending flyweights..." << std::endl;
     std::unordered_map<std::string, unit_flyweight> serialized_flyweights;
@@ -129,6 +144,8 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
     });
 
     network.send_to(networking::packet::make(chunks_to_send, PACKET_SETUP_CHUNK), handle);
+
+    spawn_unit(connected_client.id, glm::vec3(0.f, 0.f, 0.f), glm::vec2{0.f, 0.f}, 106);
 }
 
 void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id) {
