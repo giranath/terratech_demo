@@ -92,6 +92,7 @@ void network_manager::thread_work() {
             packets_to_send.swap(waiting_queue);
         }
 
+        // Send packets
         std::for_each(std::begin(packets_to_send), std::end(packets_to_send), [this](const std::pair<socket_handle, packet>& p) {
             auto socket_it = std::find_if(std::begin(connected_sockets), std::end(connected_sockets), [=](connected_socket& connection) {
                 return connection.handle == p.first && connection.current_state == connected_socket::state::connected;
@@ -190,7 +191,10 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                 }
                 break;
             case connected_socket::state::connected:
-                // TODO: Get data
+            {
+                std::lock_guard<async::spinlock> lock(received_lock);
+                received_requests.emplace_back(connection.handle, decrypt(connection.aes_key, *p));
+            }
                 break;
         }
     }
@@ -259,6 +263,27 @@ void network_manager::load_rsa_keys(const char* private_key, const char *public_
 void network_manager::send_to(const packet& p, socket_handle dest) {
     std::lock_guard<async::spinlock> lock(waiting_spin_lock);
     waiting_queue.emplace_back(dest, p);
+}
+
+std::future<std::pair<bool, packet>> network_manager::receive_from(int packet_type, socket_handle src) {
+    {
+        std::lock_guard<async::spinlock> lock(received_lock);
+        auto it = std::find_if(std::begin(received_requests), std::end(received_requests), [=](receive_request &req) {
+            return req.src == src && req.content.head.packet_id == packet_type;
+        });
+
+        if (it != std::end(received_requests)) {
+            auto future = it->promise.get_future();
+
+            it->promise.set_value(std::make_pair(true, it->content));
+            received_requests.erase(it);
+
+            return future;
+        }
+    }
+
+    // TODO: Add to a waiting queue
+    return {};
 }
 
 }

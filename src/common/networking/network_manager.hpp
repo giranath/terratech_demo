@@ -14,6 +14,7 @@
 #include <vector>
 #include <optional>
 #include <future>
+#include <list>
 
 namespace networking {
 
@@ -95,6 +96,25 @@ private:
     static packet encrypt(crypto::aes::key key, const packet& p);
     static packet decrypt(crypto::aes::key key, const packet& p);
 
+    struct receive_request {
+        socket_handle src;
+        packet content;
+        std::promise<std::pair<bool, packet>> promise;
+
+        receive_request(socket_handle src, packet&& content)
+        : src(src)
+        , content(std::move(content)) {
+
+        }
+    };
+
+    /*
+    std::list<receive_request> received_requests;
+     */
+
+    std::list<receive_request> received_requests;
+    async::spinlock received_lock;
+
 public:
     network_manager(int max_socket_count);
     ~network_manager();
@@ -107,6 +127,8 @@ public:
     std::future<std::pair<bool, socket_handle>> try_connect(const char* address, uint16_t port);
 
     void send_to(const packet& p, socket_handle dest);
+
+    std::future<std::pair<bool, packet>> receive_from(int packet_type, socket_handle src);
 };
 
 }

@@ -221,42 +221,39 @@ game::game(networking::network_manager& manager)
 }
 
 void game::on_init() {
-    // TODO: [CRYPTO] Receive public key
-    // TODO: [CRYPTO] Generate random aes key
-    // TODO: [CRYPTO] Save key
-    // TODO: [CRYPTO] Encrypt with public key the aes key
-    // TODO: [CRYPTO] Send encrypted aes key
+    // TODO: Wait to receive a PACKET_SETUP_FLYWEIGHTS
+    // TODO: Wait to receive a PACKET_SETUP_CHUNK
+    auto flyweights_packet = network.receive_from(PACKET_SETUP_FLYWEIGHTS, 0); // TODO: Get connected socket id
+    auto chunks_packet = network.receive_from(PACKET_SETUP_CHUNK, 0);
 
-    /*
-    auto packet = networking::receive_packet_from(socket);
-    if (packet)
-    {
-        auto manager_u = packet->as<std::unordered_map<std::string, unit_flyweight>>();
+    auto pair = flyweights_packet.get();
+    if(pair.first) {
+        auto manager_u = pair.second.as<std::unordered_map<std::string, unit_flyweight>>();
         unit_flyweight_manager manager;
         for (auto& v : manager_u)
         {
             manager.emplace(std::stoi(v.first), std::move(v.second));
         }
         set_flyweight_manager(manager);
-    }
 
-    packet = networking::receive_packet_from(socket);
-    if (packet)
-    {
-        auto chunks = packet->as<std::vector<networking::world_chunk>>();
+        auto chunk_pair = chunks_packet.get();
+        if(chunk_pair.first) {
+            auto chunks = chunk_pair.second.as<std::vector<networking::world_chunk>>();
 
-        for(networking::world_chunk& received_chunk : chunks) {
-            world_chunk& game_chunk = game_world.add(received_chunk.x, received_chunk.y);
-            game_chunk.set_biome_at(received_chunk.regions_biome);
+            for(networking::world_chunk& received_chunk : chunks) {
+                world_chunk& game_chunk = game_world.add(received_chunk.x, received_chunk.y);
+                game_chunk.set_biome_at(received_chunk.regions_biome);
+            }
+        }
+        else {
+            throw std::runtime_error("failed to load chunks");
         }
 
     }
     else {
-        throw std::runtime_error("failed to load chunks");
+        throw std::runtime_error("failed to load flyweights");
     }
 
-    socket_s.add(socket);
-     */
     // Setup controls
     setup_inputs();
 
