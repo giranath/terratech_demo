@@ -221,8 +221,6 @@ game::game(networking::network_manager& manager)
 }
 
 void game::on_init() {
-    // TODO: Wait to receive a PACKET_SETUP_FLYWEIGHTS
-    // TODO: Wait to receive a PACKET_SETUP_CHUNK
     auto flyweights_packet = network.receive_from(PACKET_SETUP_FLYWEIGHTS, 0); // TODO: Get connected socket id
     auto chunks_packet = network.receive_from(PACKET_SETUP_CHUNK, 0);
 
@@ -275,6 +273,7 @@ void game::on_release() {
 }
 
 void game::on_update(frame_duration last_frame_duration) {
+    // TODO: Get notified when
 
     /*
     if (socket_s.check(std::chrono::milliseconds(0)) > 0)

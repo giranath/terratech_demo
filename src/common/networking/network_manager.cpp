@@ -283,6 +283,13 @@ void network_manager::send_to(const packet& p, socket_handle dest) {
     waiting_queue.emplace_back(dest, p);
 }
 
+void network_manager::broadcast(const packet& p) {
+    std::lock_guard<async::spinlock> lock(waiting_spin_lock);
+    std::for_each(std::begin(connected_sockets), std::end(connected_sockets), [this, &p](const connected_socket& connection) {
+        waiting_queue.emplace_back(connection.handle, p);
+    });
+}
+
 std::future<std::pair<bool, packet>> network_manager::receive_from(int packet_type, socket_handle src) {
     std::lock_guard<async::spinlock> lock(received_lock);
     auto it = std::find_if(std::begin(received_requests), std::end(received_requests), [=](receive_request &req) {

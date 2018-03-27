@@ -131,61 +131,6 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
     network.send_to(networking::packet::make(chunks_to_send, PACKET_SETUP_CHUNK), handle);
 }
 
-/*
-void authoritative_game::on_client_data(const client& c) {
-    // TODO: Handle request in worker thread
-    auto received_packet = networking::receive_packet_from(c.socket);
-
-    if(received_packet) {
-        try {
-            nlohmann::json json_body = nlohmann::json::parse(std::begin(received_packet->bytes),
-                                                             std::end(received_packet->bytes));
-
-            // here we should have a valid json
-        }
-        catch(const nlohmann::json::parse_error& e) {
-            // TODO: The client has sent us crap
-            std::cerr << "client has sent us some crap: " << "[" << e.id << "] " << e.what() << std::endl;
-        }
-    }
-    else {
-        on_client_disconnection(c);
-    }
-
-    // TODO: Read what the user has sent
-    // TODO: Validate input
-}
-
-void authoritative_game::on_client_disconnection(const client& c) {
-    sockets.remove(c.socket);
-
-    // Remove the client from the connected clients
-    auto it = std::find(std::begin(connected_clients), std::end(connected_clients), c);
-    connected_clients.erase(it);
-
-    // TODO: Determine how to handle a player disconnection in game
-}
-
-void authoritative_game::check_sockets() {
-    int numready = sockets.check(std::chrono::milliseconds(0));
-    if(numready == -1) {
-        std::cerr << "SDLNet_CheckSockets: " << SDLNet_GetError() << std::endl;
-    }
-    else if(numready > 0){
-        if(sockets.is_ready(connection_listener)) {
-            on_connection();
-        }
-        else {
-            std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const client& c) {
-                if(sockets.is_ready(c.socket)) {
-                    on_client_data(c);
-                }
-            });
-        }
-    }
-}
- */
-
 void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id) {
     unit_manager& manager = units();
     server_unit_manager& units = static_cast<server_unit_manager&>(manager);
@@ -194,22 +139,11 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
     std::vector<unit> units_to_spawn;
     units_to_spawn.push_back(*static_cast<unit*>(created_unit.get()));
 
-    /*
-    // Send the command to all players
-    auto packet = networking::packet::make(units_to_spawn, SPAWN_UNITS);
-    for(auto it = connected_clients.begin(); it != connected_clients.end(); ++it) {
-        if(!networking::send_packet(it->socket, packet)) {
-            // TODO: This client has disconnected
-        }
-    }
-     */
+    network.broadcast(networking::packet::make(units_to_spawn, PACKET_SPAWN_UNITS));
 }
 
 void authoritative_game::on_update(frame_duration last_frame) {
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame);
-
-    // Handle data reception from clients
-    //check_sockets();
 
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {
         for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {

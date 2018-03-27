@@ -136,6 +136,7 @@ public:
     std::future<std::pair<bool, socket_handle>> try_connect(const char* address, uint16_t port);
 
     void send_to(const packet& p, socket_handle dest);
+    void broadcast(const packet& p);
 
     std::future<std::pair<bool, packet>> receive_from(int packet_type, socket_handle src);
 };
