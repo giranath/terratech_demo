@@ -16,6 +16,7 @@ using namespace std::chrono_literals;
 
 namespace networking {
 
+#ifndef NCRYPTO
 void to_json(nlohmann::json& json, const server_public_key& key) {
     std::string encoded;
     CryptoPP::StringSource ss(key.public_key, true,
@@ -45,9 +46,11 @@ void from_json(const nlohmann::json& json, client_aes_key& key) {
 
     key.key = std::move(decoded);
 }
+#endif
 
 network_manager::socket_handle network_manager::next_handle = 0;
 
+#ifndef NCRYPTO
 packet network_manager::encrypt(crypto::rsa::public_key key, const packet& p) {
     std::vector<uint8_t> encrypted_body;
     crypto::rsa::encrypt(key, std::begin(p.bytes), std::end(p.bytes), std::back_inserter(encrypted_body));
@@ -79,6 +82,7 @@ packet network_manager::decrypt(crypto::aes::key key, const packet& p) {
     header head(decrypted_body.size(), p.head.packet_id);
     return packet(head, std::move(decrypted_body));
 }
+#endif
 
 void network_manager::network_thread_work_fn(network_manager* manager) {
     manager->thread_work();
@@ -99,8 +103,11 @@ void network_manager::thread_work() {
             });
 
             if(socket_it != connected_sockets.end()) {
+#ifndef NCRYPTO
                 auto encrypted_packet = encrypt(socket_it->aes_key, p.second);
-
+#else
+                const packet& encrypted_packet = p.second;
+#endif
                 if(!send_packet(socket_it->socket, encrypted_packet)) {
                     // Failed to send data
                     handle_disconnection(*socket_it);
@@ -145,6 +152,7 @@ void network_manager::handle_connection(tcp_socket socket) {
 #else
     // There is no encryption
     connected.current_state = connected_socket::state::connected;
+    on_connection.call(connected.handle);
 #endif
 
     active_sockets.add(connected.socket);
@@ -157,6 +165,7 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
         switch (connection.current_state) {
             case connected_socket::state::waiting_public_key:
                 if(p->head.packet_id == PACKET_SERVER_PUBLIC_KEY) {
+#ifndef NCRYPTO
                     server_public_key server_key = p->as<server_public_key>();
                     CryptoPP::StringSource ss(server_key.public_key, true);
                     rsa_pub.Load(ss);
@@ -176,10 +185,14 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                     else {
                         handle_disconnection(connection);
                     }
+#else
+                    throw std::runtime_error("encryption is disabled");
+#endif
                 }
                 break;
             case connected_socket::state::sending_key:
                 if(p->head.packet_id == PACKET_SETUP_ENCRYPTION_KEY) {
+#ifndef NCRYPTO
                     auto decrypted_p = decrypt(rsa_priv, *p);
                     client_aes_key k = decrypted_p.as<client_aes_key>();
 
@@ -188,11 +201,18 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
 
                     connection.current_state = connected_socket::state::connected;
                     on_connection.call(connection.handle);
+#else
+                    throw std::runtime_error("encryption is disabled");
+#endif
                 }
                 break;
             case connected_socket::state::connected:
             {
+#ifndef NCRYPTO
                 auto decrypted_packet = decrypt(connection.aes_key, *p);
+#else
+                const packet& decrypted_packet = *p;
+#endif
                 {
                     std::lock_guard<async::spinlock> lock(received_lock);
 
@@ -206,7 +226,11 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                         waiting_recv_requests.erase(it);
                     }
                     else {
+#ifndef NCRYPTO
                         received_requests.emplace_back(connection.handle, std::move(decrypted_packet));
+#else
+                        received_requests.emplace_back(connection.handle, decrypted_packet);
+#endif
                     }
                 }
             }
@@ -262,7 +286,14 @@ std::future<std::pair<bool, network_manager::socket_handle>> network_manager::tr
         int handle = next_handle++;
 
         active_sockets.add(connecting_socket);
+#ifndef NCRYPTO
         connected_sockets.emplace_back(handle, std::move(connecting_socket), std::move(connection_promise));
+#else
+        connected_socket connection(handle, std::move(connecting_socket), std::move(connection_promise));
+        connection.current_state = connected_socket::state::connected;
+        connected_sockets.push_back(std::move(connection));
+        connected_sockets.back().connection_promise.set_value(std::make_pair(true, connected_sockets.back().handle));
+#endif
     }
     else {
         connection_promise.set_value(std::make_pair(false, 0));

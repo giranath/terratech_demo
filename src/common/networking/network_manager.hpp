@@ -18,6 +18,7 @@
 
 namespace networking {
 
+#ifndef NCRYPTO
 struct server_public_key {
     std::string public_key;
 };
@@ -30,6 +31,7 @@ void to_json(nlohmann::json& json, const server_public_key& key);
 void from_json(const nlohmann::json& json, server_public_key& key);
 void to_json(nlohmann::json& json, const client_aes_key& key);
 void from_json(const nlohmann::json& json, client_aes_key& key);
+#endif
 
 // The network manager manages the details of the communication between
 // connected clients
@@ -92,10 +94,12 @@ private:
     void handle_connected_socket(connected_socket& socket);
     void handle_disconnection(connected_socket& socket);
 
+#ifndef NCRYPTO
     static packet encrypt(crypto::rsa::public_key key, const packet& p);
     static packet decrypt(crypto::rsa::private_key key, const packet& p);
     static packet encrypt(crypto::aes::key key, const packet& p);
     static packet decrypt(crypto::aes::key key, const packet& p);
+#endif
 
     struct receive_request {
         socket_handle src;
@@ -104,6 +108,12 @@ private:
         receive_request(socket_handle src, packet&& content)
         : src(src)
         , content(std::move(content)) {
+
+        }
+
+        receive_request(socket_handle src, const packet& content)
+        : src(src)
+        , content(content) {
 
         }
     };
