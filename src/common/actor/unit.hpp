@@ -23,6 +23,7 @@ public:
     target_handle& get_target();
     void set_target_position(glm::vec2 _target_position);
     glm::vec2& get_target_position();
+    const glm::vec2& get_target_position() const;
     void embark_in_target();
     void gather_ressource();
 

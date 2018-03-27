@@ -208,7 +208,7 @@ void game::load_datas() {
     load_flyweights();
 }
 
-game::game(networking::tcp_socket& socket)
+game::game(networking::network_manager& manager)
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<unit_manager>())
 , game_world()
 , world_rendering(game_world)
@@ -216,40 +216,40 @@ game::game(networking::tcp_socket& socket)
 , is_scrolling(false)
 , last_fps_duration_index(0)
 , frame_count(0) 
-, socket(socket)
-, socket_s(1){
+, network{manager} {
     last_fps_durations.reserve(10);
 }
 
 void game::on_init() {
-    auto packet = networking::receive_packet_from(socket);
-    if (packet)
-    {
-        auto manager_u = packet->as<std::unordered_map<std::string, unit_flyweight>>();
+    auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, 0);
+
+    if(flyweights_packet.first) {
+        auto manager_u = flyweights_packet.second.as<std::unordered_map<std::string, unit_flyweight>>();
         unit_flyweight_manager manager;
         for (auto& v : manager_u)
         {
             manager.emplace(std::stoi(v.first), std::move(v.second));
         }
         set_flyweight_manager(manager);
-    }
 
-    packet = networking::receive_packet_from(socket);
-    if (packet)
-    {
-        auto chunks = packet->as<std::vector<networking::world_chunk>>();
+        auto chunks_packet = network.wait_packet_from(PACKET_SETUP_CHUNK, 0);
+        if(chunks_packet.first) {
+            auto chunks = chunks_packet.second.as<std::vector<networking::world_chunk>>();
 
-        for(networking::world_chunk& received_chunk : chunks) {
-            world_chunk& game_chunk = game_world.add(received_chunk.x, received_chunk.y);
-            game_chunk.set_biome_at(received_chunk.regions_biome);
+            for(networking::world_chunk& received_chunk : chunks) {
+                world_chunk& game_chunk = game_world.add(received_chunk.x, received_chunk.y);
+                game_chunk.set_biome_at(received_chunk.regions_biome);
+            }
+        }
+        else {
+            throw std::runtime_error("failed to load chunks");
         }
 
     }
     else {
-        throw std::runtime_error("failed to load chunks");
+        throw std::runtime_error("failed to load flyweights");
     }
 
-    socket_s.add(socket);
     // Setup controls
     setup_inputs();
 
@@ -271,23 +271,14 @@ void game::on_release() {
 }
 
 void game::on_update(frame_duration last_frame_duration) {
-
-    if (socket_s.check(std::chrono::milliseconds(0)) > 0)
-    {
-        auto packet = networking::receive_packet_from(socket);
-        
-        if (packet)
-        {
-            if (packet->head.packet_id == SPAWN_UNITS)
-            {
-                std::vector<unit> unit_v = packet->as < std::vector<unit>>();
-                for (unit& u : unit_v)
-                {
-                    add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
-                }
-            }
+    auto p = network.poll_packet_from(PACKET_SPAWN_UNITS, 0); // TODO: Get socket id
+    if(p.first) {
+        std::vector<unit> units = p.second.as<std::vector<unit>>();
+        for(const unit& u : units) {
+            add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
         }
     }
+
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
 
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {

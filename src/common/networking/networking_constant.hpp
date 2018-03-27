@@ -3,9 +3,11 @@
 
 enum
 {
-    SETUP_WORLD_SIZE,
-    SETUP_CHUNK,
-    SETUP_FLYWEIGHTS,
-    SPAWN_UNITS
+    PACKET_SERVER_PUBLIC_KEY,         // Le serveur envoie sa clé publique
+    PACKET_SETUP_ENCRYPTION_KEY,      // Le client envoie sa clé AES
+    PACKET_SETUP_WORLD_SIZE,
+    PACKET_SETUP_CHUNK,
+    PACKET_SETUP_FLYWEIGHTS,
+    PACKET_SPAWN_UNITS
 };
 #endif

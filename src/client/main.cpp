@@ -3,6 +3,8 @@
 #include "debug/profiler.hpp"
 #include "../common/time/clock.hpp"
 #include "../common/networking/tcp_socket.hpp"
+#include "../common/networking/network_manager.hpp"
+
 #ifdef WIN32
 #include <SDL_net.h>
 #else
@@ -68,6 +70,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    /*
     networking::tcp_socket sock;
     std::cout << "trying to connect to " << args.server_address << ":" << args.port << "..." << std::endl;
     if(!sock.try_connect(args.server_address.c_str(), args.port)) {
@@ -75,7 +78,10 @@ int main(int argc, char* argv[]) {
         SDLNet_Quit();
         return 1;
     }
-    
+     */
+    networking::network_manager network(1);
+    auto connection = network.try_connect(args.server_address.c_str(), args.port);
+
     // Setup OpenGL attributes
     set_opengl_version(3, 3);
 
@@ -100,7 +106,13 @@ int main(int argc, char* argv[]) {
 
     setup_opengl();
 
-    game game_state(sock);
+    auto connection_result = connection.get();
+    if(connection_result.first == false) {
+        std::cerr << "couldn't connect to server" << std::endl;
+        return 1;
+    }
+
+    game game_state(network);
     game_state.resize(800, 600);
 
     // TODO: Init on another thread
@@ -112,7 +124,7 @@ int main(int argc, char* argv[]) {
         frame_time.restart();
 
         if(game_state.fps() > 0) {
-            std::cout << game_state.fps() << " : " << game_state.average_fps() << std::endl;
+        //    std::cout << game_state.fps() << " : " << game_state.average_fps() << std::endl;
         }
         // Render last frame on screen
         {

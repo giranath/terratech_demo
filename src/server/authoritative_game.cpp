@@ -22,7 +22,7 @@ uint8_t authoritative_game::client::next_id = 0;
 authoritative_game::authoritative_game()
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<server_unit_manager>())
 , world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()))
-, sockets(3) {
+, network(3) {
 
 }
 
@@ -69,14 +69,31 @@ void authoritative_game::generate_world() {
 
 void authoritative_game::setup_listener() {
     std::cout << "binding to port 6426..." << std::endl;
-    for(int i = 0; i < 10 && !connection_listener.try_bind(6426); ++i) {
+    network.load_rsa_keys("asset/crypto/privkey.p8", "asset/crypto/pubkey.der");
+    network.on_connection.attach([this](networking::network_manager::socket_handle connected) {
+        std::cout << connected << " has connected" << std::endl;
+        on_connection(connected);
+    });
+    network.on_disconnection.attach([this](networking::network_manager::socket_handle disconnected) {
+        std::cout << disconnected << " has disconnected" << std::endl;
+
+        std::lock_guard<std::mutex> lock(clients_mutex);
+        auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [disconnected](const client& c) {
+            return c.socket == disconnected;
+        });
+
+        if(it != std::end(connected_clients)) {
+            connected_clients.erase(it);
+        }
+    });
+
+    for(int i = 0; i < 10 && !network.try_bind(6426); ++i) {
         std::cerr << " attempt # " << i + 1 << " to bind port failed because: " << SDLNet_GetError() << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    if(connection_listener.is_bound()) {
+    if(network.is_bound()) {
         std::cout << "waiting for connections on port 6426" << std::endl;
-        sockets.add(connection_listener);
     }
     else {
         throw std::runtime_error("failed to bind port");
@@ -90,9 +107,12 @@ void authoritative_game::on_init() {
     setup_listener();
 }
 
-void authoritative_game::on_connection() {
-    // Get client socket
-    networking::tcp_socket connecting_socket = connection_listener.accept();
+void authoritative_game::on_connection(networking::network_manager::socket_handle handle) {
+    client connected_client(handle);
+    {
+        std::lock_guard<std::mutex> lock(clients_mutex);
+        connected_clients.push_back(connected_client);
+    }
 
     // Send the flyweights
     std::cout << "sending flyweights..." << std::endl;
@@ -100,11 +120,7 @@ void authoritative_game::on_connection() {
     for(auto it = unit_flyweights().begin(); it != unit_flyweights().end(); ++it) {
         serialized_flyweights.emplace(std::to_string(it->first), it->second);
     }
-
-    if(!networking::send_packet(connecting_socket, networking::packet::make(serialized_flyweights, SETUP_FLYWEIGHTS))) {
-        std::cerr << "failed to send flyweights" << std::endl;
-        return;
-    }
+    network.send_to(networking::packet::make(serialized_flyweights, PACKET_SETUP_FLYWEIGHTS), handle);
 
     // Send the map
     std::cout << "sending map..." << std::endl;
@@ -127,76 +143,9 @@ void authoritative_game::on_connection() {
         return networking::world_chunk(chunk.position().x, chunk.position().y, biomes);
     });
 
-    if(!networking::send_packet(connecting_socket, networking::packet::make(chunks_to_send, SETUP_CHUNK))) {
-        return;
-    }
+    network.send_to(networking::packet::make(chunks_to_send, PACKET_SETUP_CHUNK), handle);
 
-    // TODO: Reserve a place to current connection
-    // TODO: CRYPTO: Send public key to client
-    // TODO: CRYPTO: Wait for symetric key from client
-    // TODO: Send this client the flyweights
-
-    std::cout << "adding new client" << std::endl;
-    // Add the client
-    sockets.add(connecting_socket);
-
-    client connecting_client(std::move(connecting_socket));
-    uint8_t client_id = connecting_client.id;
-    connected_clients.push_back(std::move(connecting_client));
-    spawn_unit(client_id, glm::vec3{10.f, 0.f, 10.f}, glm::vec2{0.f, 0.f}, 106);
-}
-
-void authoritative_game::on_client_data(const client& c) {
-    // TODO: Handle request in worker thread
-    auto received_packet = networking::receive_packet_from(c.socket);
-
-    if(received_packet) {
-        try {
-            nlohmann::json json_body = nlohmann::json::parse(std::begin(received_packet->bytes),
-                                                             std::end(received_packet->bytes));
-
-            // here we should have a valid json
-        }
-        catch(const nlohmann::json::parse_error& e) {
-            // TODO: The client has sent us crap
-            std::cerr << "client has sent us some crap: " << "[" << e.id << "] " << e.what() << std::endl;
-        }
-    }
-    else {
-        on_client_disconnection(c);
-    }
-
-    // TODO: Read what the user has sent
-    // TODO: Validate input
-}
-
-void authoritative_game::on_client_disconnection(const client& c) {
-    sockets.remove(c.socket);
-
-    // Remove the client from the connected clients
-    auto it = std::find(std::begin(connected_clients), std::end(connected_clients), c);
-    connected_clients.erase(it);
-
-    // TODO: Determine how to handle a player disconnection in game
-}
-
-void authoritative_game::check_sockets() {
-    int numready = sockets.check(std::chrono::milliseconds(0));
-    if(numready == -1) {
-        std::cerr << "SDLNet_CheckSockets: " << SDLNet_GetError() << std::endl;
-    }
-    else if(numready > 0){
-        if(sockets.is_ready(connection_listener)) {
-            on_connection();
-        }
-        else {
-            std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const client& c) {
-                if(sockets.is_ready(c.socket)) {
-                    on_client_data(c);
-                }
-            });
-        }
-    }
+    spawn_unit(connected_client.id, glm::vec3(0.f, 0.f, 0.f), glm::vec2{0.f, 0.f}, 106);
 }
 
 void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id) {
@@ -207,20 +156,11 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
     std::vector<unit> units_to_spawn;
     units_to_spawn.push_back(*static_cast<unit*>(created_unit.get()));
 
-    // Send the command to all players
-    auto packet = networking::packet::make(units_to_spawn, SPAWN_UNITS);
-    for(auto it = connected_clients.begin(); it != connected_clients.end(); ++it) {
-        if(!networking::send_packet(it->socket, packet)) {
-            // TODO: This client has disconnected
-        }
-    }
+    network.broadcast(networking::packet::make(units_to_spawn, PACKET_SPAWN_UNITS));
 }
 
 void authoritative_game::on_update(frame_duration last_frame) {
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame);
-
-    // Handle data reception from clients
-    check_sockets();
 
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {
         for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {
@@ -245,10 +185,12 @@ void authoritative_game::on_update(frame_duration last_frame) {
 }
 
 void authoritative_game::on_release() {
+    /*
     std::cout << "releasing..." << std::endl;
     std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const client& client) {
         sockets.remove(client.socket);
     });
 
     connected_clients.clear();
+     */
 }

@@ -3,6 +3,7 @@
 
 #include "allocator_traits.hpp"
 #include <cstdint>
+#include <cstddef>
 
 namespace memory {
 

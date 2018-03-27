@@ -43,7 +43,7 @@ bool tcp_listener::try_bind(uint16_t port) noexcept {
     }
 
     listener_socket = SDLNet_TCP_Open(&ip);
-    return true;
+    return listener_socket;
 }
 
 bool tcp_listener::is_bound() const noexcept {

@@ -10,9 +10,21 @@ header::header(size_type size, packet_id_type packet_id)
 
 }
 
+packet::packet()
+: head(0, 0)
+, bytes() {
+
+}
+
 packet::packet(header head)
 : head(head)
 , bytes(head.size, 0){
+
+}
+
+packet::packet(header h, byte_collection&& bytes)
+: head(h)
+, bytes(std::move(bytes)) {
 
 }
 
@@ -70,8 +82,13 @@ bool send_packet(const tcp_socket& socket, const packet& packet) {
     packet_size = SDL_Swap64(packet_size);
 #endif
 
-    socket.send(reinterpret_cast<const uint8_t*>(&packet_size), sizeof(packet_size));
-    socket.send(reinterpret_cast<const uint8_t*>(&packet.head.packet_id), sizeof(packet.head.packet_id));
+    if(socket.send(reinterpret_cast<const uint8_t*>(&packet_size), sizeof(packet_size)) <= 0) {
+        return false;
+    }
+
+    if(socket.send(reinterpret_cast<const uint8_t*>(&packet.head.packet_id), sizeof(packet.head.packet_id)) <= 0) {
+        return false;
+    }
 
     header::size_type to_send_size = packet.head.size;
     const header::size_type PER_ITERATION_MAXLEN = std::numeric_limits<int>::max();

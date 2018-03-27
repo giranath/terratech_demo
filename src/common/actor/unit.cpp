@@ -27,6 +27,11 @@ glm::vec2& unit::get_target_position()
     return target_position;
 }
 
+const glm::vec2& unit::get_target_position() const
+{
+    return target_position;
+}
+
 void unit::embark_in_target()
 {
     base_unit* targ = target.get();
