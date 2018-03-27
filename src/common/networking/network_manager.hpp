@@ -99,7 +99,6 @@ private:
     struct receive_request {
         socket_handle src;
         packet content;
-        std::promise<std::pair<bool, packet>> promise;
 
         receive_request(socket_handle src, packet&& content)
         : src(src)
@@ -108,11 +107,20 @@ private:
         }
     };
 
-    /*
-    std::list<receive_request> received_requests;
-     */
+    struct waiting_receive_request {
+        socket_handle src;
+        int type;
+        std::promise<std::pair<bool, packet>> promise;
+
+        waiting_receive_request(socket_handle src, int type)
+        : src(src)
+        , type(type) {
+
+        }
+    };
 
     std::list<receive_request> received_requests;
+    std::list<waiting_receive_request> waiting_recv_requests;
     async::spinlock received_lock;
 
 public:

@@ -192,8 +192,23 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                 break;
             case connected_socket::state::connected:
             {
-                std::lock_guard<async::spinlock> lock(received_lock);
-                received_requests.emplace_back(connection.handle, decrypt(connection.aes_key, *p));
+                auto decrypted_packet = decrypt(connection.aes_key, *p);
+                {
+                    std::lock_guard<async::spinlock> lock(received_lock);
+
+                    auto it = std::find_if(std::begin(waiting_recv_requests), std::end(waiting_recv_requests),
+                                           [&connection, &decrypted_packet](const waiting_receive_request &req) {
+                                               return req.src == connection.handle
+                                                      && req.type == decrypted_packet.head.packet_id;
+                                           });
+                    if(it != std::end(waiting_recv_requests)) {
+                        it->promise.set_value(std::make_pair(true, decrypted_packet));
+                        waiting_recv_requests.erase(it);
+                    }
+                    else {
+                        received_requests.emplace_back(connection.handle, std::move(decrypted_packet));
+                    }
+                }
             }
                 break;
         }
@@ -266,24 +281,25 @@ void network_manager::send_to(const packet& p, socket_handle dest) {
 }
 
 std::future<std::pair<bool, packet>> network_manager::receive_from(int packet_type, socket_handle src) {
-    {
-        std::lock_guard<async::spinlock> lock(received_lock);
-        auto it = std::find_if(std::begin(received_requests), std::end(received_requests), [=](receive_request &req) {
-            return req.src == src && req.content.head.packet_id == packet_type;
-        });
+    std::lock_guard<async::spinlock> lock(received_lock);
+    auto it = std::find_if(std::begin(received_requests), std::end(received_requests), [=](receive_request &req) {
+        return req.src == src && req.content.head.packet_id == packet_type;
+    });
 
-        if (it != std::end(received_requests)) {
-            auto future = it->promise.get_future();
+    if (it != std::end(received_requests)) {
+        std::promise<std::pair<bool, packet>> promise;
+        auto future = promise.get_future();
 
-            it->promise.set_value(std::make_pair(true, it->content));
-            received_requests.erase(it);
+        promise.set_value(std::make_pair(true, it->content));
+        received_requests.erase(it);
 
-            return future;
-        }
+        return future;
     }
 
-    // TODO: Add to a waiting queue
-    return {};
+    waiting_receive_request req(src, packet_type);
+    auto future = req.promise.get_future();
+    waiting_recv_requests.push_back(std::move(req));
+    return future;
 }
 
 }
