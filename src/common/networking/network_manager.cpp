@@ -13,10 +13,6 @@
 #include <crypto++/base64.h>
 #endif
 
-#if defined(__APPLE__)
-#elif defined(WIN32)
-#else
-#endif
 
 using namespace std::chrono_literals;
 
@@ -98,7 +94,10 @@ void network_manager::thread_work() {
     while(is_running) {
         // Disconnect clients
         {
-            std::scoped_lock<async::spinlock, async::spinlock> lock(to_disconnect_lock, connections_lock);
+            std::lock(to_disconnect_lock, connections_lock);
+            std::lock_guard<async::spinlock> lk1(to_disconnect_lock, std::adopt_lock);
+            std::lock_guard<async::spinlock> lk2(connections_lock, std::adopt_lock);
+
             std::for_each(std::begin(to_disconnect), std::end(to_disconnect), [this](socket_handle handle) {
                 auto it = std::find_if(std::begin(connected_sockets), std::end(connected_sockets), [handle](const connected_socket& socket) {
                    return socket.handle == handle;

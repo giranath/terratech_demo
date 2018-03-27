@@ -285,7 +285,11 @@ void game::on_update(frame_duration last_frame_duration) {
     if(update_p.first) {
         std::vector<unit> units = update_p.second.as<std::vector<unit>>();
         for(const unit& u : units) {
-            this->units().get(u.get_id())->set_position(u.get_position());
+            base_unit* my_unit = this->units().get(u.get_id());
+
+            if(my_unit) {
+                my_unit->set_position(u.get_position());
+            }
         }
     }
 
