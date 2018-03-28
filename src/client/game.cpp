@@ -272,6 +272,9 @@ void game::on_release() {
 }
 
 void game::on_update(frame_duration last_frame_duration) {
+    std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
+
+    // Spawn new units
     auto p = network.poll_packet_from(PACKET_SPAWN_UNITS, socket);
     if(p.first) {
         std::vector<unit> units = p.second.as<std::vector<unit>>();
@@ -280,7 +283,7 @@ void game::on_update(frame_duration last_frame_duration) {
         }
     }
 
-    std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
+    // Update units positions
     auto update_p = network.poll_packet_from(PACKET_UPDATE_UNITS, socket);
     if(update_p.first) {
         std::vector<unit> units = update_p.second.as<std::vector<unit>>();
@@ -293,9 +296,28 @@ void game::on_update(frame_duration last_frame_duration) {
         }
     }
 
+    auto update_task = push_task(async::make_task([this, last_frame_ms]() {
+        for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {
+            unit* actual_unit = static_cast<unit*>(u->second.get());
+
+            glm::vec2 target = actual_unit->get_target_position();
+            glm::vec3 target3D = { target.x, 0, target.y };
+
+            glm::vec3 direction = target3D - actual_unit->get_position();
+
+            if (direction == glm::vec3{}) continue;
+
+            direction = glm::normalize(direction);
+
+            glm::vec3 move = actual_unit->get_position() + (direction * 100.0f * (last_frame_ms.count() / 1000.0f));
+
+            actual_unit->set_position(move);
+        }
+    }));
+
     key_inputs.dispatch();
 
-    //update_task.wait();
+    update_task.wait();
 }
 
 void game::render() {
