@@ -324,6 +324,13 @@ void network_manager::load_rsa_keys(const char* private_key, const char *public_
 #endif
 }
 
+void network_manager::load_certificate(const char* private_key, const char* public_key) {
+#ifndef NCRYPTO
+    cert_priv = crypto::rsa::load_key<crypto::rsa::private_key >(private_key);
+    cert_pub = crypto::rsa::load_key<crypto::rsa::public_key>(public_key);
+#endif
+}
+
 void network_manager::send_to(const packet& p, socket_handle dest) {
     std::lock_guard<async::spinlock> lock(waiting_spin_lock);
     waiting_queue.emplace_back(dest, p);

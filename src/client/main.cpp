@@ -71,6 +71,8 @@ int main(int argc, char* argv[]) {
     }
 
     networking::network_manager network(1);
+    network.load_certificate("asset/crypto/privcertificate.p8", "asset/crypto/pubcertificate.der");
+
     auto connection = network.try_connect(args.server_address.c_str(), args.port);
 
     // Setup OpenGL attributes

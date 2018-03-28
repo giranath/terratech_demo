@@ -70,6 +70,8 @@ void authoritative_game::generate_world() {
 void authoritative_game::setup_listener() {
     std::cout << "binding to port 6426..." << std::endl;
     network.load_rsa_keys("asset/crypto/privkey.p8", "asset/crypto/pubkey.der");
+    network.load_certificate("asset/crypto/privcertificate.p8", "asset/crypto/pubcertificate.der");
+
     network.on_connection.attach([this](networking::network_manager::socket_handle connected) {
         std::cout << connected << " has connected" << std::endl;
         on_connection(connected);

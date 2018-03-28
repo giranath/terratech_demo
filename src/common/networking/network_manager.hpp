@@ -115,6 +115,8 @@ private:
 #ifndef NCRYPTO
     crypto::rsa::public_key rsa_pub;
     crypto::rsa::private_key rsa_priv;
+    crypto::rsa::public_key cert_pub;
+    crypto::rsa::private_key cert_priv;
 #endif
 
     std::vector<std::pair<socket_handle, packet>> waiting_queue;
@@ -168,6 +170,7 @@ public:
     bool is_bound() const noexcept;
 
     void load_rsa_keys(const char* private_key, const char* public_key);
+    void load_certificate(const char* private_key, const char* public_key);
 
     std::future<std::pair<bool, socket_handle>> try_connect(const char* address, uint16_t port);
 
