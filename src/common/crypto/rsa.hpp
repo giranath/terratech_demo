@@ -7,11 +7,13 @@
 #include <cryptopp/rsa.h>
 #include <cryptopp/osrng.h>
 #include <cryptopp/files.h>
+#include <crypto++/filters.h>
 #elif defined(WIN32)
 #else
 #include <crypto++/rsa.h>
 #include <crypto++/osrng.h>
 #include <crypto++/files.h>
+#include <crypto++/filters.h>
 #endif
 
 #include "iterator_sink.hpp"
@@ -58,6 +60,35 @@ OutputIt decrypt(private_key key, InputIt begin, InputIt end, OutputIt out) {
                           new CryptoPP::PK_DecryptorFilter(prng, d, new iterator_sink<OutputIt>(out)));
 
     return out;
+}
+
+template<typename InputIt, typename OutputIt>
+OutputIt sign(private_key key, InputIt begin, InputIt end, OutputIt out) {
+    bytes plaintext(begin, end);
+    CryptoPP::AutoSeededRandomPool prng;
+
+    CryptoPP::RSASSA_PKCS1v15_SHA_Signer s(key);
+    CryptoPP::ArraySource(&plaintext.front(), plaintext.size(), true,
+                          new CryptoPP::SignerFilter(prng, s,
+                                                     new iterator_sink<OutputIt>(out)));
+
+    return out;
+}
+
+template<typename InputIt>
+bool verify(public_key key, InputIt begin, InputIt end) {
+    bytes ciphertext(begin, end);
+    CryptoPP::AutoSeededRandomPool prng;
+
+    CryptoPP::RSASSA_PKCS1v15_SHA_Verifier v(key);
+    bool result = false;
+    CryptoPP::ArraySource(&ciphertext.front(), ciphertext.size(), true,
+                          new CryptoPP::SignatureVerificationFilter(v,
+                                                                    new CryptoPP::ArraySink(reinterpret_cast<byte*>(&result), sizeof(result)),
+                                                                    CryptoPP::SignatureVerificationFilter::PUT_RESULT | CryptoPP::SignatureVerificationFilter::SIGNATURE_AT_END
+                                                                    ));
+
+    return result;
 }
 
 }}
