@@ -163,6 +163,7 @@ void network_manager::handle_connection(tcp_socket socket) {
 
     auto p = packet::make(k, PACKET_SERVER_PUBLIC_KEY);
     // Send public key
+    // TODO: Sign public key
     if(send_packet(connected.socket, packet::make(k, PACKET_SERVER_PUBLIC_KEY))) {
         connected.current_state = connected_socket::state::sending_key;
     }
@@ -191,6 +192,8 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                 if(p->head.packet_id == PACKET_SERVER_PUBLIC_KEY) {
 #ifndef NCRYPTO
                     server_public_key server_key = p->as<server_public_key>();
+                    // TODO: Verify key
+
                     CryptoPP::StringSource ss(server_key.public_key, true);
                     rsa_pub.Load(ss);
 
@@ -207,7 +210,6 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                         connection.connection_promise.set_value(std::make_pair(true, connection.handle));
                     }
                     else {
-                        // TODO: Fix deadlock
                         handle_disconnection(connection);
                     }
 #else
