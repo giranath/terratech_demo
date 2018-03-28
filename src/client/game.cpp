@@ -208,7 +208,7 @@ void game::load_datas() {
     load_flyweights();
 }
 
-game::game(networking::network_manager& manager)
+game::game(networking::network_manager& manager, networking::network_manager::socket_handle socket)
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<unit_manager>())
 , is_scrolling(false)
 , game_world()
@@ -216,12 +216,13 @@ game::game(networking::network_manager& manager)
 , game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)
 , last_fps_duration_index(0)
 , frame_count(0) 
-, network{manager} {
+, network{manager}
+, socket(socket) {
     last_fps_durations.reserve(10);
 }
 
 void game::on_init() {
-    auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, 0);
+    auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, socket);
 
     if(flyweights_packet.first) {
         auto manager_u = flyweights_packet.second.as<std::unordered_map<std::string, unit_flyweight>>();
@@ -232,7 +233,7 @@ void game::on_init() {
         }
         set_flyweight_manager(manager);
 
-        auto chunks_packet = network.wait_packet_from(PACKET_SETUP_CHUNK, 0);
+        auto chunks_packet = network.wait_packet_from(PACKET_SETUP_CHUNK, socket);
         if(chunks_packet.first) {
             auto chunks = chunks_packet.second.as<std::vector<networking::world_chunk>>();
 
@@ -271,7 +272,10 @@ void game::on_release() {
 }
 
 void game::on_update(frame_duration last_frame_duration) {
-    auto p = network.poll_packet_from(PACKET_SPAWN_UNITS, 0); // TODO: Get socket id
+    std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
+
+    // Spawn new units
+    auto p = network.poll_packet_from(PACKET_SPAWN_UNITS, socket);
     if(p.first) {
         std::vector<unit> units = p.second.as<std::vector<unit>>();
         for(const unit& u : units) {
@@ -279,11 +283,21 @@ void game::on_update(frame_duration last_frame_duration) {
         }
     }
 
-    std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
+    // Update units positions
+    auto update_p = network.poll_packet_from(PACKET_UPDATE_UNITS, socket);
+    if(update_p.first) {
+        std::vector<unit> units = update_p.second.as<std::vector<unit>>();
+        for(const unit& u : units) {
+            base_unit* my_unit = this->units().get(u.get_id());
+
+            if(my_unit) {
+                my_unit->set_position(u.get_position());
+            }
+        }
+    }
 
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {
-        for (auto u = units().begin_of_units(); u != units().end_of_units(); u++)
-        {
+        for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {
             unit* actual_unit = static_cast<unit*>(u->second.get());
 
             glm::vec2 target = actual_unit->get_target_position();
@@ -291,15 +305,13 @@ void game::on_update(frame_duration last_frame_duration) {
 
             glm::vec3 direction = target3D - actual_unit->get_position();
 
-            if (direction == glm::vec3{})
-                continue;
+            if (direction == glm::vec3{}) continue;
 
             direction = glm::normalize(direction);
 
             glm::vec3 move = actual_unit->get_position() + (direction * 100.0f * (last_frame_ms.count() / 1000.0f));
 
-            if(can_move(actual_unit, move))
-                actual_unit->set_position(move);
+            actual_unit->set_position(move);
         }
     }));
 

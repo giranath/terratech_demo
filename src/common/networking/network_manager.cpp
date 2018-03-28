@@ -13,29 +13,35 @@
 #include <crypto++/base64.h>
 #endif
 
-#if defined(__APPLE__)
-#elif defined(WIN32)
-#else
-#endif
 
 using namespace std::chrono_literals;
 
 namespace networking {
 
 #ifndef NCRYPTO
-void to_json(nlohmann::json& json, const server_public_key& key) {
+std::string to_base64(const std::string& str) {
     std::string encoded;
-    CryptoPP::StringSource ss(key.public_key, true,
+    CryptoPP::StringSource ss(str, true,
                               new CryptoPP::Base64Encoder(new CryptoPP::StringSink(encoded)));
-    json["public key"] = encoded;
+    return encoded;
+}
+
+std::string from_base64(const std::string& str) {
+    std::string decoded;
+    CryptoPP::StringSource ss(str, true,
+                              new CryptoPP::Base64Decoder(new CryptoPP::StringSink(decoded)));
+
+    return decoded;
+}
+
+void to_json(nlohmann::json& json, const server_public_key& key) {
+    json["public key"] = to_base64(key.public_key);
+    json["signature"] = to_base64(key.signature);
 }
 
 void from_json(const nlohmann::json& json, server_public_key& key) {
-    std::string decoded;
-    CryptoPP::StringSource ss(json["public key"], true,
-                              new CryptoPP::Base64Decoder(new CryptoPP::StringSink(decoded)));
-
-    key.public_key = std::move(decoded);
+    key.public_key = from_base64(json["public key"]);
+    key.signature = from_base64(json["signature"]);
 }
 
 void to_json(nlohmann::json& json, const client_aes_key& key) {
@@ -98,7 +104,10 @@ void network_manager::thread_work() {
     while(is_running) {
         // Disconnect clients
         {
-            std::scoped_lock<async::spinlock, async::spinlock> lock(to_disconnect_lock, connections_lock);
+            std::lock(to_disconnect_lock, connections_lock);
+            std::lock_guard<async::spinlock> lk1(to_disconnect_lock, std::adopt_lock);
+            std::lock_guard<async::spinlock> lk2(connections_lock, std::adopt_lock);
+
             std::for_each(std::begin(to_disconnect), std::end(to_disconnect), [this](socket_handle handle) {
                 auto it = std::find_if(std::begin(connected_sockets), std::end(connected_sockets), [handle](const connected_socket& socket) {
                    return socket.handle == handle;
@@ -161,8 +170,8 @@ void network_manager::handle_connection(tcp_socket socket) {
     server_public_key k;
     CryptoPP::StringSink ss(k.public_key);
     rsa_pub.Save(ss);
+    crypto::rsa::sign(cert_priv, std::begin(k.public_key), std::end(k.public_key), std::back_inserter(k.signature));
 
-    auto p = packet::make(k, PACKET_SERVER_PUBLIC_KEY);
     // Send public key
     if(send_packet(connected.socket, packet::make(k, PACKET_SERVER_PUBLIC_KEY))) {
         connected.current_state = connected_socket::state::sending_key;
@@ -192,6 +201,17 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                 if(p->head.packet_id == PACKET_SERVER_PUBLIC_KEY) {
 #ifndef NCRYPTO
                     server_public_key server_key = p->as<server_public_key>();
+                    // Verifying signature
+                    if(!crypto::rsa::verify(cert_pub, std::begin(server_key.public_key), std::end(server_key.public_key),
+                                                     std::begin(server_key.signature), std::end(server_key.signature))) {
+                        // What to do if verification failed
+                        std::cerr << "you are contacting a untrusted server" << std::endl;
+                    }
+                    else {
+                        std::cout << "you are contacting a trusted server" << std::endl;
+                    }
+
+                    // Load public key
                     CryptoPP::StringSource ss(server_key.public_key, true);
                     rsa_pub.Load(ss);
 
@@ -208,7 +228,6 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                         connection.connection_promise.set_value(std::make_pair(true, connection.handle));
                     }
                     else {
-                        // TODO: Fix deadlock
                         handle_disconnection(connection);
                     }
 #else
@@ -325,6 +344,13 @@ void network_manager::load_rsa_keys(const char* private_key, const char *public_
 #endif
 }
 
+void network_manager::load_certificate(const char* private_key, const char* public_key) {
+#ifndef NCRYPTO
+    cert_priv = crypto::rsa::load_key<crypto::rsa::private_key >(private_key);
+    cert_pub = crypto::rsa::load_key<crypto::rsa::public_key>(public_key);
+#endif
+}
+
 void network_manager::send_to(const packet& p, socket_handle dest) {
     std::lock_guard<async::spinlock> lock(waiting_spin_lock);
     waiting_queue.emplace_back(dest, p);
@@ -376,6 +402,20 @@ std::pair<bool, packet> network_manager::poll_packet_from(int packet_type, socke
     }
 
     return std::make_pair(false, packet{});
-};
+}
+
+std::vector<std::pair<network_manager::socket_handle, packet>> network_manager::poll_packets() {
+    std::lock_guard<std::mutex> lock(received_lock);
+
+    std::vector<std::pair<socket_handle, packet>> received_vect;
+    received_vect.reserve(received_requests.size());
+
+    std::transform(std::begin(received_requests), std::end(received_requests), std::back_inserter(received_vect), [](const receive_request& req) {
+       return std::make_pair(req.src, req.content);
+    });
+    received_requests.clear();
+
+    return received_vect;
+}
 
 }

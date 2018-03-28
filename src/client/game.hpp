@@ -58,6 +58,7 @@ private:
 
     //Networking
     networking::network_manager& network;
+    networking::network_manager::socket_handle socket;
 
     // Initialization functions
     void load_flyweights();
@@ -70,7 +71,7 @@ private:
     void load_datas();
 
 public:
-    game(networking::network_manager& manager);
+    game(networking::network_manager& manager, networking::network_manager::socket_handle socket);
     
     void on_init() override;
     void on_update(frame_duration last_frame) override;
