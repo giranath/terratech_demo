@@ -75,9 +75,11 @@ OutputIt sign(private_key key, InputIt begin, InputIt end, OutputIt out) {
     return out;
 }
 
-template<typename InputIt>
-bool verify(public_key key, InputIt begin, InputIt end) {
-    bytes ciphertext(begin, end);
+template<typename InputIt, typename SignatureIt>
+bool verify(public_key key, InputIt data_begin, InputIt data_end, SignatureIt signature_begin, SignatureIt signature_end) {
+    bytes ciphertext(data_begin, data_end);
+    std::copy(signature_begin, signature_end, std::back_inserter(ciphertext));
+
     CryptoPP::AutoSeededRandomPool prng;
 
     CryptoPP::RSASSA_PKCS1v15_SHA_Verifier v(key);
