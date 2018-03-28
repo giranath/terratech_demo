@@ -21,6 +21,7 @@ namespace networking {
 #ifndef NCRYPTO
 struct server_public_key {
     std::string public_key;
+    std::string signature;
 };
 
 struct client_aes_key {

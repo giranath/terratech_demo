@@ -19,19 +19,29 @@ using namespace std::chrono_literals;
 namespace networking {
 
 #ifndef NCRYPTO
-void to_json(nlohmann::json& json, const server_public_key& key) {
+std::string to_base64(const std::string& str) {
     std::string encoded;
-    CryptoPP::StringSource ss(key.public_key, true,
+    CryptoPP::StringSource ss(str, true,
                               new CryptoPP::Base64Encoder(new CryptoPP::StringSink(encoded)));
-    json["public key"] = encoded;
+    return encoded;
+}
+
+std::string from_base64(const std::string& str) {
+    std::string decoded;
+    CryptoPP::StringSource ss(str, true,
+                              new CryptoPP::Base64Decoder(new CryptoPP::StringSink(decoded)));
+
+    return decoded;
+}
+
+void to_json(nlohmann::json& json, const server_public_key& key) {
+    json["public key"] = to_base64(key.public_key);
+    json["signature"] = to_base64(key.signature);
 }
 
 void from_json(const nlohmann::json& json, server_public_key& key) {
-    std::string decoded;
-    CryptoPP::StringSource ss(json["public key"], true,
-                              new CryptoPP::Base64Decoder(new CryptoPP::StringSink(decoded)));
-
-    key.public_key = std::move(decoded);
+    key.public_key = from_base64(json["public key"]);
+    key.signature = from_base64(json["signature"]);
 }
 
 void to_json(nlohmann::json& json, const client_aes_key& key) {
@@ -160,10 +170,9 @@ void network_manager::handle_connection(tcp_socket socket) {
     server_public_key k;
     CryptoPP::StringSink ss(k.public_key);
     rsa_pub.Save(ss);
+    crypto::rsa::sign(cert_priv, std::begin(k.public_key), std::end(k.public_key), std::back_inserter(k.signature));
 
-    auto p = packet::make(k, PACKET_SERVER_PUBLIC_KEY);
     // Send public key
-    // TODO: Sign public key
     if(send_packet(connected.socket, packet::make(k, PACKET_SERVER_PUBLIC_KEY))) {
         connected.current_state = connected_socket::state::sending_key;
     }
@@ -192,8 +201,17 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                 if(p->head.packet_id == PACKET_SERVER_PUBLIC_KEY) {
 #ifndef NCRYPTO
                     server_public_key server_key = p->as<server_public_key>();
-                    // TODO: Verify key
+                    // Verifying signature
+                    if(!crypto::rsa::verify(cert_pub, std::begin(server_key.public_key), std::end(server_key.public_key),
+                                                     std::begin(server_key.signature), std::end(server_key.signature))) {
+                        // What to do if verification failed
+                        std::cerr << "you are contacting a untrusted server" << std::endl;
+                    }
+                    else {
+                        std::cout << "you are contacting a trusted server" << std::endl;
+                    }
 
+                    // Load public key
                     CryptoPP::StringSource ss(server_key.public_key, true);
                     rsa_pub.Load(ss);
 
