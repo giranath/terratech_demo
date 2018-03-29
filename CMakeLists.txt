@@ -82,6 +82,9 @@ add_library(common
         src/common/async/task_executor.cpp
         src/common/async/task_executor.hpp
         src/common/async/task.hpp
+        src/common/async/spinlock.cpp
+        src/common/async/spinlock.hpp
+        src/common/async/event.hpp
 
         src/common/time/clock.hpp
 
@@ -109,6 +112,8 @@ add_library(common
         src/common/networking/world_chunk.hpp
         src/common/networking/world_map.hpp
         src/common/networking/networking_constant.hpp
+        src/common/networking/network_manager.cpp
+        src/common/networking/network_manager.hpp
 
         src/common/game/base_game.cpp 
         src/common/game/base_game.hpp
@@ -117,7 +122,11 @@ add_library(common
         src/common/memory/malloc_allocator.cpp
         src/common/memory/malloc_allocator.hpp
         src/common/memory/frame_allocator.cpp
-        src/common/memory/frame_allocator.hpp src/common/memory/heap_allocator.cpp src/common/memory/heap_allocator.hpp src/common/memory/allocator.hpp src/common/async/spinlock.cpp src/common/async/spinlock.hpp src/common/networking/network_manager.cpp src/common/networking/network_manager.hpp src/common/async/event.hpp)
+        src/common/memory/frame_allocator.hpp
+        src/common/memory/heap_allocator.cpp
+        src/common/memory/heap_allocator.hpp
+        src/common/memory/allocator.hpp
+        )
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${SDL2_INCLUDE_DIRS}
