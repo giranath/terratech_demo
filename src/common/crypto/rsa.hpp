@@ -7,7 +7,7 @@
 #include <cryptopp/rsa.h>
 #include <cryptopp/osrng.h>
 #include <cryptopp/files.h>
-#include <crypto++/filters.h>
+#include <cryptopp/filters.h>
 #elif defined(WIN32)
 #else
 #include <crypto++/rsa.h>
@@ -86,7 +86,7 @@ bool verify(public_key key, InputIt data_begin, InputIt data_end, SignatureIt si
     bool result = false;
     CryptoPP::ArraySource(&ciphertext.front(), ciphertext.size(), true,
                           new CryptoPP::SignatureVerificationFilter(v,
-                                                                    new CryptoPP::ArraySink(reinterpret_cast<byte*>(&result), sizeof(result)),
+                                                                    new CryptoPP::ArraySink(reinterpret_cast<uint8_t*>(&result), sizeof(result)),
                                                                     CryptoPP::SignatureVerificationFilter::PUT_RESULT | CryptoPP::SignatureVerificationFilter::SIGNATURE_AT_END
                                                                     ));
 

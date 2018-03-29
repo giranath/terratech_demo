@@ -26,9 +26,6 @@ namespace crypto { namespace aes {
 using key = std::vector<uint8_t>;
 using bytes = std::vector<uint8_t>;
 
-bytes encrypt(bytes plaintext, key key);
-bytes decrypt(bytes ciphertex, key key);
-
 template<typename InputIt, typename OutputIt>
 OutputIt encrypt(key k, InputIt begin, InputIt end, OutputIt out) {
     bytes plaintext(begin, end);
