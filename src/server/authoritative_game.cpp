@@ -166,7 +166,21 @@ void authoritative_game::on_update(frame_duration last_frame) {
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame);
 
     auto received_packets = network.poll_packets();
-    // TODO: Handle received packets
+    std::for_each(std::begin(received_packets), std::end(received_packets), [this](const std::pair<networking::network_manager::socket_handle, networking::packet>& pair) {
+        switch(pair.second.head.packet_id) {
+            case PACKET_UPDATE_UNIT_TARGET: {
+                networking::update_unit_target update = pair.second.as<networking::update_unit_target>();
+
+                auto bunit = units().get(update.id);
+                unit* u = static_cast<unit*>(bunit);
+
+                u->set_target_position(update.target);
+            }
+                break;
+            default:
+                break;
+        }
+    });
 
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {
         for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {

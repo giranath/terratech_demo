@@ -13,6 +13,7 @@
 #include <crypto++/base64.h>
 #endif
 
+#include "../actor/actor.hpp"
 
 using namespace std::chrono_literals;
 
@@ -59,6 +60,16 @@ void from_json(const nlohmann::json& json, client_aes_key& key) {
     key.key = std::move(decoded);
 }
 #endif
+
+void to_json(nlohmann::json& json, const update_unit_target& key) {
+    json["id"] = key.id;
+    json["target"] = key.target;
+}
+
+void from_json(const nlohmann::json& json, update_unit_target& key) {
+    key.id = json["id"];
+    key.target = json["target"];
+}
 
 network_manager::socket_handle network_manager::next_handle = 0;
 

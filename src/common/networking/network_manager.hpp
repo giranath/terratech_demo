@@ -9,6 +9,8 @@
 #include "../async/event.hpp"
 #include "../async/spinlock.hpp"
 
+#include <glm/glm.hpp>
+
 #include <thread>
 #include <atomic>
 #include <vector>
@@ -33,6 +35,13 @@ void from_json(const nlohmann::json& json, server_public_key& key);
 void to_json(nlohmann::json& json, const client_aes_key& key);
 void from_json(const nlohmann::json& json, client_aes_key& key);
 #endif
+
+struct update_unit_target {
+    uint32_t id;
+    glm::vec2 target;
+};
+void to_json(nlohmann::json& json, const update_unit_target& key);
+void from_json(const nlohmann::json& json, update_unit_target& key);
 
 // The network manager manages the details of the communication between
 // connected clients

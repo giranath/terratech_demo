@@ -288,14 +288,16 @@ void game::on_update(frame_duration last_frame_duration) {
     if(update_p.first) {
         std::vector<unit> units = update_p.second.as<std::vector<unit>>();
         for(const unit& u : units) {
-            base_unit* my_unit = this->units().get(u.get_id());
+            unit* my_unit = static_cast<unit*>(this->units().get(u.get_id()));
 
             if(my_unit) {
                 my_unit->set_position(u.get_position());
+                my_unit->set_target_position(u.get_target_position());
             }
         }
     }
 
+    // TODO: Modifier pour mettre a jour de plusieurs unités en parallèle
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {
         for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {
             unit* actual_unit = static_cast<unit*>(u->second.get());
@@ -382,12 +384,15 @@ void game::handle_event(SDL_Event event) {
             // clicked outside the map
             if (inside_world_bound(test))
             {
-                //add_unit(test, glm::vec2{0.f, 0.f}, next_unit_to_spawn);
-
                 for (auto u = units().begin_of_units(); u != units().end_of_units(); u++)
                 {
                     unit* actual_unit = static_cast<unit*>(u->second.get());
                     actual_unit->set_target_position({ test.x, test.z });
+
+                    networking::update_unit_target update;
+                    update.id = u->first;
+                    update.target = glm::vec2{test.x, test.z};
+                    network.send_to(networking::packet::make(update, PACKET_UPDATE_UNIT_TARGET), socket);
                 }
             }
         }
