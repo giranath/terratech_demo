@@ -3,6 +3,7 @@
 
 #include <terratech/terratech.h>
 #include <cstdint>
+#include "constants.hpp"
 
 class invalid_layer_exception{};
 
@@ -23,26 +24,6 @@ public:
 
     operator terra_chunk*() noexcept;
     operator const terra_chunk*() noexcept;
-};
-
-enum {
-    BIOME_DESERT,
-    BIOME_SNOW,
-    BIOME_GRASS,
-    BIOME_ROCK,
-    BIOME_WATER,
-    BIOME_COUNT
-};
-
-enum {
-    SITE_NOTHING,
-    SITE_TREE,
-    SITE_GOLD,
-    SITE_MAGIC_ESSENCE,
-    SITE_BERRY,
-    SITE_DEER,
-    SITE_STONE,
-    SITE_FISH,
 };
 
 class world_generator {

@@ -2,6 +2,8 @@
 #define MMAP_DEMO_WORLD_CHUNK_H
 
 #include "site.hpp"
+#include "constants.hpp"
+
 #include <terratech/terratech.h>
 #include <glm/glm.hpp>
 #include <vector>
@@ -17,6 +19,15 @@ struct vec3_hash {
     }
 };
 
+template<typename T>
+struct vec2_hash {
+std::size_t operator()(const T& vec) const {
+    using val_type = typename T::value_type;
+    return ((std::hash<val_type>()(vec.x)
+             ^ (std::hash<val_type>()(vec.y) << 1)) >> 1);
+}
+};
+
 class world_chunk {
 public:
     using position_type = glm::i32vec2;
@@ -24,6 +35,9 @@ private:
     std::vector<int> biomes;
     const position_type pos;
     std::unordered_map<glm::i32vec3, std::vector<site>, vec3_hash<glm::i32vec3>> sites;
+
+    static std::unordered_map<int, double> site_scores();
+    static std::unordered_map<int, double> biome_scores();
 public:
     world_chunk(int x, int z);
     /**
@@ -38,6 +52,8 @@ public:
     std::vector<const site*> sites_at(int x, int y, int z) const noexcept;
 
     position_type position() const noexcept;
+
+    double score() const noexcept;
 };
 
 #endif //MMAP_DEMO_WORLD_CHUNK_H

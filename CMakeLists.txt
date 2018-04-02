@@ -124,7 +124,7 @@ add_library(common
         src/common/memory/heap_allocator.cpp
         src/common/memory/heap_allocator.hpp
         src/common/memory/allocator.hpp
-        )
+        src/common/world/constants.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${SDL2_INCLUDE_DIRS}

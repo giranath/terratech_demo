@@ -5,6 +5,7 @@
 #include "../common/world/world.hpp"
 #include "../common/networking/network_manager.hpp"
 #include "../common/networking/packet.hpp"
+#include "../common/time/clock.hpp"
 
 class authoritative_game : public gameplay::base_game {
     struct client {
@@ -27,6 +28,8 @@ class authoritative_game : public gameplay::base_game {
     std::vector<client> connected_clients;
     std::mutex clients_mutex;
     networking::network_manager network;
+    game_time::highres_clock world_state_sync_clock;
+    glm::i32vec2 spawn_chunks[2];
 
     void load_flyweights();
     void load_assets();
@@ -37,6 +40,8 @@ class authoritative_game : public gameplay::base_game {
     void send_map(networking::network_manager::socket_handle client);
     void on_connection(networking::network_manager::socket_handle handle);
     void spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id);
+
+    void broadcast_current_state();
 
 public:
     authoritative_game();

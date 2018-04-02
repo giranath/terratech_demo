@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <numeric>
 
 world_chunk::world_chunk(int x, int z)
 : pos{x, z}{
@@ -82,4 +83,47 @@ std::vector<const site*> world_chunk::sites_at(int x, int y, int z) const noexce
 
 world_chunk::position_type world_chunk::position() const noexcept {
     return pos;
+}
+
+std::unordered_map<int, double> world_chunk::site_scores() {
+    std::unordered_map<int, double> scores;
+    scores[SITE_TREE] = 10.0;
+    scores[SITE_BERRY] = 8.0;
+    scores[SITE_DEER] = 8.0;
+    scores[SITE_STONE] = 4.0;
+    scores[SITE_MAGIC_ESSENCE] = 4.0;
+    scores[SITE_GOLD] = 4.0;
+    scores[SITE_NOTHING] = 0.0;
+    scores[SITE_FISH] = 0.0;
+
+    return scores;
+}
+
+std::unordered_map<int, double> world_chunk::biome_scores() {
+    std::unordered_map<int, double> scores;
+    scores[BIOME_GRASS] = 10.0;
+    scores[BIOME_ROCK] = 5.0;
+    scores[BIOME_DESERT] = 2.0;
+    scores[BIOME_WATER] = 0.0;
+    scores[BIOME_SNOW] = 2.0;
+
+    return scores;
+}
+
+double world_chunk::score() const noexcept {
+    const auto& sites_s = site_scores();
+    const auto& biomes_s = biome_scores();
+
+    double score = std::accumulate(std::begin(biomes), std::end(biomes), 0.0, [&biomes_s](double current, int biome) {
+        return current + biomes_s.at(biome);
+    });
+
+    score = std::accumulate(std::begin(sites), std::end(sites), score, [&sites_s](double current, auto pair) {
+        if(pair.second.empty()) {
+            return current;
+        }
+        return current + sites_s.at(pair.second.front().type());
+    });
+
+    return score;
 }

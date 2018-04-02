@@ -279,7 +279,7 @@ void game::on_update(frame_duration last_frame_duration) {
     if(p.first) {
         std::vector<unit> units = p.second.as<std::vector<unit>>();
         for(const unit& u : units) {
-            add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
+            add_unit(u.get_id(), u.get_position() * rendering::chunk_renderer::SQUARE_SIZE, u.get_target_position() * rendering::chunk_renderer::SQUARE_SIZE, u.get_type_id());
         }
     }
 
@@ -288,10 +288,11 @@ void game::on_update(frame_duration last_frame_duration) {
     if(update_p.first) {
         std::vector<unit> units = update_p.second.as<std::vector<unit>>();
         for(const unit& u : units) {
-            base_unit* my_unit = this->units().get(u.get_id());
+            unit* my_unit = static_cast<unit*>(this->units().get(u.get_id()));
 
             if(my_unit) {
-                my_unit->set_position(u.get_position());
+                my_unit->set_position(u.get_position() * rendering::chunk_renderer::SQUARE_SIZE);
+                my_unit->set_target_position(u.get_target_position() * rendering::chunk_renderer::SQUARE_SIZE);
             }
         }
     }
