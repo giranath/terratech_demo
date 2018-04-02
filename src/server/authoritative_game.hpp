@@ -33,6 +33,8 @@ class authoritative_game : public gameplay::base_game {
     void generate_world();
     void setup_listener();
 
+    void send_flyweights(networking::network_manager::socket_handle client);
+    void send_map(networking::network_manager::socket_handle client);
     void on_connection(networking::network_manager::socket_handle handle);
     void spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id);
 

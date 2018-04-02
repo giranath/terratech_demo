@@ -109,22 +109,16 @@ void authoritative_game::on_init() {
     setup_listener();
 }
 
-void authoritative_game::on_connection(networking::network_manager::socket_handle handle) {
-    client connected_client(handle);
-    {
-        std::lock_guard<std::mutex> lock(clients_mutex);
-        connected_clients.push_back(connected_client);
-    }
-
-    // Send the flyweights
+void authoritative_game::send_flyweights(networking::network_manager::socket_handle client) {
     std::cout << "sending flyweights..." << std::endl;
     std::unordered_map<std::string, unit_flyweight> serialized_flyweights;
     for(auto it = unit_flyweights().begin(); it != unit_flyweights().end(); ++it) {
         serialized_flyweights.emplace(std::to_string(it->first), it->second);
     }
-    network.send_to(networking::packet::make(serialized_flyweights, PACKET_SETUP_FLYWEIGHTS), handle);
+    network.send_to(networking::packet::make(serialized_flyweights, PACKET_SETUP_FLYWEIGHTS), client);
+}
 
-    // Send the map
+void authoritative_game::send_map(networking::network_manager::socket_handle client) {
     std::cout << "sending map..." << std::endl;
     std::vector<networking::world_chunk> chunks_to_send;
     chunks_to_send.reserve(std::distance(world.begin(), world.end()));
@@ -145,7 +139,19 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
         return networking::world_chunk(chunk.position().x, chunk.position().y, biomes);
     });
 
-    network.send_to(networking::packet::make(chunks_to_send, PACKET_SETUP_CHUNK), handle);
+    network.send_to(networking::packet::make(chunks_to_send, PACKET_SETUP_CHUNK), client);
+}
+
+void authoritative_game::on_connection(networking::network_manager::socket_handle handle) {
+    client connected_client(handle);
+    {
+        std::lock_guard<std::mutex> lock(clients_mutex);
+        connected_clients.push_back(connected_client);
+    }
+
+    // Send initial data to the newly connected client
+    send_flyweights(handle);
+    send_map(handle);
 
     spawn_unit(connected_client.id, glm::vec3(0.f, 0.f, 0.f), glm::vec2{1000.f, 1000.f}, 106);
 }
