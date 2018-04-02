@@ -219,17 +219,44 @@ void authoritative_game::generate_world() {
         }
     }
 
-    // TODO: Split indices to check into multiple buckets and find best match in each bucket
-    // TODO: After that, find the very best match from all buckets
-    auto f = push_task(std::make_unique<starting_point_finding_task>(std::begin(indices_to_check), std::end(indices_to_check), region_scores));
+    // Splits the load on 4 threads
+    const std::size_t BUCKET_COUNT = 4;
+    const std::size_t BUCKET_SIZE = (indices_to_check.size() / BUCKET_COUNT) + 1;
+    std::size_t missing_count = indices_to_check.size();
 
-    auto task = f.get();
-    starting_point_finding_task* finding_task = static_cast<starting_point_finding_task*>(task.get());
+    // Create 4 processing batch
+    std::vector<async::task_executor::task_future> bucket_futures;
+    auto begin_of_bucket = std::begin(indices_to_check);
+    for(std::size_t i = 0; i < BUCKET_COUNT; ++i) {
+        const std::size_t size = std::min(BUCKET_SIZE, missing_count);
 
-    auto pair = finding_task->found();
+        auto end_of_bucket = std::next(begin_of_bucket, size);
+        bucket_futures.push_back(push_task(std::make_unique<starting_point_finding_task>(std::begin(indices_to_check),
+                                                                                         std::end(indices_to_check),
+                                                                                         region_scores)));
 
-    spawn_chunks[0] = glm::i32vec2(std::get<0>(region_scores[pair.first]), std::get<1>(region_scores[pair.first]));
-    spawn_chunks[1] = glm::i32vec2(std::get<0>(region_scores[pair.second]), std::get<1>(region_scores[pair.second]));
+        begin_of_bucket = end_of_bucket;
+        missing_count -= size;
+    }
+
+    // Wait every batch to be processed
+    std::vector<std::pair<std::size_t, std::size_t>> best_pairs;
+    std::transform(std::begin(bucket_futures), std::end(bucket_futures), std::back_inserter(best_pairs), [](async::task_executor::task_future& future) {
+        auto task = future.get();
+        starting_point_finding_task* finding_task = static_cast<starting_point_finding_task*>(task.get());
+
+        return finding_task->found();
+    });
+
+    // Find best score in matching points
+    auto best_pair = std::max_element(std::begin(best_pairs), std::end(best_pairs),
+                                      [&region_scores](const std::pair<std::size_t, std::size_t>& a,
+                                         const std::pair<std::size_t, std::size_t>& b) {
+        return std::get<2>(region_scores[a.first]) < std::get<2>(region_scores[b.first]);
+    });
+
+    spawn_chunks[0] = glm::i32vec2(std::get<0>(region_scores[best_pair->first]), std::get<1>(region_scores[best_pair->first]));
+    spawn_chunks[1] = glm::i32vec2(std::get<0>(region_scores[best_pair->second]), std::get<1>(region_scores[best_pair->second]));
 }
 
 void authoritative_game::setup_listener() {

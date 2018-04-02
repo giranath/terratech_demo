@@ -279,8 +279,14 @@ void game::on_update(frame_duration last_frame_duration) {
     if(p.first) {
         std::vector<unit> units = p.second.as<std::vector<unit>>();
         for(const unit& u : units) {
-            add_unit(u.get_id(), u.get_position() * rendering::chunk_renderer::SQUARE_SIZE, u.get_target_position() * rendering::chunk_renderer::SQUARE_SIZE, u.get_type_id());
+            add_unit(u.get_id(),
+                     u.get_position() * rendering::chunk_renderer::SQUARE_SIZE,
+                     u.get_target_position() * rendering::chunk_renderer::SQUARE_SIZE,
+                     u.get_type_id());
         }
+
+        glm::vec3 target_position = units.front().get_position() * rendering::chunk_renderer::SQUARE_SIZE;
+        game_camera.reset({target_position.x, game_camera.position().y, target_position.z});
     }
 
     // Update units positions
