@@ -6,12 +6,19 @@
 #include "../common/networking/network_manager.hpp"
 #include "../common/networking/packet.hpp"
 #include "../common/time/clock.hpp"
+#include <unordered_set>
 
 class authoritative_game : public gameplay::base_game {
     struct client {
         static uint8_t next_id;
         networking::network_manager::socket_handle socket;
         uint8_t id;
+
+        // The units this player knows about
+        std::unordered_set<uint32_t> known_units;
+
+        // The chunks this player knows about
+        std::unordered_set<glm::i32vec2, vec2_hash<glm::i32vec2>> known_chunks;
 
         explicit client(networking::network_manager::socket_handle socket)
         : socket(socket)
@@ -33,11 +40,12 @@ class authoritative_game : public gameplay::base_game {
 
     void load_flyweights();
     void load_assets();
+    void find_spawn_chunks();
     void generate_world();
     void setup_listener();
 
     void send_flyweights(networking::network_manager::socket_handle client);
-    void send_map(networking::network_manager::socket_handle client);
+    void send_map(const client& connecting_client);
     void on_connection(networking::network_manager::socket_handle handle);
     void spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id);
 

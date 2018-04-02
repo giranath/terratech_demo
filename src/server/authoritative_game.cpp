@@ -17,6 +17,9 @@
 //  - lobby
 //  - gameplay
 
+// TODO:
+// Keep track of what each player can see
+
 uint8_t authoritative_game::client::next_id = 0;
 
 authoritative_game::authoritative_game()
@@ -131,15 +134,7 @@ public:
     }
 };
 
-void authoritative_game::generate_world() {
-    std::cout << "generating world..." << std::endl;
-
-    for(std::size_t x = 0; x < 20; ++x) {
-        for(std::size_t z = 0; z < 20; ++z) {
-            world_chunk& chunk = world.generate_at(x, z);
-        }
-    }
-
+void authoritative_game::find_spawn_chunks() {
     std::vector<async::task_executor::task_future> chunk_scores_tasks;
     std::transform(std::begin(world), std::end(world), std::back_inserter(chunk_scores_tasks), [this](const world_chunk& chunk) {
         return push_task(std::make_unique<chunk_score_calculator_task>(chunk));
@@ -251,12 +246,24 @@ void authoritative_game::generate_world() {
     // Find best score in matching points
     auto best_pair = std::max_element(std::begin(best_pairs), std::end(best_pairs),
                                       [&region_scores](const std::pair<std::size_t, std::size_t>& a,
-                                         const std::pair<std::size_t, std::size_t>& b) {
-        return std::get<2>(region_scores[a.first]) < std::get<2>(region_scores[b.first]);
-    });
+                                                       const std::pair<std::size_t, std::size_t>& b) {
+                                          return std::get<2>(region_scores[a.first]) < std::get<2>(region_scores[b.first]);
+                                      });
 
     spawn_chunks[0] = glm::i32vec2(std::get<0>(region_scores[best_pair->first]), std::get<1>(region_scores[best_pair->first]));
     spawn_chunks[1] = glm::i32vec2(std::get<0>(region_scores[best_pair->second]), std::get<1>(region_scores[best_pair->second]));
+}
+
+void authoritative_game::generate_world() {
+    std::cout << "generating world..." << std::endl;
+
+    for(std::size_t x = 0; x < 20; ++x) {
+        for(std::size_t z = 0; z < 20; ++z) {
+            world_chunk& chunk = world.generate_at(x, z);
+        }
+    }
+
+    find_spawn_chunks();
 }
 
 void authoritative_game::setup_listener() {
@@ -311,12 +318,17 @@ void authoritative_game::send_flyweights(networking::network_manager::socket_han
     network.send_to(networking::packet::make(serialized_flyweights, PACKET_SETUP_FLYWEIGHTS), client);
 }
 
-void authoritative_game::send_map(networking::network_manager::socket_handle client) {
+void authoritative_game::send_map(const client& connecting_client) {
     std::cout << "sending map..." << std::endl;
     std::vector<networking::world_chunk> chunks_to_send;
     chunks_to_send.reserve(std::distance(world.begin(), world.end()));
 
-    std::transform(world.begin(), world.end(), std::back_inserter(chunks_to_send), [](const world_chunk& chunk) {
+    world::chunk_collection filtered_chunks;
+    std::copy_if(std::begin(world), std::end(world), std::back_inserter(filtered_chunks), [&connecting_client](const world_chunk& chunk) {
+       return connecting_client.known_chunks.find(chunk.position()) != std::end(connecting_client.known_chunks);
+    });
+
+    std::transform(std::begin(filtered_chunks), std::end(filtered_chunks), std::back_inserter(chunks_to_send), [&connecting_client](const world_chunk& chunk) {
         std::vector<uint8_t> biomes;
         biomes.reserve(world::CHUNK_WIDTH * world::CHUNK_HEIGHT * world::CHUNK_DEPTH);
 
@@ -324,7 +336,9 @@ void authoritative_game::send_map(networking::network_manager::socket_handle cli
         for(uint32_t y = 0; y < world::CHUNK_HEIGHT; ++y) {
             for(uint32_t z = 0; z < world::CHUNK_DEPTH; ++z) {
                 for(uint32_t x = 0; x < world::CHUNK_WIDTH; ++x) {
-                    biomes.push_back(static_cast<uint8_t>(chunk.biome_at(static_cast<int>(x), static_cast<int>(y), static_cast<int>(z))));
+                        biomes.push_back(static_cast<uint8_t>(chunk.biome_at(static_cast<int>(x),
+                                                                             static_cast<int>(y),
+                                                                             static_cast<int>(z))));
                 }
             }
         }
@@ -332,11 +346,19 @@ void authoritative_game::send_map(networking::network_manager::socket_handle cli
         return networking::world_chunk(chunk.position().x, chunk.position().y, biomes);
     });
 
-    network.send_to(networking::packet::make(chunks_to_send, PACKET_SETUP_CHUNK), client);
+    network.send_to(networking::packet::make(chunks_to_send, PACKET_SETUP_CHUNK), connecting_client.socket);
 }
 
 void authoritative_game::on_connection(networking::network_manager::socket_handle handle) {
     client connected_client(handle);
+
+    glm::i32vec2 spawn_position = spawn_chunks[connected_client.id - 1];
+    glm::vec3 starting_position(spawn_position.x * world::CHUNK_WIDTH,
+                                0.f,
+                                spawn_position.y * world::CHUNK_DEPTH);
+
+    connected_client.known_chunks.insert(spawn_position);
+
     {
         std::lock_guard<std::mutex> lock(clients_mutex);
         connected_clients.push_back(connected_client);
@@ -344,13 +366,12 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
 
     // Send initial data to the newly connected client
     send_flyweights(handle);
-    send_map(handle);
+
+    // Only send initial chunks
+    send_map(connected_client);
 
     // TODO: Improve this
-    glm::i32vec2 spawn_position = spawn_chunks[connected_client.id - 1];
-    glm::vec3 starting_position(spawn_position.x * world::CHUNK_WIDTH,
-                                0.f,
-                                spawn_position.y * world::CHUNK_DEPTH);
+
 
     // TODO: To remove
     spawn_unit(connected_client.id, starting_position, glm::vec2{starting_position.x, starting_position.z}, 106);

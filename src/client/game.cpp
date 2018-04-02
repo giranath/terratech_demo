@@ -254,11 +254,9 @@ void game::on_init() {
     // Setup controls
     setup_inputs();
 
-    // Setup world rendering
-    for(int x = 0; x < 20; ++x) {
-        for(int z = 0; z < 20; ++z) {
-            world_rendering.show(x, z);
-        }
+    // Only show know chunks
+    for(const world_chunk& known_chunks : game_world) {
+        world_rendering.show(known_chunks.position().x, known_chunks.position().y);
     }
 
     // Setup camera

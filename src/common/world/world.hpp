@@ -7,10 +7,11 @@
 #include <vector>
 
 class world {
+public:
     using chunk_collection = std::vector<world_chunk>;
     using iterator = chunk_collection::iterator;
     using const_iterator = chunk_collection::const_iterator;
-
+private:
     chunk_collection chunks;
 public:
     static const uint32_t CHUNK_WIDTH = 16;
