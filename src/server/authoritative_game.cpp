@@ -389,15 +389,25 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
 }
 
 void authoritative_game::broadcast_current_state() {
-    std::vector<unit> updated_units;
-    std::transform(units().begin_of_units(), units().end_of_units(), std::back_inserter(updated_units),
-                   [](const auto &p) {
-                       return *static_cast<unit *>(p.second.get());
-                   });
-    // Send unit update every frame
-    if(updated_units.size() > 0) {
-        network.broadcast(networking::packet::make(updated_units, PACKET_UPDATE_UNITS));
-    }
+    std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const client& c) {
+        // Send units known by this client
+        std::vector<unit> updated_units;
+        std::transform(units().begin_of_units(), units().end_of_units(), std::back_inserter(updated_units),
+                       [](const auto &p) {
+                           return *static_cast<unit *>(p.second.get());
+                       });
+        std::vector<unit> known_units;
+        known_units.reserve(updated_units.size());
+        std::copy_if(std::begin(updated_units), std::end(updated_units), std::back_inserter(known_units), [&c](const unit& u) {
+            return c.known_units.find(u.get_id()) != std::end(c.known_units);
+        });
+
+        // Send unit update every frame
+        if(updated_units.size() > 0) {
+            network.send_to(networking::packet::make(known_units, PACKET_UPDATE_UNITS), c.socket);
+        }
+    });
+
 }
 
 void authoritative_game::on_update(frame_duration last_frame) {
