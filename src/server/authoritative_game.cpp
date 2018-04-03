@@ -20,8 +20,6 @@
 // TODO:
 // Keep track of what each player can see
 
-uint8_t authoritative_game::client::next_id = 0;
-
 authoritative_game::authoritative_game()
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<server_unit_manager>())
 , world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()))
@@ -142,7 +140,7 @@ void authoritative_game::find_spawn_chunks() {
 
     // TODO: Do other stuff here
 
-    std::unordered_map<glm::i32vec2, double, vec2_hash<glm::i32vec2>> chunk_scores;
+    std::unordered_map<glm::i32vec2, double, util::vec2_hash<glm::i32vec2>> chunk_scores;
     for(async::task_executor::task_future& future : chunk_scores_tasks) {
         async::task_executor::task_ptr task = future.get();
         chunk_score_calculator_task* calculated_score = static_cast<chunk_score_calculator_task*>(task.get());

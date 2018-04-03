@@ -3,30 +3,12 @@
 
 #include "site.hpp"
 #include "constants.hpp"
+#include "../util/vec_hash.hpp"
 
 #include <terratech/terratech.h>
 #include <glm/glm.hpp>
 #include <vector>
 #include <unordered_map>
-
-template<typename T>
-struct vec3_hash {
-    std::size_t operator()(const T& vec) const {
-        using val_type = typename T::value_type;
-        return ((std::hash<val_type>()(vec.x)
-                 ^ (std::hash<val_type>()(vec.y) << 1)) >> 1)
-               ^ (std::hash<val_type>()(vec.z) << 1);
-    }
-};
-
-template<typename T>
-struct vec2_hash {
-std::size_t operator()(const T& vec) const {
-    using val_type = typename T::value_type;
-    return ((std::hash<val_type>()(vec.x)
-             ^ (std::hash<val_type>()(vec.y) << 1)) >> 1);
-}
-};
 
 class world_chunk {
 public:
@@ -34,7 +16,7 @@ public:
 private:
     std::vector<int> biomes;
     const position_type pos;
-    std::unordered_map<glm::i32vec3, std::vector<site>, vec3_hash<glm::i32vec3>> sites;
+    std::unordered_map<glm::i32vec3, std::vector<site>, util::vec3_hash<glm::i32vec3>> sites;
 
     static std::unordered_map<int, double> site_scores();
     static std::unordered_map<int, double> biome_scores();

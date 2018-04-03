@@ -124,7 +124,7 @@ add_library(common
         src/common/memory/heap_allocator.cpp
         src/common/memory/heap_allocator.hpp
         src/common/memory/allocator.hpp
-        src/common/world/constants.hpp)
+        src/common/world/constants.hpp src/common/util/vec_hash.hpp src/common/world/visibility_map.cpp src/common/world/visibility_map.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
         ${SDL2_INCLUDE_DIRS}
@@ -235,7 +235,7 @@ if (NOT DISABLE_SERVER)
     add_executable(server
             src/server/main.cpp
             src/server/authoritative_game.cpp
-            src/server/authoritative_game.hpp src/server/server_unit_manager.cpp src/server/server_unit_manager.hpp)
+            src/server/authoritative_game.hpp src/server/server_unit_manager.cpp src/server/server_unit_manager.hpp src/server/client.cpp src/server/client.hpp)
     target_include_directories(server PRIVATE
             ${terratech_INCLUDE_DIRS}
             ${CRYPTO++_INCLUDE_DIR}
