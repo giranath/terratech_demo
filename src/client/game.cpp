@@ -256,6 +256,7 @@ void game::on_init() {
 
     // Only show know chunks
     for(const world_chunk& known_chunks : game_world) {
+        std::cout << "initial chunk : " << known_chunks.position().x << ", " << known_chunks.position().y << std::endl;
         world_rendering.show(known_chunks.position().x, known_chunks.position().y);
     }
 
@@ -278,13 +279,30 @@ void game::on_update(frame_duration last_frame_duration) {
         std::vector<unit> units = p.second.as<std::vector<unit>>();
         for(const unit& u : units) {
             add_unit(u.get_id(),
-                     u.get_position() * rendering::chunk_renderer::SQUARE_SIZE,
-                     u.get_target_position() * rendering::chunk_renderer::SQUARE_SIZE,
+                     u.get_position(),
+                     u.get_target_position(),
                      u.get_type_id());
         }
 
-        glm::vec3 target_position = units.front().get_position() * rendering::chunk_renderer::SQUARE_SIZE;
-        game_camera.reset({target_position.x, game_camera.position().y, target_position.z});
+        glm::vec3 target_position = units.front().get_position();
+        game_camera.reset({target_position.x * rendering::chunk_renderer::SQUARE_SIZE,
+                           game_camera.position().y,
+                           target_position.z * rendering::chunk_renderer::SQUARE_SIZE});
+    }
+
+    // Update chunks
+    p = network.poll_packet_from(PACKET_SETUP_CHUNK, socket);
+    if(p.first) {
+        std::cout << "received new chunk" << std::endl;
+        auto chunks = p.second.as<std::vector<networking::world_chunk>>();
+
+        for(networking::world_chunk& received_chunk : chunks) {
+            world_chunk& game_chunk = game_world.add(received_chunk.x, received_chunk.y);
+            game_chunk.set_biome_at(received_chunk.regions_biome);
+
+            std::cout << "displaying " << received_chunk.x << ", " << received_chunk.y << std::endl;
+            world_rendering.show(received_chunk.x, received_chunk.y);
+        }
     }
 
     // Update units positions
@@ -295,8 +313,8 @@ void game::on_update(frame_duration last_frame_duration) {
             unit* my_unit = static_cast<unit*>(this->units().get(u.get_id()));
 
             if(my_unit) {
-                my_unit->set_position(u.get_position() * rendering::chunk_renderer::SQUARE_SIZE);
-                my_unit->set_target_position(u.get_target_position() * rendering::chunk_renderer::SQUARE_SIZE);
+                my_unit->set_position(u.get_position());
+                my_unit->set_target_position(u.get_target_position());
             }
         }
     }
@@ -314,7 +332,7 @@ void game::on_update(frame_duration last_frame_duration) {
 
             direction = glm::normalize(direction);
 
-            glm::vec3 move = actual_unit->get_position() + (direction * 100.0f * (last_frame_ms.count() / 1000.0f));
+            glm::vec3 move = actual_unit->get_position() + (direction * actual_unit->get_speed() * (last_frame_ms.count() / 1000.0f));
 
             actual_unit->set_position(move);
         }
@@ -331,7 +349,7 @@ void game::render() {
     // TODO: Render every units
     for(auto unit = units().begin_of_units(); unit != units().end_of_units(); ++unit) {
         rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
-                                          glm::translate(glm::mat4{1.f}, unit->second->get_position()),
+                                          glm::translate(glm::mat4{1.f}, unit->second->get_position() * rendering::chunk_renderer::SQUARE_SIZE),
                                           virtual_textures[unit->second->texture()].id , PROGRAM_BILLBOARD);
         mesh_rendering.push(std::move(renderer));
     }

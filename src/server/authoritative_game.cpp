@@ -150,9 +150,9 @@ public:
         auto units = units_.units_of(player_id);
         std::for_each(std::begin(units), std::end(units), [this](unit* u) {
             const int start_of_x = u->get_position().x - u->visibility_radius();
-            const int start_of_y = u->get_position().y - u->visibility_radius();
+            const int start_of_y = u->get_position().z - u->visibility_radius();
             const int end_of_x = u->get_position().x + u->visibility_radius();
-            const int end_of_y = u->get_position().y + u->visibility_radius();
+            const int end_of_y = u->get_position().z + u->visibility_radius();
 
             for(int y = std::max(0, start_of_y); y < std::min(static_cast<int>(visibility_.height()), end_of_y); ++y) {
                 for(int x = std::max(0, start_of_x); x < std::min(static_cast<int>(visibility_.width()), end_of_x); ++x) {
@@ -392,6 +392,7 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
                                 0.f,
                                 spawn_position.y * world::CHUNK_DEPTH);
 
+    std::cout << "client #" << connected_client.id << " spawns at " << spawn_position.x << ", " << spawn_position.y << std::endl;
     connected_client.known_chunks.insert(spawn_position);
 
     {
@@ -409,16 +410,29 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
 
 
     // TODO: To remove
-    spawn_unit(connected_client.id, starting_position, glm::vec2{starting_position.x, starting_position.z}, 106);
+    spawn_unit(connected_client.id, starting_position, glm::vec2{200, 200}, 106);
 }
 
 void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id) {
+    std::cout << "spawning unit " << flyweight_id
+              << " for player #" << static_cast<int>(owner)
+              << " at " << position.x << ", " << position.y << ", " << position.z
+              << std::endl;
     unit_manager& manager = units();
     server_unit_manager& units = static_cast<server_unit_manager&>(manager);
     auto created_unit = units.add_unit_to(owner, make_unit(position, target, flyweight_id));
 
     std::vector<unit> units_to_spawn;
     units_to_spawn.push_back(*static_cast<unit*>(created_unit.get()));
+
+    auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [owner](const client& c) {
+        return c.id == owner;
+    });
+    if(it != std::end(connected_clients)) {
+        for(const unit& u : units_to_spawn) {
+            it->known_units.emplace(u.get_id());
+        }
+    }
 
     network.broadcast(networking::packet::make(units_to_spawn, PACKET_SPAWN_UNITS));
 }
@@ -466,7 +480,7 @@ void authoritative_game::on_update(frame_duration last_frame) {
 
             direction = glm::normalize(direction);
 
-            glm::vec3 move = actual_unit->get_position() + (direction * 100.0f * (last_frame_ms.count() / 1000.0f));
+            glm::vec3 move = actual_unit->get_position() + (direction * actual_unit->get_speed() * (last_frame_ms.count() / 1000.0f));
 
             actual_unit->set_position(move);
         }
@@ -486,8 +500,33 @@ void authoritative_game::on_update(frame_duration last_frame) {
         future.wait();
     }
 
-    // TODO: Manage exploration from player
+    // Update known chunks of every clients
+    for(client& c : connected_clients) {
+        bool has_explored = false;
+        for(std::size_t y = 0; y < c.map_visibility.height(); ++y) {
+            for(std::size_t x = 0; x < c.map_visibility.width(); ++x) {
+                const int chunk_x = x / world::CHUNK_WIDTH;
+                const int chunk_z = y / world::CHUNK_DEPTH;
 
+                if(c.map_visibility.at(x, y) != visibility::unexplored) {
+                    if(c.known_chunks.find(glm::i32vec2(chunk_x, chunk_z)) == c.known_chunks.end()) {
+                        std::cout << "player #" << c.id << " has explored " << chunk_x << ", " << chunk_z << std::endl;
+                        has_explored = true;
+                    }
+
+                    c.known_chunks.emplace(chunk_x, chunk_z);
+                }
+            }
+        }
+
+        if(has_explored) {
+            send_map(c);
+        }
+    }
+    // If a new chunk is discovered, send it to the player
+    // If a unit is present in visibility field, add it to known units
+
+    // Broadcast current state every seconds
     if(world_state_sync_clock.elapsed_time<std::chrono::seconds>() >= std::chrono::seconds(1)) {
         broadcast_current_state();
         world_state_sync_clock.substract(std::chrono::seconds(1));
