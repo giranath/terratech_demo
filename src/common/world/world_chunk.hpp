@@ -33,6 +33,8 @@ public:
     std::vector<site*> sites_at(int x, int y, int z) noexcept;
     std::vector<const site*> sites_at(int x, int y, int z) const noexcept;
 
+    void set_site_at(int x, int y, int z, site s) noexcept;
+
     position_type position() const noexcept;
 
     double score() const noexcept;

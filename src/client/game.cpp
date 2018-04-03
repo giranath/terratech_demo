@@ -240,6 +240,10 @@ void game::on_init() {
             for(networking::world_chunk& received_chunk : chunks) {
                 world_chunk& game_chunk = game_world.add(received_chunk.x, received_chunk.y);
                 game_chunk.set_biome_at(received_chunk.regions_biome);
+
+                for(const networking::resource& res : received_chunk.sites) {
+                    game_chunk.set_site_at(res.x, 0, res.y, site(res.type, res.quantity));
+                }
             }
         }
         else {
@@ -299,6 +303,10 @@ void game::on_update(frame_duration last_frame_duration) {
         for(networking::world_chunk& received_chunk : chunks) {
             world_chunk& game_chunk = game_world.add(received_chunk.x, received_chunk.y);
             game_chunk.set_biome_at(received_chunk.regions_biome);
+
+            for(const networking::resource& res : received_chunk.sites) {
+                game_chunk.set_site_at(res.x, 0, res.y, site(res.type, res.quantity));
+            }
 
             std::cout << "displaying " << received_chunk.x << ", " << received_chunk.y << std::endl;
             world_rendering.show(received_chunk.x, received_chunk.y);

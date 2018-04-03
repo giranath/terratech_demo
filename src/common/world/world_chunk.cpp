@@ -81,6 +81,10 @@ std::vector<const site*> world_chunk::sites_at(int x, int y, int z) const noexce
     return ret_sites;
 }
 
+void world_chunk::set_site_at(int x, int y, int z, site s) noexcept {
+    sites[glm::i32vec3(x, y, z)].push_back(s);
+}
+
 world_chunk::position_type world_chunk::position() const noexcept {
     return pos;
 }

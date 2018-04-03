@@ -355,30 +355,37 @@ void authoritative_game::send_flyweights(networking::network_manager::socket_han
 
 void authoritative_game::send_map(const client& connecting_client) {
     std::cout << "sending map..." << std::endl;
-    std::vector<networking::world_chunk> chunks_to_send;
-    chunks_to_send.reserve(std::distance(world.begin(), world.end()));
-
     world::chunk_collection filtered_chunks;
     std::copy_if(std::begin(world), std::end(world), std::back_inserter(filtered_chunks), [&connecting_client](const world_chunk& chunk) {
        return connecting_client.known_chunks.find(chunk.position()) != std::end(connecting_client.known_chunks);
     });
 
+    std::vector<networking::world_chunk> chunks_to_send;
+    chunks_to_send.reserve(std::distance(world.begin(), world.end()));
     std::transform(std::begin(filtered_chunks), std::end(filtered_chunks), std::back_inserter(chunks_to_send), [&connecting_client](const world_chunk& chunk) {
         std::vector<uint8_t> biomes;
         biomes.reserve(world::CHUNK_WIDTH * world::CHUNK_HEIGHT * world::CHUNK_DEPTH);
 
+        std::vector<networking::resource> resources;
         // SETUP BIOMES
         for(uint32_t y = 0; y < world::CHUNK_HEIGHT; ++y) {
             for(uint32_t z = 0; z < world::CHUNK_DEPTH; ++z) {
                 for(uint32_t x = 0; x < world::CHUNK_WIDTH; ++x) {
-                        biomes.push_back(static_cast<uint8_t>(chunk.biome_at(static_cast<int>(x),
-                                                                             static_cast<int>(y),
-                                                                             static_cast<int>(z))));
+                    biomes.push_back(static_cast<uint8_t>(chunk.biome_at(static_cast<int>(x),
+                                                                         static_cast<int>(y),
+                                                                         static_cast<int>(z))));
+
+                    auto local_sites = chunk.sites_at(static_cast<int>(x),
+                                                      static_cast<int>(y),
+                                                      static_cast<int>(z));
+                    std::transform(std::begin(local_sites), std::end(local_sites), std::back_inserter(resources), [x, z](const site* site) {
+                        return networking::resource(x, z, site->type(), site->amount());
+                    });
                 }
             }
         }
 
-        return networking::world_chunk(chunk.position().x, chunk.position().y, biomes);
+        return networking::world_chunk(chunk.position().x, chunk.position().y, biomes, resources);
     });
 
     network.send_to(networking::packet::make(chunks_to_send, PACKET_SETUP_CHUNK), connecting_client.socket);
