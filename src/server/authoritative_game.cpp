@@ -452,7 +452,7 @@ void authoritative_game::broadcast_current_state() {
         });
 
         // Send unit update every frame
-        if(updated_units.size() > 0) {
+        if(known_units.size() > 0) {
             network.send_to(networking::packet::make(known_units, PACKET_UPDATE_UNITS), c.socket);
         }
     });
@@ -502,6 +502,17 @@ void authoritative_game::on_update(frame_duration last_frame) {
 
     // Update known chunks of every clients
     for(client& c : connected_clients) {
+        // The players always knows about it's units
+        c.known_units.clear();
+
+        auto players_units = units().units_of(c.id);
+        std::vector<uint32_t> unit_ids;
+        unit_ids.resize(players_units.size());
+        std::transform(std::begin(players_units), std::end(players_units), std::begin(unit_ids), [](const unit* u) {
+            return u->get_id();
+        });
+        c.known_units.insert(std::begin(unit_ids), std::end(unit_ids));
+
         bool has_explored = false;
         for(std::size_t y = 0; y < c.map_visibility.height(); ++y) {
             for(std::size_t x = 0; x < c.map_visibility.width(); ++x) {
@@ -510,11 +521,20 @@ void authoritative_game::on_update(frame_duration last_frame) {
 
                 if(c.map_visibility.at(x, y) != visibility::unexplored) {
                     if(c.known_chunks.find(glm::i32vec2(chunk_x, chunk_z)) == c.known_chunks.end()) {
-                        std::cout << "player #" << c.id << " has explored " << chunk_x << ", " << chunk_z << std::endl;
                         has_explored = true;
                     }
 
                     c.known_chunks.emplace(chunk_x, chunk_z);
+                }
+
+                if(c.map_visibility.at(x, y) == visibility::visible) {
+                    auto units_in_tile = units().units_in(collision::aabb_shape(glm::vec2(x, y), 1.0f));
+                    std::vector<uint32_t> units_ids(units_in_tile.size(), 0);
+                    std::transform(std::begin(units_in_tile), std::end(units_in_tile), std::begin(units_ids), [](const unit* u) {
+                       return u->get_id();
+                    });
+
+                    c.known_units.insert(std::begin(units_ids), std::end(units_ids));
                 }
             }
         }
@@ -523,8 +543,6 @@ void authoritative_game::on_update(frame_duration last_frame) {
             send_map(c);
         }
     }
-    // If a new chunk is discovered, send it to the player
-    // If a unit is present in visibility field, add it to known units
 
     // Broadcast current state every seconds
     if(world_state_sync_clock.elapsed_time<std::chrono::seconds>() >= std::chrono::seconds(1)) {

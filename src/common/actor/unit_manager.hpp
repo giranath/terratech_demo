@@ -4,6 +4,8 @@
 #include "base_unit.hpp"
 #include "unit.hpp"
 #include "target_handle.hpp"
+#include "../collision/circle_shape.hpp"
+#include "../collision/aabb_shape.hpp"
 
 #include <vector>
 #include <cstdint>
@@ -59,6 +61,8 @@ public:
 
     std::size_t count_units() const noexcept;
     std::vector<unit*> units_of(uint8_t player_id);
+    std::vector<unit*> units_in(collision::circle_shape shape);
+    std::vector<unit*> units_in(collision::aabb_shape shape);
 
 };
 #endif
