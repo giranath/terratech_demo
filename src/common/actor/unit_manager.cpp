@@ -59,3 +59,30 @@ unit_manager::iterator unit_manager::begin_of_units() {
 unit_manager::iterator unit_manager::end_of_units() {
     return units[static_cast<std::size_t>(actor_type::unit)].end();
 }
+
+std::size_t unit_manager::count_units() const noexcept {
+    return units[static_cast<std::size_t>(actor_type::unit)].size();
+}
+
+std::vector<unit*> unit_manager::units_of(uint8_t player_id) {
+    std::vector<base_unit*> units_pts;
+    units_pts.reserve(count_units());
+
+    std::transform(begin_of_units(), end_of_units(), std::back_inserter(units_pts), [](auto& p) {
+        return p.second.get();
+    });
+
+    std::vector<unit*> units;
+    units.reserve(units_pts.size());
+    std::transform(std::begin(units_pts), std::end(units_pts), std::back_inserter(units), [](base_unit* u) {
+        return static_cast<unit*>(u);
+    });
+
+    auto end = std::copy_if(std::begin(units), std::end(units), std::begin(units), [player_id](unit* u) {
+        return unit_id(u->get_id()).player_id == player_id;
+    });
+
+    units.resize(std::distance(std::begin(units), end));
+
+    return units;
+}

@@ -2,6 +2,7 @@
 #define MMAP_DEMO_SERVER_UNIT_MANAGER_HPP
 
 #include "../common/actor/unit_manager.hpp"
+#include "../common/actor/unit.hpp"
 
 #include <unordered_map>
 

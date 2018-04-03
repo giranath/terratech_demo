@@ -64,6 +64,10 @@ public:
         return flyweight->texture();
     }
 
+    float visibility_radius() const noexcept {
+        return flyweight->visibility();
+    }
+
     friend void from_json(const nlohmann::json& j, base_unit& u);
     friend void to_json(nlohmann::json& j, const base_unit& u);
 };

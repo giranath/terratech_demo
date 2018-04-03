@@ -27,6 +27,7 @@ private:
     float height_;
     float width_;
     int construction_time;
+    float visibility_radius;
     float speed;
     uint16_t damage;
     int16_t armor;
@@ -73,6 +74,7 @@ public:
         speed = json["WalkSpeed"];
         range = json["Range"];
         damage = json["Damage"];
+        visibility_radius = json["Visibility"];
         tranport_unit_capacity = json["TransportCapacity"];
         buildable_unit_id_list = json["BuildableUnit"].get<std::vector<int>>();
 
@@ -164,6 +166,10 @@ public:
 
     int id() const noexcept {
         return unit_id;
+    }
+
+    float visibility() const noexcept {
+        return visibility_radius;
     }
 
     friend void to_json(nlohmann::json& j, const unit_flyweight& uf);

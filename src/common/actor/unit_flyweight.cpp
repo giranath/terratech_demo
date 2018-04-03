@@ -26,7 +26,8 @@ void to_json(nlohmann::json& j, const unit_flyweight& uf)
             {"Height", uf.height_},
             {"Width", uf.width_},
             {"ConstructionTime", uf.construction_time},
-            {"Texture", uf.texture_handle}
+            {"Texture", uf.texture_handle},
+            {"Visibility", uf.visibility_radius}
     };
 }
 

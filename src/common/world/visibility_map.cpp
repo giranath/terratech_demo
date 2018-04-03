@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <iterator>
 
-namespace world {
-
-visibility_map::visibility_map(std::size_t width, std::size_t height) {
+visibility_map::visibility_map(std::size_t width, std::size_t height)
+: width_(width)
+, height_(height) {
     // At first each tile is unexplored
     tile_visibility.resize(height);
     for(std::size_t y = 0; y < height; ++y) {
@@ -40,4 +40,10 @@ void visibility_map::set(std::size_t x, std::size_t y, visibility value) noexcep
     tile_visibility[y][x] = value;
 }
 
+std::size_t visibility_map::width() const noexcept {
+    return width_;
+}
+
+std::size_t visibility_map::height() const noexcept {
+    return height_;
 }

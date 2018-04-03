@@ -2,6 +2,7 @@
 #define DEF_UNIT_MANAGER_HPP
 
 #include "base_unit.hpp"
+#include "unit.hpp"
 #include "target_handle.hpp"
 
 #include <vector>
@@ -12,9 +13,15 @@
 
 struct unit_id
 {
-    uint8_t player_id;
-    uint8_t unit_type;
-    uint16_t counter;
+    uint8_t player_id = 0;
+    uint8_t unit_type = 0;
+    uint16_t counter  = 0;
+
+    unit_id() = default;
+    unit_id(uint32_t v) {
+        from_uint32_t(v);
+    }
+
     uint32_t to_uint32_t() const
     {
         return *reinterpret_cast<const uint32_t*>(this);
@@ -49,6 +56,9 @@ public:
 
     iterator begin_of_units();
     iterator end_of_units();
+
+    std::size_t count_units() const noexcept;
+    std::vector<unit*> units_of(uint8_t player_id);
 
 };
 #endif
