@@ -5,10 +5,10 @@ enum
 {
     PACKET_SERVER_PUBLIC_KEY,         // Le serveur envoie sa clé publique
     PACKET_SETUP_ENCRYPTION_KEY,      // Le client envoie sa clé AES
-    PACKET_SETUP_WORLD_SIZE,
-    PACKET_SETUP_CHUNK,
-    PACKET_SETUP_FLYWEIGHTS,
-    PACKET_SPAWN_UNITS,
-    PACKET_UPDATE_UNITS
+    PACKET_SETUP_CHUNK,               // Le serveur envoie plusieurs chunks
+    PACKET_SETUP_FLYWEIGHTS,          // Le serveur envoie les types d'unités
+    PACKET_SPAWN_UNITS,               // Le client doit ajouter de nouveaux unités
+    PACKET_UPDATE_UNITS,              // Le client doit mettre à jour des unités
+    PACKET_GAME_STATE_CHANGED,        // Le client doit mettre à jour l'état du jeu (en attente, en cours, terminée)
 };
 #endif

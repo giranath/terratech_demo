@@ -25,5 +25,6 @@
 	"WalkableType": ["Water"],
     "Width": 1.0,
     "Wood": 50,
-    "id": 101
+    "id": 101,
+    "Visibility" : 3
 }

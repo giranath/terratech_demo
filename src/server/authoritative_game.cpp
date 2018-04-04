@@ -17,7 +17,8 @@
 //  - lobby
 //  - gameplay
 
-uint8_t authoritative_game::client::next_id = 0;
+// TODO:
+// Keep track of what each player can see
 
 authoritative_game::authoritative_game()
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<server_unit_manager>())
@@ -53,18 +54,251 @@ void authoritative_game::load_assets() {
     // TODO: Load world generation
 }
 
-void authoritative_game::generate_world() {
-    std::cout << "generating world..." << std::endl;
-    for(std::size_t x = 0; x < 20; ++x) {
-        for(std::size_t z = 0; z < 20; ++z) {
-            world.generate_at(x, z);
+class chunk_score_task : public async::base_task {
+    const world_chunk& chunk_;
+    double score_;
+protected:
+    void set_score(double value) {
+        score_ = value;
+    }
+public:
+    chunk_score_task(const world_chunk& chunk)
+    : chunk_(chunk)
+    , score_(0.0) {
+
+    }
+
+    double score() const noexcept {
+        return score_;
+    }
+
+    const world_chunk& chunk() const {
+        return chunk_;
+    }
+};
+
+class chunk_score_calculator_task : public chunk_score_task {
+public:
+    explicit chunk_score_calculator_task(const world_chunk& chunk)
+    : chunk_score_task(chunk) {
+
+    }
+
+    void execute() override {
+        set_score(chunk().score());
+    }
+};
+
+class starting_point_finding_task : public async::base_task {
+public:
+    using iterator = std::unordered_map<std::size_t, std::vector<std::size_t>>::const_iterator;
+private:
+    std::pair<std::size_t, std::size_t> found_pair;
+    const std::vector<std::tuple<int, int, double>>& region_scores;
+    iterator begin;
+    iterator end;
+public:
+    starting_point_finding_task(iterator begin, iterator end, const std::vector<std::tuple<int, int, double>>& regions)
+    : region_scores(regions)
+    , begin(begin)
+    , end(end) {
+
+    }
+
+    void execute() override {
+        double bigest_score = -1.0;
+        std::for_each(begin, end, [this, &bigest_score](const auto& pair) {
+            const double score_to_match = std::get<2>(region_scores[pair.first]);
+
+            if(score_to_match > bigest_score) {
+                auto best_match = std::min_element(std::begin(pair.second), std::end(pair.second),
+                                                   [this, score_to_match](std::size_t a, std::size_t b) {
+                                                       const double score_diff_a = std::abs(
+                                                               score_to_match - std::get<2>(region_scores[a]));
+                                                       const double score_diff_b = std::abs(
+                                                               score_to_match - std::get<2>(region_scores[b]));
+
+                                                       return score_diff_a < score_diff_b;
+                                                   });
+                auto best_match_pair = std::make_pair(pair.first, *best_match);
+                std::swap(found_pair, best_match_pair);
+                bigest_score = score_to_match;
+            }
+        });
+    }
+
+    std::pair<std::size_t, std::size_t> found() const noexcept {
+        return found_pair;
+    }
+};
+
+class update_player_visibility : public async::base_task {
+    uint8_t player_id;
+    visibility_map& visibility_;
+    unit_manager& units_;
+public:
+    update_player_visibility(uint8_t player, visibility_map& v, unit_manager& units)
+    : player_id(player)
+    , visibility_(v)
+    , units_(units) {
+
+    }
+
+    void execute() override {
+        visibility_.clear();
+
+        auto units = units_.units_of(player_id);
+        std::for_each(std::begin(units), std::end(units), [this](unit* u) {
+            const int start_of_x = u->get_position().x - u->visibility_radius();
+            const int start_of_y = u->get_position().z - u->visibility_radius();
+            const int end_of_x = u->get_position().x + u->visibility_radius();
+            const int end_of_y = u->get_position().z + u->visibility_radius();
+
+            for(int y = std::max(0, start_of_y); y < std::min(static_cast<int>(visibility_.height()), end_of_y); ++y) {
+                for(int x = std::max(0, start_of_x); x < std::min(static_cast<int>(visibility_.width()), end_of_x); ++x) {
+                    // Test each tiles
+                    const glm::vec3 tile_pos(x, 0, y);
+                    const glm::vec3 diff = tile_pos - u->get_position();
+
+                    if(diff.length() <= u->visibility_radius()) {
+                        visibility_.set(x, y, visibility::visible);
+                    }
+                }
+            }
+        });
+    }
+};
+
+void authoritative_game::find_spawn_chunks() {
+    std::vector<async::task_executor::task_future> chunk_scores_tasks;
+    std::transform(std::begin(world), std::end(world), std::back_inserter(chunk_scores_tasks), [this](const world_chunk& chunk) {
+        return push_task(std::make_unique<chunk_score_calculator_task>(chunk));
+    });
+
+    // TODO: Do other stuff here
+
+    std::unordered_map<glm::i32vec2, double, util::vec2_hash<glm::i32vec2>> chunk_scores;
+    for(async::task_executor::task_future& future : chunk_scores_tasks) {
+        async::task_executor::task_ptr task = future.get();
+        chunk_score_calculator_task* calculated_score = static_cast<chunk_score_calculator_task*>(task.get());
+        chunk_scores.emplace(glm::i32vec2(calculated_score->chunk().position().x, calculated_score->chunk().position().y), calculated_score->score());
+    }
+
+    std::vector<std::tuple<int, int, double>> region_scores;
+    std::for_each(std::begin(chunk_scores), std::end(chunk_scores), [&chunk_scores, &region_scores](const std::pair<glm::i32vec2, double>& pair) {
+        std::vector<double> n;
+
+        if(pair.first.x > 0) {
+            n.push_back(chunk_scores[{pair.first.x - 1, pair.first.y}]);
+
+            if(pair.first.y > 0) {
+                n.push_back(chunk_scores[{pair.first.x - 1, pair.first.y - 1}]);
+            }
+
+            if(pair.first.y < 20) {
+                n.push_back(chunk_scores[{pair.first.x - 1, pair.first.y + 1}]);
+            }
+        }
+
+        if(pair.first.y > 0) {
+            n.push_back(chunk_scores[{pair.first.x, pair.first.y - 1}]);
+        }
+
+        if(pair.first.x < 20) {
+            n.push_back(chunk_scores[{pair.first.x + 1, pair.first.y}]);
+
+            if(pair.first.y > 0) {
+                n.push_back(chunk_scores[{pair.first.x + 1, pair.first.y - 1}]);
+            }
+
+            if(pair.first.y < 20) {
+                n.push_back(chunk_scores[{pair.first.x + 1, pair.first.y + 1}]);
+            }
+        }
+
+        if(pair.first.y < 20) {
+            n.push_back(chunk_scores[{pair.first.x, pair.first.y + 1}]);
+        }
+
+        region_scores.emplace_back(pair.first.x, pair.first.y, std::accumulate(std::begin(n), std::end(n), pair.second));
+    });
+
+    std::sort(std::begin(region_scores), std::end(region_scores), [](const std::tuple<int, int, double>& a, const std::tuple<int, int, double>& b) {
+        return std::get<2>(a) < std::get<2>(b);
+    });
+
+    std::size_t chunk_a_index = 0;
+    std::size_t chunk_b_index = 1;
+
+    // Associate each chunk with other chunk to check
+    std::unordered_map<std::size_t, std::vector<std::size_t>> indices_to_check;
+
+    for(std::size_t i = 0; i < region_scores.size(); ++i) {
+        for(std::size_t j = 0; j < region_scores.size(); ++j) {
+            if(i != j) {
+                // Check if an association may be done
+                const glm::vec2 chunk_a_pos(std::get<0>(region_scores[i]), std::get<1>(region_scores[i]));
+                const glm::vec2 chunk_b_pos(std::get<0>(region_scores[j]), std::get<1>(region_scores[j]));
+
+                float dist = glm::length(chunk_b_pos - chunk_a_pos);
+                // Players must be separated by at least 5 chunks
+                if(dist > 10.f) {
+                    indices_to_check[i].push_back(j);
+                }
+            }
         }
     }
 
-    // TODO: Caculate best starting spots
-    // Using the thread pool, calculate a score for each individual chunk based on biomes + sites
-    //                        then, accumulate a chunk's score with it's neighbours
-    //                        then, try to find two biomes with similar scores at a certain distance
+    // Splits the load on 4 threads
+    const std::size_t BUCKET_COUNT = 4;
+    const std::size_t BUCKET_SIZE = (indices_to_check.size() / BUCKET_COUNT) + 1;
+    std::size_t missing_count = indices_to_check.size();
+
+    // Create 4 processing batch
+    std::vector<async::task_executor::task_future> bucket_futures;
+    auto begin_of_bucket = std::begin(indices_to_check);
+    for(std::size_t i = 0; i < BUCKET_COUNT; ++i) {
+        const std::size_t size = std::min(BUCKET_SIZE, missing_count);
+
+        auto end_of_bucket = std::next(begin_of_bucket, size);
+        bucket_futures.push_back(push_task(std::make_unique<starting_point_finding_task>(std::begin(indices_to_check),
+                                                                                         std::end(indices_to_check),
+                                                                                         region_scores)));
+
+        begin_of_bucket = end_of_bucket;
+        missing_count -= size;
+    }
+
+    // Wait every batch to be processed
+    std::vector<std::pair<std::size_t, std::size_t>> best_pairs;
+    std::transform(std::begin(bucket_futures), std::end(bucket_futures), std::back_inserter(best_pairs), [](async::task_executor::task_future& future) {
+        auto task = future.get();
+        starting_point_finding_task* finding_task = static_cast<starting_point_finding_task*>(task.get());
+
+        return finding_task->found();
+    });
+
+    // Find best score in matching points
+    auto best_pair = std::max_element(std::begin(best_pairs), std::end(best_pairs),
+                                      [&region_scores](const std::pair<std::size_t, std::size_t>& a,
+                                                       const std::pair<std::size_t, std::size_t>& b) {
+                                          return std::get<2>(region_scores[a.first]) < std::get<2>(region_scores[b.first]);
+                                      });
+
+    spawn_chunks[0] = glm::i32vec2(std::get<0>(region_scores[best_pair->first]), std::get<1>(region_scores[best_pair->first]));
+    spawn_chunks[1] = glm::i32vec2(std::get<0>(region_scores[best_pair->second]), std::get<1>(region_scores[best_pair->second]));
+}
+
+void authoritative_game::generate_world() {
+    std::cout << "generating world..." << std::endl;
+
+    for(std::size_t x = 0; x < 20; ++x) {
+        for(std::size_t z = 0; z < 20; ++z) {
+            world_chunk& chunk = world.generate_at(x, z);
+        }
+    }
+
+    find_spawn_chunks();
 }
 
 void authoritative_game::setup_listener() {
@@ -76,6 +310,7 @@ void authoritative_game::setup_listener() {
         std::cout << connected << " has connected" << std::endl;
         on_connection(connected);
     });
+
     network.on_disconnection.attach([this](networking::network_manager::socket_handle disconnected) {
         std::cout << disconnected << " has disconnected" << std::endl;
 
@@ -109,48 +344,87 @@ void authoritative_game::on_init() {
     setup_listener();
 }
 
-void authoritative_game::on_connection(networking::network_manager::socket_handle handle) {
-    client connected_client(handle);
-    {
-        std::lock_guard<std::mutex> lock(clients_mutex);
-        connected_clients.push_back(connected_client);
-    }
-
-    // Send the flyweights
+void authoritative_game::send_flyweights(networking::network_manager::socket_handle client) {
     std::cout << "sending flyweights..." << std::endl;
     std::unordered_map<std::string, unit_flyweight> serialized_flyweights;
     for(auto it = unit_flyweights().begin(); it != unit_flyweights().end(); ++it) {
         serialized_flyweights.emplace(std::to_string(it->first), it->second);
     }
-    network.send_to(networking::packet::make(serialized_flyweights, PACKET_SETUP_FLYWEIGHTS), handle);
+    network.send_to(networking::packet::make(serialized_flyweights, PACKET_SETUP_FLYWEIGHTS), client);
+}
 
-    // Send the map
+void authoritative_game::send_map(const client& connecting_client) {
     std::cout << "sending map..." << std::endl;
+    world::chunk_collection filtered_chunks;
+    std::copy_if(std::begin(world), std::end(world), std::back_inserter(filtered_chunks), [&connecting_client](const world_chunk& chunk) {
+       return connecting_client.known_chunks.find(chunk.position()) != std::end(connecting_client.known_chunks);
+    });
+
     std::vector<networking::world_chunk> chunks_to_send;
     chunks_to_send.reserve(std::distance(world.begin(), world.end()));
-
-    std::transform(world.begin(), world.end(), std::back_inserter(chunks_to_send), [](const world_chunk& chunk) {
+    std::transform(std::begin(filtered_chunks), std::end(filtered_chunks), std::back_inserter(chunks_to_send), [&connecting_client](const world_chunk& chunk) {
         std::vector<uint8_t> biomes;
         biomes.reserve(world::CHUNK_WIDTH * world::CHUNK_HEIGHT * world::CHUNK_DEPTH);
 
+        std::vector<networking::resource> resources;
         // SETUP BIOMES
         for(uint32_t y = 0; y < world::CHUNK_HEIGHT; ++y) {
             for(uint32_t z = 0; z < world::CHUNK_DEPTH; ++z) {
                 for(uint32_t x = 0; x < world::CHUNK_WIDTH; ++x) {
-                    biomes.push_back(static_cast<uint8_t>(chunk.biome_at(static_cast<int>(x), static_cast<int>(y), static_cast<int>(z))));
+                    biomes.push_back(static_cast<uint8_t>(chunk.biome_at(static_cast<int>(x),
+                                                                         static_cast<int>(y),
+                                                                         static_cast<int>(z))));
+
+                    auto local_sites = chunk.sites_at(static_cast<int>(x),
+                                                      static_cast<int>(y),
+                                                      static_cast<int>(z));
+                    std::transform(std::begin(local_sites), std::end(local_sites), std::back_inserter(resources), [x, z](const site* site) {
+                        return networking::resource(x, z, site->type(), site->amount());
+                    });
                 }
             }
         }
 
-        return networking::world_chunk(chunk.position().x, chunk.position().y, biomes);
+        return networking::world_chunk(chunk.position().x, chunk.position().y, biomes, resources);
     });
 
-    network.send_to(networking::packet::make(chunks_to_send, PACKET_SETUP_CHUNK), handle);
+    network.send_to(networking::packet::make(chunks_to_send, PACKET_SETUP_CHUNK), connecting_client.socket);
+}
 
-    spawn_unit(connected_client.id, glm::vec3(0.f, 0.f, 0.f), glm::vec2{1000.f, 1000.f}, 106);
+void authoritative_game::on_connection(networking::network_manager::socket_handle handle) {
+    client connected_client(handle);
+
+    glm::i32vec2 spawn_position = spawn_chunks[connected_client.id - 1];
+    glm::vec3 starting_position(spawn_position.x * world::CHUNK_WIDTH,
+                                0.f,
+                                spawn_position.y * world::CHUNK_DEPTH);
+
+    std::cout << "client #" << connected_client.id << " spawns at " << spawn_position.x << ", " << spawn_position.y << std::endl;
+    connected_client.known_chunks.insert(spawn_position);
+
+    {
+        std::lock_guard<std::mutex> lock(clients_mutex);
+        connected_clients.push_back(connected_client);
+    }
+
+    // Send initial data to the newly connected client
+    send_flyweights(handle);
+
+    // Only send initial chunks
+    send_map(connected_client);
+
+    // TODO: Improve this
+
+
+    // TODO: To remove
+    spawn_unit(connected_client.id, starting_position, glm::vec2{200, 200}, 106);
 }
 
 void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id) {
+    std::cout << "spawning unit " << flyweight_id
+              << " for player #" << static_cast<int>(owner)
+              << " at " << position.x << ", " << position.y << ", " << position.z
+              << std::endl;
     unit_manager& manager = units();
     server_unit_manager& units = static_cast<server_unit_manager&>(manager);
     auto created_unit = units.add_unit_to(owner, make_unit(position, target, flyweight_id));
@@ -158,16 +432,48 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
     std::vector<unit> units_to_spawn;
     units_to_spawn.push_back(*static_cast<unit*>(created_unit.get()));
 
+    auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [owner](const client& c) {
+        return c.id == owner;
+    });
+    if(it != std::end(connected_clients)) {
+        for(const unit& u : units_to_spawn) {
+            it->known_units.emplace(u.get_id());
+        }
+    }
+
     network.broadcast(networking::packet::make(units_to_spawn, PACKET_SPAWN_UNITS));
 }
 
+void authoritative_game::broadcast_current_state() {
+    std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const client& c) {
+        // Send units known by this client
+        std::vector<unit> updated_units;
+        std::transform(units().begin_of_units(), units().end_of_units(), std::back_inserter(updated_units),
+                       [](const auto &p) {
+                           return *static_cast<unit *>(p.second.get());
+                       });
+        std::vector<unit> known_units;
+        known_units.reserve(updated_units.size());
+        std::copy_if(std::begin(updated_units), std::end(updated_units), std::back_inserter(known_units), [&c](const unit& u) {
+            return c.known_units.find(u.get_id()) != std::end(c.known_units);
+        });
+
+        // Send unit update every frame
+        if(known_units.size() > 0) {
+            network.send_to(networking::packet::make(known_units, PACKET_UPDATE_UNITS), c.socket);
+        }
+    });
+
+}
+
 void authoritative_game::on_update(frame_duration last_frame) {
-    static frame_duration acc;
+    //static frame_duration acc;
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame);
 
     auto received_packets = network.poll_packets();
     // TODO: Handle received packets
 
+    // TODO: Move out task
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {
         for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {
             unit* actual_unit = static_cast<unit*>(u->second.get());
@@ -181,7 +487,7 @@ void authoritative_game::on_update(frame_duration last_frame) {
 
             direction = glm::normalize(direction);
 
-            glm::vec3 move = actual_unit->get_position() + (direction * 100.0f * (last_frame_ms.count() / 1000.0f));
+            glm::vec3 move = actual_unit->get_position() + (direction * actual_unit->get_speed() * (last_frame_ms.count() / 1000.0f));
 
             actual_unit->set_position(move);
         }
@@ -189,29 +495,68 @@ void authoritative_game::on_update(frame_duration last_frame) {
 
     update_task.wait();
 
-    acc += last_frame;
+    // Wait that units moves to update visibility
+    std::vector<async::task_executor::task_future> update_visibility;
+    for(client& c : connected_clients) {
+        update_visibility.push_back(push_task(std::make_unique<update_player_visibility>(c.id, c.map_visibility, units())));
+    }
 
-    if(acc > std::chrono::seconds(1)) {
-        std::vector<unit> updated_units;
-        std::transform(units().begin_of_units(), units().end_of_units(), std::back_inserter(updated_units),
-                       [](const auto &p) {
-                           return *static_cast<unit *>(p.second.get());
-                       });
-        // Send unit update every frame
-        if(updated_units.size() > 0) {
-            network.broadcast(networking::packet::make(updated_units, PACKET_UPDATE_UNITS));
+    // TODO: Update stuff
+
+    for(async::task_executor::task_future& future : update_visibility) {
+        future.wait();
+    }
+
+    // Update known chunks of every clients
+    for(client& c : connected_clients) {
+        // The players always knows about it's units
+        c.known_units.clear();
+
+        auto players_units = units().units_of(c.id);
+        std::vector<uint32_t> unit_ids;
+        unit_ids.resize(players_units.size());
+        std::transform(std::begin(players_units), std::end(players_units), std::begin(unit_ids), [](const unit* u) {
+            return u->get_id();
+        });
+        c.known_units.insert(std::begin(unit_ids), std::end(unit_ids));
+
+        bool has_explored = false;
+        for(std::size_t y = 0; y < c.map_visibility.height(); ++y) {
+            for(std::size_t x = 0; x < c.map_visibility.width(); ++x) {
+                const int chunk_x = x / world::CHUNK_WIDTH;
+                const int chunk_z = y / world::CHUNK_DEPTH;
+
+                if(c.map_visibility.at(x, y) != visibility::unexplored) {
+                    if(c.known_chunks.find(glm::i32vec2(chunk_x, chunk_z)) == c.known_chunks.end()) {
+                        has_explored = true;
+                    }
+
+                    c.known_chunks.emplace(chunk_x, chunk_z);
+                }
+
+                if(c.map_visibility.at(x, y) == visibility::visible) {
+                    auto units_in_tile = units().units_in(collision::aabb_shape(glm::vec2(x, y), 1.0f));
+                    std::vector<uint32_t> units_ids(units_in_tile.size(), 0);
+                    std::transform(std::begin(units_in_tile), std::end(units_in_tile), std::begin(units_ids), [](const unit* u) {
+                       return u->get_id();
+                    });
+
+                    c.known_units.insert(std::begin(units_ids), std::end(units_ids));
+                }
+            }
         }
-        acc = std::chrono::seconds(0);
+
+        if(has_explored) {
+            send_map(c);
+        }
+    }
+
+    // Broadcast current state every seconds
+    if(world_state_sync_clock.elapsed_time<std::chrono::seconds>() >= std::chrono::seconds(1)) {
+        broadcast_current_state();
+        world_state_sync_clock.substract(std::chrono::seconds(1));
     }
 }
 
 void authoritative_game::on_release() {
-    /*
-    std::cout << "releasing..." << std::endl;
-    std::for_each(std::begin(connected_clients), std::end(connected_clients), [this](const client& client) {
-        sockets.remove(client.socket);
-    });
-
-    connected_clients.clear();
-     */
 }

@@ -1,4 +1,5 @@
 #include "unit_manager.hpp"
+#include "../collision/collision_detector.hpp"
 
 uint32_t unit_manager::get_unit_type(uint32_t id)
 {
@@ -58,4 +59,61 @@ unit_manager::iterator unit_manager::begin_of_units() {
 
 unit_manager::iterator unit_manager::end_of_units() {
     return units[static_cast<std::size_t>(actor_type::unit)].end();
+}
+
+std::size_t unit_manager::count_units() const noexcept {
+    return units[static_cast<std::size_t>(actor_type::unit)].size();
+}
+
+std::vector<unit*> unit_manager::units_of(uint8_t player_id) {
+    std::vector<unit*> units_pts;
+    units_pts.reserve(count_units());
+
+    std::transform(begin_of_units(), end_of_units(), std::back_inserter(units_pts), [](auto& p) {
+        return static_cast<unit*>(p.second.get());
+    });
+
+    auto end = std::copy_if(std::begin(units_pts), std::end(units_pts), std::begin(units_pts), [player_id](unit* u) {
+        return unit_id(u->get_id()).player_id == player_id;
+    });
+
+    units.resize(std::distance(std::begin(units_pts), end));
+
+    return units_pts;
+}
+
+std::vector<unit*> unit_manager::units_in(collision::circle_shape shape) {
+    std::vector<unit*> units_ptrs;
+    units_ptrs.reserve(count_units());
+
+    std::transform(begin_of_units(), end_of_units(), std::back_inserter(units_ptrs), [](auto& p) {
+        return static_cast<unit*>(p.second.get());
+    });
+
+    auto end = std::copy_if(std::begin(units_ptrs), std::end(units_ptrs), std::begin(units_ptrs), [shape](unit* u) {
+        return collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.0),
+                                 shape);
+    });
+
+    units_ptrs.resize(std::distance(std::begin(units_ptrs), end));
+
+    return units_ptrs;
+}
+
+std::vector<unit*> unit_manager::units_in(collision::aabb_shape shape) {
+    std::vector<unit*> units_ptrs;
+    units_ptrs.reserve(count_units());
+
+    std::transform(begin_of_units(), end_of_units(), std::back_inserter(units_ptrs), [](auto& p) {
+        return static_cast<unit*>(p.second.get());
+    });
+
+    auto end = std::copy_if(std::begin(units_ptrs), std::end(units_ptrs), std::begin(units_ptrs), [shape](unit* u) {
+        return collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.0),
+                                 shape);
+    });
+
+    units_ptrs.resize(std::distance(std::begin(units_ptrs), end));
+
+    return units_ptrs;
 }

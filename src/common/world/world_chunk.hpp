@@ -2,20 +2,13 @@
 #define MMAP_DEMO_WORLD_CHUNK_H
 
 #include "site.hpp"
+#include "constants.hpp"
+#include "../util/vec_hash.hpp"
+
 #include <terratech/terratech.h>
 #include <glm/glm.hpp>
 #include <vector>
 #include <unordered_map>
-
-template<typename T>
-struct vec3_hash {
-    std::size_t operator()(const T& vec) const {
-        using val_type = typename T::value_type;
-        return ((std::hash<val_type>()(vec.x)
-                 ^ (std::hash<val_type>()(vec.y) << 1)) >> 1)
-               ^ (std::hash<val_type>()(vec.z) << 1);
-    }
-};
 
 class world_chunk {
 public:
@@ -23,7 +16,10 @@ public:
 private:
     std::vector<int> biomes;
     const position_type pos;
-    std::unordered_map<glm::i32vec3, std::vector<site>, vec3_hash<glm::i32vec3>> sites;
+    std::unordered_map<glm::i32vec3, std::vector<site>, util::vec3_hash<glm::i32vec3>> sites;
+
+    static std::unordered_map<int, double> site_scores();
+    static std::unordered_map<int, double> biome_scores();
 public:
     world_chunk(int x, int z);
     /**
@@ -37,7 +33,11 @@ public:
     std::vector<site*> sites_at(int x, int y, int z) noexcept;
     std::vector<const site*> sites_at(int x, int y, int z) const noexcept;
 
+    void set_site_at(int x, int y, int z, site s) noexcept;
+
     position_type position() const noexcept;
+
+    double score() const noexcept;
 };
 
 #endif //MMAP_DEMO_WORLD_CHUNK_H
