@@ -73,11 +73,11 @@ std::vector<unit*> unit_manager::units_of(uint8_t player_id) {
         return static_cast<unit*>(p.second.get());
     });
 
-    auto end = std::copy_if(std::begin(units_pts), std::end(units_pts), std::begin(units_pts), [player_id](unit* u) {
+	auto end = std::copy_if(std::begin(units_pts), std::end(units_pts), std::begin(units_pts), [player_id](unit* u) {
         return unit_id(u->get_id()).player_id == player_id;
     });
 
-    units.resize(std::distance(std::begin(units_pts), end));
+	units_pts.resize(std::distance(std::begin(units_pts), end));
 
     return units_pts;
 }
@@ -104,6 +104,7 @@ std::vector<unit*> unit_manager::units_in(collision::aabb_shape shape) {
     std::vector<unit*> units_ptrs;
     units_ptrs.reserve(count_units());
 
+	
     std::transform(begin_of_units(), end_of_units(), std::back_inserter(units_ptrs), [](auto& p) {
         return static_cast<unit*>(p.second.get());
     });
@@ -114,6 +115,6 @@ std::vector<unit*> unit_manager::units_in(collision::aabb_shape shape) {
     });
 
     units_ptrs.resize(std::distance(std::begin(units_ptrs), end));
-
+	
     return units_ptrs;
 }
