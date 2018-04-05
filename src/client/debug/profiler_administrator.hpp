@@ -59,6 +59,8 @@ template<class T>
 class profiler_administrator
 {
     static_assert(is_time<T>::value, "the type is not a time");
+	static const int RECORD_BUFFER_MAX = 4096;
+	static const int RECORD_BUFFER = 2;
 
 #ifndef NPROFILER
     struct log_record {
@@ -75,8 +77,8 @@ class profiler_administrator
         }
     };
 
-    std::vector<log_record> records;
-    async::spinlock records_mutex;
+    std::vector<log_record> records[RECORD_BUFFER];
+	std::atomic<int> current_record_buffer = 0;
     std::thread background_thread;
     std::atomic<bool> is_running;
 
@@ -84,20 +86,24 @@ class profiler_administrator
         std::ofstream out_stream("log_time.csv");
         admin->write_header(out_stream);
 
-        while(admin->is_running) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+		int current_buffer = 0;
+		int buffer_to_write = 0;
 
-            // Swap records from admin
-            std::vector<log_record> temp_records;
-            temp_records.reserve(30000); // Measured value
-            {
-                std::lock_guard<async::spinlock> lock(admin->records_mutex);
-                temp_records.swap(admin->records);
-            }
+		while (admin->is_running)
+		{
+			if (current_buffer == admin->current_record_buffer)
+				continue;
+			else
+			{
+				buffer_to_write = current_buffer;
+				current_buffer = admin->current_record_buffer;
+			}
 
-            std::cout << "dumping " << temp_records.size() << " profiling records" << std::endl;
+            auto& v = admin->records[buffer_to_write];
 
-            for(const log_record& record : temp_records) {
+            std::cout << "dumping " << v.size() << " profiling records" << std::endl;
+
+            for(const log_record& record : v) {
                 admin->write_row(out_stream, record.name, record.time, record.duration);
             }
         }
@@ -106,7 +112,8 @@ class profiler_administrator
     profiler_administrator()
     : background_thread(background_thread_function, this)
     , is_running{true} {
-
+		for (int i = 0; i < RECORD_BUFFER; i++)
+			records[i].reserve(RECORD_BUFFER_MAX);
     }
 
     ~profiler_administrator() {
@@ -141,8 +148,14 @@ public:
     void log_time(const std::string& name, const TimePoint& begin, const TimePoint& end)
     {
 #ifndef NPROFILER
-        std::lock_guard<async::spinlock> lock(records_mutex);
-        records.emplace_back(name, get_current_time(), std::chrono::duration_cast<T>(end - begin).count());
+		if (records[current_record_buffer].size() == RECORD_BUFFER_MAX)
+		{
+			current_record_buffer = (current_record_buffer + 1) % RECORD_BUFFER;
+			std::cout << records[current_record_buffer].size() << std::endl;
+			records[current_record_buffer].clear();
+		}
+
+        records[current_record_buffer].emplace_back(name, get_current_time(), std::chrono::duration_cast<T>(end - begin).count());
 #endif
     }
 
