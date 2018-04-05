@@ -53,7 +53,7 @@ private:
     game_time::highres_clock fps_clock;
 
     // Gameplay
-    int next_unit_to_spawn = 106;
+    int selected_unit_id;
     bool can_move(base_unit* unit, glm::vec3 position) const;
 
     //Networking

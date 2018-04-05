@@ -15,6 +15,7 @@
 #include "../common/networking/world_map.hpp"
 #include "../common/networking/world_chunk.hpp"
 #include "../common/networking/networking_constant.hpp"
+#include "../common/networking/update_target.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -155,6 +156,7 @@ void game::setup_inputs() {
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
 
     // Change Unit To Spawn	using change_unit_command
+    /*
     key_inputs.register_action(SDLK_1, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 100));
     key_inputs.register_action(SDLK_2, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 101));
     key_inputs.register_action(SDLK_3, KMOD_NONE, std::make_unique<input::change_unit_command>(next_unit_to_spawn, 102));
@@ -170,6 +172,7 @@ void game::setup_inputs() {
 
     // Change Unit To Spawn	using generic_command
     key_inputs.register_action(SDLK_i, KMOD_NONE, input::make_generic_command([&]() { next_unit_to_spawn = 112; }));
+     */
 }
 
 // TODO: Move out of here
@@ -411,10 +414,38 @@ void game::handle_event(SDL_Event event) {
             // clicked outside the map
             if (inside_world_bound(test))
             {
-                for (auto u = units().begin_of_units(); u != units().end_of_units(); u++)
-                {
-                    unit* actual_unit = static_cast<unit*>(u->second.get());
-                    actual_unit->set_target_position({ test.x, test.z });
+                auto clicked_units = units().units_in(glm::vec2(test.x, test.z));
+
+                if(!clicked_units.empty()) {
+                    unit* clicked_unit = clicked_units.front();
+
+                    selected_unit_id = clicked_unit->get_id();
+                    std::cout << "selected unit is " << selected_unit_id << std::endl;
+                }
+            }
+        }
+        else if(event.button.button == SDL_BUTTON_RIGHT) {
+            const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
+            const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
+
+            const glm::vec2 coords{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y };
+            const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
+
+            glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
+
+            if(inside_world_bound(test)) {
+                // Update target of unit
+                base_unit* selected_unit = units().get(selected_unit_id);
+                if(selected_unit) {
+                    unit* u = static_cast<unit*>(selected_unit);
+                    u->set_target_position(glm::vec2(test.x, test.z));
+
+                    // Send to server
+                    std::vector<networking::update_target> updates;
+                    updates.emplace_back(selected_unit_id, glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
+                                                                     test.z / rendering::chunk_renderer::SQUARE_SIZE));
+
+                    network.send_to(networking::packet::make(updates, PACKET_UPDATE_TARGETS), socket);
                 }
             }
         }
