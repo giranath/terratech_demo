@@ -15,7 +15,6 @@
 #include <iterator>
 #include <chrono>
 
-
 void setup_opengl() {
     std::cout << "available extensions: " << std::endl;
     gl::get_extensions(std::ostream_iterator<const char*>(std::cout, "\n"));

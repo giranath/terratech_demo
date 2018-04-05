@@ -25,8 +25,8 @@ bool detect(glm::vec2 a, const aabb_shape& b) noexcept {
 }
 
 bool detect(const circle_shape& a, glm::vec2 b) noexcept {
-    // TODO: Verify
-    const float dist = (b - a.center()).length();
+    const glm::vec2 diff = b - a.center();
+    const float dist = glm::length(diff);
 
     return dist <= a.radius();
 }
