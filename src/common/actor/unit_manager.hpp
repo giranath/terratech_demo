@@ -5,7 +5,7 @@
 #include "unit.hpp"
 #include "target_handle.hpp"
 #include "../collision/circle_shape.hpp"
-#include "../collision/aabb_shape.hpp"
+#include "../collision/collision_detector.hpp"
 
 #include <vector>
 #include <cstdint>
@@ -61,8 +61,27 @@ public:
 
     std::size_t count_units() const noexcept;
     std::vector<unit*> units_of(uint8_t player_id);
-    std::vector<unit*> units_in(collision::circle_shape shape);
-    std::vector<unit*> units_in(collision::aabb_shape shape);
+
+    template<typename CollisionShape>
+    std::vector<unit*> units_in(CollisionShape shape) {
+        static_assert(collision::is_collision_shape<CollisionShape>::value, "you must specify a collision shape");
+
+        std::vector<unit*> units_ptrs;
+        units_ptrs.reserve(count_units());
+
+        std::transform(begin_of_units(), end_of_units(), std::back_inserter(units_ptrs), [](auto& p) {
+            return static_cast<unit*>(p.second.get());
+        });
+
+        auto end = std::copy_if(std::begin(units_ptrs), std::end(units_ptrs), std::begin(units_ptrs), [shape](unit* u) {
+            return collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 15.0),
+                                     shape);
+        });
+
+        units_ptrs.resize(std::distance(std::begin(units_ptrs), end));
+
+        return units_ptrs;
+    }
 
 };
 #endif

@@ -12,6 +12,7 @@
 #include <fstream>
 #include <chrono>
 #include "server_unit_manager.hpp"
+#include "../common/networking/update_target.hpp"
 
 // The states:
 //  - lobby
@@ -471,7 +472,34 @@ void authoritative_game::on_update(frame_duration last_frame) {
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame);
 
     auto received_packets = network.poll_packets();
-    // TODO: Handle received packets
+    for(const std::pair<networking::network_manager::socket_handle, networking::packet>& packet : received_packets) {
+        auto packet_socket = packet.first;
+        auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [packet_socket](const client& c) {
+            return c.socket == packet_socket;
+        });
+
+        if(it != std::end(connected_clients)) {
+            // TODO: Handle packet for this client
+            switch(packet.second.head.packet_id) {
+                case PACKET_UPDATE_TARGETS: {
+                    std::vector<networking::update_target> updates = packet.second.as<std::vector<networking::update_target>>();
+
+                    // Only update units
+                    for(const networking::update_target& update : updates) {
+                        unit_id id(update.unit_id);
+
+                        // it can move this unit
+                        if(id.player_id == it->id) {
+                            static_cast<unit*>(units().get(update.unit_id))->set_target_position(update.new_target);
+                        }
+                    }
+                }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
 
     // TODO: Move out task
     auto update_task = push_task(async::make_task([this, last_frame_ms]() {
