@@ -12,7 +12,6 @@
 #include <cryptopp/aes.h>
 #include <cryptopp/modes.h>
 #include <cryptopp/filters.h>
-#elif defined(WIN32)
 #else
 #include <crypto++/aes.h>
 #include <crypto++/modes.h>
@@ -63,9 +62,9 @@ key make_key(random& rd) {
 
     key k(block_count, 0);
 
-    std::uniform_int_distribution<uint8_t> block_distrib(std::numeric_limits<uint8_t>::min(), std::numeric_limits<uint8_t>::max());
+    std::uniform_int_distribution<int> block_distrib(std::numeric_limits<uint8_t>::min(), std::numeric_limits<uint8_t>::max());
     for(std::size_t i = 0; i < block_count; ++i) {
-        k[i] = block_distrib(rd);
+        k[i] = static_cast<uint8_t>(block_distrib(rd));
     }
 
     return k;

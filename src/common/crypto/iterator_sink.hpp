@@ -5,7 +5,6 @@
 
 #if defined(__APPLE__)
 #include <cryptopp/filters.h>
-#elif defined(WIN32)
 #else
 #include <crypto++/filters.h>
 #endif

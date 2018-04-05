@@ -130,6 +130,7 @@ add_library(common
         src/common/world/visibility_map.hpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
+		${CRYPTO++_INCLUDE_DIR}
         ${SDL2_INCLUDE_DIRS}
         ${sdl2_net_INCLUDE_DIRS}
         ${terratech_INCLUDE_DIRS}

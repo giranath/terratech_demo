@@ -8,7 +8,6 @@
 
 #if defined(__APPLE__)
 #include <cryptopp/base64.h>
-#elif defined(WIN32)
 #else
 #include <crypto++/base64.h>
 #endif
@@ -205,7 +204,7 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                     if(!crypto::rsa::verify(cert_pub, std::begin(server_key.public_key), std::end(server_key.public_key),
                                                      std::begin(server_key.signature), std::end(server_key.signature))) {
                         // What to do if verification failed
-                        std::cerr << "you are contacting a untrusted server" << std::endl;
+                        std::cerr << "you are contacting an untrusted server" << std::endl;
                     }
                     else {
                         std::cout << "you are contacting a trusted server" << std::endl;
