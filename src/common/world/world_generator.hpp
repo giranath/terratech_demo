@@ -8,6 +8,13 @@
 class invalid_layer_exception{};
 
 class world_generator;
+enum class map_choice
+{
+    RIVER_MAP,
+    ISLAND_MAP,
+    LAKE_MAP,
+    PLAIN_MAP
+};
 class world_generator_chunk {
     friend world_generator;
     terra_chunk* chunk;
@@ -26,9 +33,11 @@ public:
     operator const terra_chunk*() noexcept;
 };
 
+
 class world_generator {
     terra_map* map_generator;
     terra_layer_handle altitude_layer;
+    terra_layer_handle chosen_altitude_layer;
     terra_layer_handle humidity_layer;
     terra_layer_handle temperature_layer;
 
@@ -38,9 +47,12 @@ class world_generator {
     void setup_resources();
 
 public:
-    world_generator(uint32_t seed, uint32_t chunk_width, uint32_t chunk_depth);
+    world_generator(uint32_t seed, uint32_t chunk_width, uint32_t chunk_depth, uint8_t map_choice);
     ~world_generator();
-
+    void setup_river_map_layer();
+    void setup_island_map_layer();
+    void setup_lake_map_layer();
+    void setup_plain_map_layer();
     world_generator_chunk generate_chunk(int x, int y, int z) const noexcept;
 };
 

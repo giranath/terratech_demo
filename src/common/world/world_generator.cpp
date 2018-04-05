@@ -24,7 +24,8 @@ world_generator::world_generator(uint32_t seed, uint32_t chunk_width, uint32_t c
 : map_generator{terra_map_create(seed, chunk_width, 1, chunk_depth, CHUNK_NOISE_RATIO)}
 , altitude_layer{terra_map_add_noise_layer(map_generator, TERRA_NOISE_FRACTAL_SIMPLEX)}
 , humidity_layer{terra_map_add_noise_layer(map_generator, TERRA_NOISE_FRACTAL_SIMPLEX)}
-, temperature_layer{terra_map_add_noise_layer(map_generator, TERRA_NOISE_FRACTAL_SIMPLEX)}{
+, temperature_layer{terra_map_add_noise_layer(map_generator, TERRA_NOISE_FRACTAL_SIMPLEX)
+, }{
     if(altitude_layer == TERRA_LAYER_INVALID
     || humidity_layer == TERRA_LAYER_INVALID
     || temperature_layer == TERRA_LAYER_INVALID) {
@@ -76,16 +77,184 @@ terra_biome_table* make_biome_table() {
 }
 
 terra_biome_table* make_altitude_axis() {
-    terra_biome_table* altitude_axis = terra_biome_table_create(10, 0);
+    terra_biome_table* altitude_axis = terra_biome_table_create(20, 0);
 
     terra_biome_table_set(altitude_axis, 0,  0, BIOME_WATER);
     terra_biome_table_set(altitude_axis, 1,  0, BIOME_WATER);
     terra_biome_table_set(altitude_axis, 2,  0, BIOME_WATER);
-    terra_biome_table_set(altitude_axis, 9, 0, BIOME_WATER);
-
+    terra_biome_table_set(altitude_axis, 4,  0, BIOME_WATER);
+    terra_biome_table_set(altitude_axis, 5,  0, BIOME_WATER);
+    terra_biome_table_set(altitude_axis, 6,  0, BIOME_WATER);
     return altitude_axis;
 }
 
+struct circle {
+    double x;
+    double y;
+    double radius;
+
+    circle(double x, double y, double radius) : x{ x }, y{ y }, radius{ radius } {
+
+    }
+};
+
+double circle_custom_noise(double x, double /*y*/, double z, terra_userdata userdata) {
+    circle* island = static_cast<circle*>(userdata);
+
+    double distance = std::sqrt((x - island->x) * (x - island->x) + (z - island->y) * (z - island->y));
+    if (distance > island->radius) {
+        return 0.0;
+    }
+
+    double percent = distance / island->radius;
+    return 1.0 - percent;
+}
+
+double inverse_circle_custom_noise(double x, double /*y*/, double z, terra_userdata userdata) {
+    circle* island = static_cast<circle*>(userdata);
+
+    double distance = std::sqrt((x - island->x) * (x - island->x) + (z - island->y) * (z - island->y));
+    if (distance > island->radius) {
+        return 1.0;
+    }
+
+    double percent = distance / island->radius;
+    return percent;
+}
+
+struct oval
+{
+    double cx;
+    double cy;
+    double height_radius;
+    double width_radius;
+    oval(double x, double y, double height_radius, double width_radius) : cx{ x }, cy{ y }, height_radius{ height_radius }, width_radius{ width_radius } {
+
+    }
+    bool is_inside(double x, double y)
+    {
+        double inside = ((x - cx) * (x - cx)) / (width_radius * width_radius) + ((y - cy) * (y - cy)) / (height_radius * height_radius);
+        if (inside <= 1.0)
+            return true;
+        return false;
+    }
+};
+
+double oval_custom_noise(double x, double /*y*/, double z, terra_userdata userdata) {
+    oval* island = static_cast<oval*>(userdata);
+
+    if (!island->is_inside(x, z))
+    {
+        return 0.0;
+    }
+    if (x - 0.01 < island->cx  && x + 0.01 > island->cx)
+    {
+        if (z - 0.01 < island->cy - island->height_radius  && z + 0.01 > island->cy - island->height_radius)
+            auto bob = 0;
+    }
+    double width_to_height_ratio = island->width_radius / island->height_radius;
+    double x_dist = ((x - island->cx) * (x - island->cx)) / (island->width_radius * island->width_radius);
+    double y_dist = ((z - island->cy) * (z - island->cy)) / (island->height_radius * island->height_radius);
+    double x_val = ((x_dist / width_to_height_ratio) * (x_dist / width_to_height_ratio));
+    double y_val = (y_dist * y_dist);
+    double percent = sqrt(x_val + y_val);
+
+    return 1.0 - percent;
+}
+
+
+double combine_noises(double a, double b, terra_userdata /*userdata*/) {
+    if (b > 0.0) {
+        return (a * b) * 1.2;
+    }
+
+    return 0.0;
+}
+
+double lowest_value_combine(double a, double b, terra_userdata)
+{
+    if (a < b)
+    {
+        return a;
+    }
+    return b;
+}
+
+double best_value_combine(double a, double b, terra_userdata)
+{
+    if (a > b)
+    {
+        return a;
+    }
+    return b;
+}
+
+void world_generator::setup_river_map_layer()
+{
+    //TODO change scale
+    auto river_layer = terra_map_add_noise_layer(map_generator, TERRA_NOISE_OCTAVE_PERLIN);
+    auto river_combo = terra_map_add_noise_combinator_layer(map_generator, altitude_layer, river_layer, lowest_value_combine, nullptr);
+
+    oval oval_island_shape_player_1(0.5, 0.0, 0.4, 0.8);
+    oval oval_island_shape_player_2(0.5, 1.0, 0.4, 0.8);
+    
+    auto oval_island_shape_layer = terra_map_add_custom_noise_layer(map_generator, oval_custom_noise, nullptr, &oval_island_shape_player_1);
+    auto oval_island_shape_layer_2 = terra_map_add_custom_noise_layer(map_generator, oval_custom_noise, nullptr, &oval_island_shape_player_2);
+
+    auto combination_player_1 = terra_map_add_noise_combinator_layer(map_generator, altitude_layer, oval_island_shape_layer, combine_noises, nullptr);
+    auto combination_player_2 = terra_map_add_noise_combinator_layer(map_generator, altitude_layer, oval_island_shape_layer_2, combine_noises, nullptr);
+
+    auto combine_both_player_island = terra_map_add_noise_combinator_layer(map_generator, combination_player_1, combination_player_2, best_value_combine, nullptr);
+    auto chosen_altitude_layer = terra_map_add_noise_combinator_layer(map_generator, combine_both_player_island, river_layer, lowest_value_combine, nullptr);
+}
+
+void world_generator::setup_river_map_layer()
+{
+    //TODO change scale
+    auto river_layer = terra_map_add_noise_layer(map_generator, TERRA_NOISE_OCTAVE_PERLIN);
+    auto river_combo = terra_map_add_noise_combinator_layer(map_generator, altitude_layer, river_layer, lowest_value_combine, nullptr);
+
+    oval oval_island_shape_player_1(0.5, 0.0, 0.4, 0.8);
+    oval oval_island_shape_player_2(0.5, 1.0, 0.4, 0.8);
+
+    auto oval_island_shape_layer = terra_map_add_custom_noise_layer(map_generator, oval_custom_noise, nullptr, &oval_island_shape_player_1);
+    auto oval_island_shape_layer_2 = terra_map_add_custom_noise_layer(map_generator, oval_custom_noise, nullptr, &oval_island_shape_player_2);
+
+    auto combination_player_1 = terra_map_add_noise_combinator_layer(map_generator, altitude_layer, oval_island_shape_layer, combine_noises, nullptr);
+    auto combination_player_2 = terra_map_add_noise_combinator_layer(map_generator, altitude_layer, oval_island_shape_layer_2, combine_noises, nullptr);
+
+    auto combine_both_player_island = terra_map_add_noise_combinator_layer(map_generator, combination_player_1, combination_player_2, best_value_combine, nullptr);
+    chosen_altitude_layer = terra_map_add_noise_combinator_layer(map_generator, combine_both_player_island, river_layer, lowest_value_combine, nullptr);
+}
+
+void world_generator::setup_island_map_layer()
+{
+    //TODO change scale
+    auto river_layer = terra_map_add_noise_layer(map_generator, TERRA_NOISE_OCTAVE_PERLIN);
+    auto river_combo = terra_map_add_noise_combinator_layer(map_generator, altitude_layer, river_layer, lowest_value_combine, nullptr);
+
+    circle island_shape(0.4, 0.4, 0.6);
+    auto island_shape_layer = terra_map_add_custom_noise_layer(map_generator, circle_custom_noise, nullptr, &island_shape);
+    auto combine_big_island_layer = terra_map_add_noise_combinator_layer(map_generator, altitude_layer, island_shape_layer, combine_noises, nullptr);
+    chosen_altitude_layer = terra_map_add_noise_combinator_layer(map_generator, combine_big_island_layer, river_layer, lowest_value_combine, nullptr);
+}
+
+void world_generator::setup_lake_map_layer()
+{
+    auto river_layer = terra_map_add_noise_layer(map_generator, TERRA_NOISE_OCTAVE_PERLIN);
+    auto river_combo = terra_map_add_noise_combinator_layer(map_generator, altitude_layer, river_layer, lowest_value_combine, nullptr);
+
+    circle lake_shape(0.4, 0.4, 0.4);
+    auto inverse_island_shape_layer = terra_map_add_custom_noise_layer(map_generator, inverse_circle_custom_noise, nullptr, &lake_shape);
+    auto combine_lake_layer = terra_map_add_noise_combinator_layer(map_generator, altitude_layer, inverse_island_shape_layer, combine_noises, nullptr);
+    chosen_altitude_layer = terra_map_add_noise_combinator_layer(map_generator, combine_lake_layer, river_layer, lowest_value_combine, nullptr);
+}
+
+void world_generator::setup_plain_map_layer()
+{
+    auto river_layer = terra_map_add_noise_layer(map_generator, TERRA_NOISE_OCTAVE_PERLIN);
+    chosen_altitude_layer = terra_map_add_noise_combinator_layer(map_generator, altitude_layer, river_layer, lowest_value_combine, nullptr);
+}
 void world_generator::setup_biomes() {
     // The biome table
     terra_biome_table* table = make_biome_table();
@@ -101,7 +270,7 @@ void world_generator::setup_biomes() {
     terra_biome_generator_set_layer(generator, TERRA_BIOMEGEN_AXIS_Y_NOISE, terra_map_get_layer(map_generator, humidity_layer));
 
     terra_biome_generator_set_table(generator, TERRA_BIOMEGEN_BIOME_AXIS,   altitude_axis);
-    terra_biome_generator_set_layer(generator, TERRA_BIOMEGEN_AXIS_Z_NOISE, terra_map_get_layer(map_generator, altitude_layer));
+    terra_biome_generator_set_layer(generator, TERRA_BIOMEGEN_AXIS_Z_NOISE, terra_map_get_layer(map_generator, chosen_altitude_layer));
 
     // Here we attach the biome generator to the map
     terra_map_set_biome_generator(map_generator, generator);
