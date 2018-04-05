@@ -135,10 +135,10 @@ public:
 
 class update_player_visibility : public async::base_task {
     uint8_t player_id;
-    visibility_map& visibility_;
+    visibility_map visibility_;
     unit_manager& units_;
 public:
-    update_player_visibility(uint8_t player, visibility_map& v, unit_manager& units)
+    update_player_visibility(uint8_t player, visibility_map v, unit_manager& units)
     : player_id(player)
     , visibility_(v)
     , units_(units) {
@@ -168,6 +168,8 @@ public:
             }
         });
     }
+
+	visibility_map get_visibility() const { return visibility_; }
 };
 
 void authoritative_game::find_spawn_chunks() {
@@ -418,7 +420,7 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
 
 
     // TODO: To remove
-    spawn_unit(connected_client.id, starting_position, glm::vec2{200, 200}, 106);
+    spawn_unit(connected_client.id, starting_position, glm::vec2{0, 0}, 106);
 }
 
 void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id) {
@@ -428,7 +430,7 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
               << std::endl;
     unit_manager& manager = units();
     server_unit_manager& units = static_cast<server_unit_manager&>(manager);
-    auto created_unit = units.add_unit_to(owner, make_unit(position, flyweight_id));
+    auto created_unit = units.add_unit_to(owner, make_unit(position, target, flyweight_id));
 
     std::vector<unit> units_to_spawn;
     units_to_spawn.push_back(*static_cast<unit*>(created_unit.get()));
@@ -442,7 +444,7 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
         }
     }
 
-    network.broadcast(networking::packet::make(units_to_spawn, PACKET_SPAWN_UNITS));
+   // network.broadcast(networking::packet::make(units_to_spawn, PACKET_SPAWN_UNITS));
 }
 
 void authoritative_game::broadcast_current_state() {
@@ -530,9 +532,13 @@ void authoritative_game::on_update(frame_duration last_frame) {
     }
 
     // TODO: Update stuff
-
+	int i = 0;
     for(async::task_executor::task_future& future : update_visibility) {
-        future.wait();
+		auto task = future.get();
+		update_player_visibility* visibility_task = static_cast<update_player_visibility*>(task.get());
+
+		connected_clients[i].map_visibility =  visibility_task->get_visibility();
+		i++;
     }
 
     // Update known chunks of every clients

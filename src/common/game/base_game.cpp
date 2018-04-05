@@ -55,6 +55,11 @@ target_handle base_game::add_unit(uint32_t id, glm::vec3 position, glm::vec2 tar
     return units_->add(make_unit(position, target, flyweight_id), id);
 }
 
+target_handle base_game::add_unit(uint32_t id, glm::vec3 position, int flyweight_id) {
+	return units_->add(make_unit(position, flyweight_id), id);
+}
+
+
 unit_manager::unit_ptr base_game::make_unit(glm::vec3 position, glm::vec2 target, int flyweight_id) {
     return std::make_unique<unit>(position, target, &unit_flyweights_[flyweight_id], units_.get());
 }

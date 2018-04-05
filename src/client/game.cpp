@@ -314,17 +314,23 @@ void game::on_update(frame_duration last_frame_duration) {
         }
     }
 
-    // Update units positions
+    // Update units
     auto update_p = network.poll_packet_from(PACKET_UPDATE_UNITS, socket);
     if(update_p.first) {
         std::vector<unit> units = update_p.second.as<std::vector<unit>>();
         for(const unit& u : units) {
             unit* my_unit = static_cast<unit*>(this->units().get(u.get_id()));
-
+			
             if(my_unit) {
                 my_unit->set_position(u.get_position());
                 my_unit->set_target_position(u.get_target_position());
             }
+			else {
+				add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
+				game_camera.reset({ u.get_position().x * rendering::chunk_renderer::SQUARE_SIZE,
+					game_camera.position().y,
+					u.get_position().z * rendering::chunk_renderer::SQUARE_SIZE });
+			}
         }
     }
 

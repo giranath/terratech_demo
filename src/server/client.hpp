@@ -25,6 +25,7 @@ struct client {
     visibility_map map_visibility;
 
     explicit client(networking::network_manager::socket_handle socket);
+	client() = delete;
     bool operator==(const client& other) const noexcept;
 };
 
