@@ -8,7 +8,6 @@
 #include <cryptopp/osrng.h>
 #include <cryptopp/files.h>
 #include <cryptopp/filters.h>
-#elif defined(WIN32)
 #else
 #include <crypto++/rsa.h>
 #include <crypto++/osrng.h>
