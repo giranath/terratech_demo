@@ -220,7 +220,8 @@ game::game(networking::network_manager& manager, networking::network_manager::so
 , last_fps_duration_index(0)
 , frame_count(0) 
 , network{manager}
-, socket(socket) {
+, socket(socket)
+, selected_unit_id(-1){
     last_fps_durations.reserve(10);
 }
 
@@ -410,6 +411,7 @@ void game::handle_event(SDL_Event event) {
             const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
 
             glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
+            selected_unit_id = -1;
 
             // clicked outside the map
             if (inside_world_bound(test))
@@ -433,7 +435,7 @@ void game::handle_event(SDL_Event event) {
 
             glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
 
-            if(inside_world_bound(test)) {
+            if(inside_world_bound(test) && selected_unit_id != -1) {
                 // Update target of unit
                 base_unit* selected_unit = units().get(selected_unit_id);
                 if(selected_unit) {

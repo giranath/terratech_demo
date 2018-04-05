@@ -74,7 +74,7 @@ public:
         });
 
         auto end = std::copy_if(std::begin(units_ptrs), std::end(units_ptrs), std::begin(units_ptrs), [shape](unit* u) {
-            return collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 15.0),
+            return collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 10.0),
                                      shape);
         });
 
