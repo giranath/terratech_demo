@@ -427,7 +427,7 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
               << std::endl;
     unit_manager& manager = units();
     server_unit_manager& units = static_cast<server_unit_manager&>(manager);
-    auto created_unit = units.add_unit_to(owner, make_unit(position, target, flyweight_id));
+    auto created_unit = units.add_unit_to(owner, make_unit(position, flyweight_id));
 
     std::vector<unit> units_to_spawn;
     units_to_spawn.push_back(*static_cast<unit*>(created_unit.get()));
