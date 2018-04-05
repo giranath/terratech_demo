@@ -438,7 +438,8 @@ void game::handle_event(SDL_Event event) {
                 base_unit* selected_unit = units().get(selected_unit_id);
                 if(selected_unit) {
                     unit* u = static_cast<unit*>(selected_unit);
-                    u->set_target_position(glm::vec2(test.x, test.z));
+                    u->set_target_position(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
+                                                     test.z / rendering::chunk_renderer::SQUARE_SIZE));
 
                     // Send to server
                     std::vector<networking::update_target> updates;
