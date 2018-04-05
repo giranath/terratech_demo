@@ -297,7 +297,6 @@ void game::on_update(frame_duration last_frame_duration) {
     // Update chunks
     p = network.poll_packet_from(PACKET_SETUP_CHUNK, socket);
     if(p.first) {
-        std::cout << "received new chunk" << std::endl;
         auto chunks = p.second.as<std::vector<networking::world_chunk>>();
 
         for(networking::world_chunk& received_chunk : chunks) {
@@ -308,7 +307,6 @@ void game::on_update(frame_duration last_frame_duration) {
                 game_chunk.set_site_at(res.x, 0, res.y, site(res.type, res.quantity));
             }
 
-            std::cout << "displaying " << received_chunk.x << ", " << received_chunk.y << std::endl;
             world_rendering.show(received_chunk.x, received_chunk.y);
         }
     }
@@ -413,8 +411,6 @@ void game::handle_event(SDL_Event event) {
             // clicked outside the map
             if (inside_world_bound(test))
             {
-                //add_unit(test, glm::vec2{0.f, 0.f}, next_unit_to_spawn);
-
                 for (auto u = units().begin_of_units(); u != units().end_of_units(); u++)
                 {
                     unit* actual_unit = static_cast<unit*>(u->second.get());

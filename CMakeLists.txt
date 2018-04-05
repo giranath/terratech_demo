@@ -36,13 +36,14 @@ endif()
 # Generates GL3W files
 execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/thirdparty/gl3w/gl3w_gen.py")
 
+file(COPY "${CMAKE_SOURCE_DIR}/asset" DESTINATION "${CMAKE_BINARY_DIR}")
+
 set(SOURCE_CRYPTO "")
 if(ENABLE_CRYPTO)
     set(SOURCE_CRYPTO
-            src/common/crypto/aes.hpp
+        src/common/crypto/aes.hpp
         src/common/crypto/iterator_sink.hpp
-            src/common/crypto/rsa.hpp)
-
+        src/common/crypto/rsa.hpp)
 endif()
 
 add_library(common
