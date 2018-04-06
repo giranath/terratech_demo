@@ -13,6 +13,7 @@
 #include "../common/time/clock.hpp"
 #include "../common/game/base_game.hpp"
 #include "../common/networking/network_manager.hpp"
+#include "../common/world/visibility_map.hpp"
 
 #include <chrono>
 #include <array>
@@ -54,11 +55,15 @@ private:
 
     // Gameplay
     int selected_unit_id;
-    bool can_move(base_unit* unit, glm::vec3 position) const;
 
     //Networking
     networking::network_manager& network;
     networking::network_manager::socket_handle socket;
+
+    visibility_map local_visibility;
+    rendering::mesh fog_of_war;
+
+    std::vector<glm::i32vec2> discovered_chunks;
 
     // Initialization functions
     void load_flyweights();
@@ -69,6 +74,8 @@ private:
     void load_shaders();
 
     void load_datas();
+
+    void update_fog_of_war();
 
 public:
     game(networking::network_manager& manager, networking::network_manager::socket_handle socket);

@@ -5,6 +5,7 @@
 #include "../async/task_executor.hpp"
 #include "../actor/unit_manager.hpp"
 #include "../time/clock.hpp"
+#include "../world/world.hpp"
 
 #include <chrono>
 #include <unordered_map>
@@ -54,8 +55,9 @@ public:
     async::task_executor::task_future push_task(async::task_executor::task_ptr task);
     target_handle add_unit(uint32_t id, glm::vec3 position, glm::vec2 target, int flyweight_id);
     unit_manager::unit_ptr make_unit(glm::vec3 position, glm::vec2 target, int flyweight_id); // TODO: Make const
-	unit_manager::unit_ptr make_unit(glm::vec3 position, int flyweight_id); // TODO: Make const
+    unit_manager::unit_ptr make_unit(glm::vec3 position, int flyweight_id); // TODO: Make const
 
+    bool can_move(base_unit* unit, glm::vec3 position, world& w) const;
     void load_flyweight(const nlohmann::json& json);
 
     void set_flyweight_manager(const unit_flyweight_manager& manager);

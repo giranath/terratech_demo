@@ -19,6 +19,10 @@ void world_renderer::show(int x, int z) noexcept {
     chunk_renderers.emplace_back(*w.chunk_at(x, z));
 }
 
+void world_renderer::hide_all() noexcept {
+    chunk_renderers.clear();
+}
+
 void world_renderer::render(mesh_rendering_system &rendering, glm::mat4 parent_model) noexcept {
     profiler_us p("world_renderer");
     std::for_each(std::begin(chunk_renderers), std::end(chunk_renderers),
@@ -31,6 +35,22 @@ void world_renderer::render(mesh_rendering_system &rendering, glm::mat4 parent_m
 
                       renderer.renderer.render(rendering, model);
                   });
+}
+
+world_renderer::iterator world_renderer::begin() {
+    return chunk_renderers.begin();
+}
+
+world_renderer::iterator world_renderer::end() {
+    return chunk_renderers.end();
+}
+
+world_renderer::const_iterator world_renderer::begin() const {
+    return chunk_renderers.begin();
+}
+
+world_renderer::const_iterator world_renderer::end() const {
+    return chunk_renderers.end();
 }
 
 }

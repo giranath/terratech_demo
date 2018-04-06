@@ -1,7 +1,26 @@
 #include "base_game.hpp"
 #include "../actor/unit.hpp"
+#include "../world/world.hpp"
 
 namespace gameplay {
+
+bool base_game::can_move(base_unit* unit, glm::vec3 position, world& w) const {
+    if(unit) {
+        int chunk_x = static_cast<int>(position.x / world::CHUNK_WIDTH);
+        int chunk_z = static_cast<int>(position.z / world::CHUNK_DEPTH);
+
+        const world_chunk* chunk = w.chunk_at(chunk_x, chunk_z);
+        if(chunk) {
+            const glm::vec3 chunk_space_position(position.x - chunk_x * world::CHUNK_WIDTH,
+                                                 position.y,
+                                                 position.z - chunk_z * world::CHUNK_DEPTH);
+
+            return chunk->biome_at(chunk_space_position.x, 0, chunk_space_position.z) != BIOME_WATER;
+        }
+    }
+
+    return false;
+}
 
 base_game::base_game(std::size_t thread_count, std::unique_ptr<unit_manager> units)
 : tasks(thread_count)

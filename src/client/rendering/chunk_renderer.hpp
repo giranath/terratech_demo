@@ -24,13 +24,14 @@ class chunk_renderer {
     void build_site_meshes() noexcept;
 
 public:
-    static constexpr float SQUARE_SIZE = 64.f;
+    static constexpr float SQUARE_SIZE = 32.f;
 
     explicit chunk_renderer(const world_chunk &chunk) noexcept;
 
     void build() noexcept;
 
     void render(mesh_rendering_system &renderer, glm::mat4 parent_model) const noexcept;
+    const world_chunk& displayed_chunk() const;
 };
 
 }
