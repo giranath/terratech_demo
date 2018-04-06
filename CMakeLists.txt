@@ -197,7 +197,7 @@ add_executable(mmap_demo
         src/client/debug/profiler_administrator.hpp
 
         src/client/constant/rendering.hpp
-        )
+        src/client/opengl/frame_buffer.cpp src/client/opengl/frame_buffer.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}

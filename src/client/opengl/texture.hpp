@@ -29,6 +29,7 @@ public:
     bool good() const noexcept;
 
     static texture make() noexcept;
+    static texture make(uint32_t width, uint32_t height) noexcept;
     static texture load_from_path(const char* path) noexcept;
 };
 
