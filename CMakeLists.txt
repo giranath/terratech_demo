@@ -128,7 +128,7 @@ add_library(common
         src/common/world/constants.hpp
         src/common/util/vec_hash.hpp
         src/common/world/visibility_map.cpp
-        src/common/world/visibility_map.hpp src/common/networking/update_target.hpp src/common/networking/update_target.cpp src/common/task/update_player_visibility.cpp src/common/task/update_player_visibility.hpp)
+        src/common/world/visibility_map.hpp src/common/networking/update_target.hpp src/common/networking/update_target.cpp src/common/task/update_player_visibility.cpp src/common/task/update_player_visibility.hpp src/common/networking/player_init.hpp src/common/networking/player_init.cpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
 		${CRYPTO++_INCLUDE_DIR}

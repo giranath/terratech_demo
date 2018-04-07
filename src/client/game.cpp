@@ -17,6 +17,7 @@
 #include "../common/networking/networking_constant.hpp"
 #include "../common/networking/update_target.hpp"
 #include "../common/task/update_player_visibility.hpp"
+#include "../common/networking/player_init.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -206,8 +207,13 @@ game::game(networking::network_manager& manager, networking::network_manager::so
 }
 
 void game::on_init() {
-    auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, socket);
+    auto client_informations = network.wait_packet_from(PACKET_PLAYER_ID, socket);
+    if(client_informations.first) {
+        auto infos = client_informations.second.as<networking::player_infos>();
+        player_id = infos.id;
+    }
 
+    auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, socket);
     if(flyweights_packet.first) {
         auto manager_u = flyweights_packet.second.as<std::unordered_map<std::string, unit_flyweight>>();
         unit_flyweight_manager manager;
@@ -260,8 +266,7 @@ void game::on_release() {
 void game::on_update(frame_duration last_frame_duration) {
     std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
 
-    // TODO: Find this player id
-    auto visibility_task = push_task(std::make_unique<task::update_player_visibility>(1, local_visibility, units()));
+    auto visibility_task = push_task(std::make_unique<task::update_player_visibility>(player_id, local_visibility, units()));
 
     // Spawn new units
     auto p = network.poll_packet_from(PACKET_SPAWN_UNITS, socket);
@@ -342,29 +347,7 @@ void game::on_update(frame_duration last_frame_duration) {
 
     update_task.wait();
 
-    // TODO: Only show visible chunks
-    //auto view_cube = game_camera.view_cube();
-    const glm::vec3 top_left = game_camera.world_coordinate_of(    glm::vec2{-1.f,  1.f}, { 0,0,0 }, {0,1,0});
-    const glm::vec3 top_right = game_camera.world_coordinate_of(   glm::vec2{ 1.f,  1.f}, { 0,0,0 }, {0,1,0});
-    const glm::vec3 bottom_left = game_camera.world_coordinate_of( glm::vec2{-1.f, -1.f}, { 0,0,0 }, {0,1,0});
-    const glm::vec3 bottom_right = game_camera.world_coordinate_of(glm::vec2{ 1.f, -1.f}, { 0,0,0 }, {0,1,0});
-
-    //bounding_box<float> cam_view_box(std::min(top_left.x, bottom_left.x),
-    //                                 std::max(top_left.z, top_right.z),
-    //                                 std::max(top_right.x, bottom_right.x),
-    //                                 std::min(bottom_left.z, bottom_right.z));
-    const bounding_box<float> cam_view_box(bottom_right.x, bottom_left.z, top_left.x, top_right.z);
-    world_rendering.hide_all();
-    std::for_each(std::begin(discovered_chunks), std::end(discovered_chunks), [this, &cam_view_box](const glm::i32vec2& pos) {
-        const bounding_box<float> chunk_box(pos.x * world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE,
-                                            pos.y * world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE,
-                                            pos.x * world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE + world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE,
-                                            pos.y * world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE + world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE);
-        if(cam_view_box.intersect(chunk_box)) {
-            world_rendering.show(pos.x, pos.y);
-        }
-    });
-
+    // Update fog of war
     auto visiblity_ptr = visibility_task.get();
     auto visibility_task_ptr = static_cast<task::update_player_visibility*>(visiblity_ptr.get());
     if(visibility_task_ptr) {
@@ -426,9 +409,27 @@ void game::update_fog_of_war() {
 }
 
 void game::render() {
+    // Render world
+    const glm::vec3 top_left = game_camera.world_coordinate_of(    glm::vec2{-1.f,  1.f}, { 0,0,0 }, {0,1,0});
+    const glm::vec3 top_right = game_camera.world_coordinate_of(   glm::vec2{ 1.f,  1.f}, { 0,0,0 }, {0,1,0});
+    const glm::vec3 bottom_left = game_camera.world_coordinate_of( glm::vec2{-1.f, -1.f}, { 0,0,0 }, {0,1,0});
+    const glm::vec3 bottom_right = game_camera.world_coordinate_of(glm::vec2{ 1.f, -1.f}, { 0,0,0 }, {0,1,0});
+
+    const bounding_box<float> cam_view_box(bottom_right.x, bottom_left.z, top_left.x, top_right.z);
+    world_rendering.hide_all();
+    std::for_each(std::begin(discovered_chunks), std::end(discovered_chunks), [this, &cam_view_box](const glm::i32vec2& pos) {
+        const bounding_box<float> chunk_box(pos.x * world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE,
+                                            pos.y * world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE,
+                                            pos.x * world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE + world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE,
+                                            pos.y * world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE + world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE);
+        if(cam_view_box.intersect(chunk_box)) {
+            world_rendering.show(pos.x, pos.y);
+        }
+    });
+
     world_rendering.render(mesh_rendering);
 
-    // TODO: Render every units
+    // Render every units
     for(auto unit = units().begin_of_units(); unit != units().end_of_units(); ++unit) {
         rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
                                           glm::translate(glm::mat4{1.f}, unit->second->get_position() * rendering::chunk_renderer::SQUARE_SIZE),

@@ -55,6 +55,7 @@ private:
 
     // Gameplay
     int selected_unit_id;
+    uint8_t player_id;
 
     //Networking
     networking::network_manager& network;
