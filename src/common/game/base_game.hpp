@@ -57,7 +57,6 @@ public:
     unit_manager::unit_ptr make_unit(glm::vec3 position, glm::vec2 target, int flyweight_id); // TODO: Make const
     unit_manager::unit_ptr make_unit(glm::vec3 position, int flyweight_id); // TODO: Make const
 
-    bool can_move(base_unit* unit, glm::vec3 position, world& w) const;
     void load_flyweight(const nlohmann::json& json);
 
     void set_flyweight_manager(const unit_flyweight_manager& manager);

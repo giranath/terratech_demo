@@ -17,6 +17,7 @@
 #include "../common/networking/networking_constant.hpp"
 #include "../common/networking/update_target.hpp"
 #include "../common/task/update_player_visibility.hpp"
+#include "../common/task/update_units.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -314,46 +315,14 @@ void game::on_update(frame_duration last_frame_duration) {
         }
     }
 
-    auto update_task = push_task(async::make_task([this, last_frame_ms]() {
-        for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {
-            unit* actual_unit = static_cast<unit*>(u->second.get());
-
-            glm::vec2 target = actual_unit->get_target_position();
-            glm::vec3 target3D = { target.x, 0, target.y };
-
-            glm::vec3 direction = target3D - actual_unit->get_position();
-
-            if (direction == glm::vec3{}) continue;
-
-            direction = glm::normalize(direction);
-
-            glm::vec3 new_position = actual_unit->get_position() + (direction * actual_unit->get_speed() * (last_frame_ms.count() / 1000.0f));
-
-            if(can_move(actual_unit, new_position, game_world)) {
-                actual_unit->set_position(new_position);
-            }
-            else {
-                actual_unit->set_target_position(glm::vec2(actual_unit->get_position().x, actual_unit->get_position().z));
-            }
-        }
-    }));
+    auto update_task = push_task(std::make_unique<task::update_units>(units(), game_world, last_frame_ms.count() / 1000.0f));
 
     key_inputs.dispatch();
 
     update_task.wait();
 
-    // TODO: Only show visible chunks
-    //auto view_cube = game_camera.view_cube();
-    const glm::vec3 top_left = game_camera.world_coordinate_of(    glm::vec2{-1.f,  1.f}, { 0,0,0 }, {0,1,0});
-    const glm::vec3 top_right = game_camera.world_coordinate_of(   glm::vec2{ 1.f,  1.f}, { 0,0,0 }, {0,1,0});
-    const glm::vec3 bottom_left = game_camera.world_coordinate_of( glm::vec2{-1.f, -1.f}, { 0,0,0 }, {0,1,0});
-    const glm::vec3 bottom_right = game_camera.world_coordinate_of(glm::vec2{ 1.f, -1.f}, { 0,0,0 }, {0,1,0});
-
-    //bounding_box<float> cam_view_box(std::min(top_left.x, bottom_left.x),
-    //                                 std::max(top_left.z, top_right.z),
-    //                                 std::max(top_right.x, bottom_right.x),
-    //                                 std::min(bottom_left.z, bottom_right.z));
-    const bounding_box<float> cam_view_box(bottom_right.x, bottom_left.z, top_left.x, top_right.z);
+    // Only show visibles chunks
+    const bounding_box<float> cam_view_box = camera_bounding_box();
     world_rendering.hide_all();
     std::for_each(std::begin(discovered_chunks), std::end(discovered_chunks), [this, &cam_view_box](const glm::i32vec2& pos) {
         const bounding_box<float> chunk_box(pos.x * world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE,
@@ -365,6 +334,7 @@ void game::on_update(frame_duration last_frame_duration) {
         }
     });
 
+    // Update Fog of War
     auto visiblity_ptr = visibility_task.get();
     auto visibility_task_ptr = static_cast<task::update_player_visibility*>(visiblity_ptr.get());
     if(visibility_task_ptr) {
@@ -373,6 +343,15 @@ void game::on_update(frame_duration last_frame_duration) {
         // TODO: Only update if changed
         update_fog_of_war();
     }
+}
+
+bounding_box<float> game::camera_bounding_box() const noexcept {
+    const glm::vec3 top_left = game_camera.world_coordinate_of(    glm::vec2{-1.f,  1.f}, { 0,0,0 }, {0,1,0});
+    const glm::vec3 top_right = game_camera.world_coordinate_of(   glm::vec2{ 1.f,  1.f}, { 0,0,0 }, {0,1,0});
+    const glm::vec3 bottom_left = game_camera.world_coordinate_of( glm::vec2{-1.f, -1.f}, { 0,0,0 }, {0,1,0});
+    const glm::vec3 bottom_right = game_camera.world_coordinate_of(glm::vec2{ 1.f, -1.f}, { 0,0,0 }, {0,1,0});
+
+    return bounding_box<float>(bottom_right.x, bottom_left.z, top_left.x, top_right.z);
 }
 
 void game::update_fog_of_war() {

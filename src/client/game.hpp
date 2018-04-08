@@ -77,6 +77,8 @@ private:
 
     void update_fog_of_war();
 
+    bounding_box<float> camera_bounding_box() const noexcept;
+
 public:
     game(networking::network_manager& manager, networking::network_manager::socket_handle socket);
     

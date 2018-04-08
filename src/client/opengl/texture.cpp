@@ -60,16 +60,16 @@ texture texture::make() noexcept {
 }
 
 texture texture::make(uint32_t width, uint32_t height) noexcept {
-    GLuint texture;
-    glGenTextures(1, &texture);
+    GLuint tex;
+    glGenTextures(1, &tex);
 
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    return texture{texture};
+    return texture{tex};
 }
 
 texture texture::load_from_path(const char* path) noexcept {

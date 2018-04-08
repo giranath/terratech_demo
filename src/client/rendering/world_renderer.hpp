@@ -15,6 +15,7 @@ public:
     struct chunk_rendering {
         chunk_renderer renderer;
         world_chunk::position_type pos;
+        bool is_visible;
 
         chunk_rendering(const world_chunk &chunk);
     };

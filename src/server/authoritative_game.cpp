@@ -14,6 +14,7 @@
 #include "server_unit_manager.hpp"
 #include "../common/networking/update_target.hpp"
 #include "../common/task/update_player_visibility.hpp"
+#include "../common/task/update_units.hpp"
 
 // The states:
 //  - lobby
@@ -467,29 +468,7 @@ void authoritative_game::on_update(frame_duration last_frame) {
         }
     }
 
-    // TODO: Move out task
-    auto update_task = push_task(async::make_task([this, last_frame_ms]() {
-        for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {
-            unit* actual_unit = static_cast<unit*>(u->second.get());
-
-            glm::vec2 target = actual_unit->get_target_position();
-            glm::vec3 target3D = { target.x, 0, target.y };
-
-            glm::vec3 direction = target3D - actual_unit->get_position();
-
-            if (direction == glm::vec3{}) continue;
-
-            direction = glm::normalize(direction);
-
-            glm::vec3 new_position = actual_unit->get_position() + (direction * actual_unit->get_speed() * (last_frame_ms.count() / 1000.0f));
-            if(can_move(actual_unit, new_position, world)) {
-                actual_unit->set_position(new_position);
-            }
-            else {
-                actual_unit->set_target_position(glm::vec2(actual_unit->get_position().x, actual_unit->get_position().z));
-            }
-        }
-    }));
+    auto update_task = push_task(std::make_unique<task::update_units>(units(), world, last_frame_ms.count() / 1000.0f));
 
     update_task.wait();
 
