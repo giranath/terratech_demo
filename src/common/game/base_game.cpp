@@ -1,5 +1,6 @@
 #include "base_game.hpp"
 #include "../actor/unit.hpp"
+#include "../world/world.hpp"
 
 namespace gameplay {
 

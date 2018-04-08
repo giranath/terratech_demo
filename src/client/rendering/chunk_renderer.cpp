@@ -134,4 +134,8 @@ void chunk_renderer::render(mesh_rendering_system &renderer, glm::mat4 parent_mo
     renderer.emplace(&sites_mesh, parent_model, TEXTURE_NONE, PROGRAM_STANDARD);
 }
 
+const world_chunk& chunk_renderer::displayed_chunk() const {
+    return chunk;
+}
+
 }

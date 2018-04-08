@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <iostream>
+#include <cmath>
 
 world_generator_chunk::world_generator_chunk(terra_chunk* chunk)
 : chunk {chunk} {
@@ -105,8 +106,6 @@ terra_biome_table* make_altitude_axis() {
     terra_biome_table_set(altitude_axis, 6,  0, BIOME_WATER);
     return altitude_axis;
 }
-
-
 
 double circle_custom_noise(double x, double /*y*/, double z, terra_userdata userdata) {
     circle* island = static_cast<circle*>(userdata);

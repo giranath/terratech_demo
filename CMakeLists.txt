@@ -61,6 +61,9 @@ add_library(common
         src/common/world/site.hpp
         src/common/world/infinite_world.cpp
         src/common/world/biome_type.hpp
+        src/common/world/constants.hpp
+        src/common/world/visibility_map.cpp
+        src/common/world/visibility_map.hpp
 
         src/common/actor/actor.hpp
         src/common/actor/actor.cpp
@@ -113,6 +116,10 @@ add_library(common
         src/common/networking/networking_constant.hpp
         src/common/networking/network_manager.cpp
         src/common/networking/network_manager.hpp
+        src/common/networking/update_target.hpp
+        src/common/networking/update_target.cpp
+        src/common/networking/player_init.hpp
+        src/common/networking/player_init.cpp
 
         src/common/game/base_game.cpp 
         src/common/game/base_game.hpp
@@ -125,10 +132,14 @@ add_library(common
         src/common/memory/heap_allocator.cpp
         src/common/memory/heap_allocator.hpp
         src/common/memory/allocator.hpp
-        src/common/world/constants.hpp
+
         src/common/util/vec_hash.hpp
-        src/common/world/visibility_map.cpp
-        src/common/world/visibility_map.hpp src/common/networking/update_target.hpp src/common/networking/update_target.cpp)
+
+        src/common/task/update_player_visibility.cpp
+        src/common/task/update_player_visibility.hpp
+        src/common/task/update_units.cpp
+        src/common/task/update_units.hpp
+        )
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
 		${CRYPTO++_INCLUDE_DIR}
@@ -161,6 +172,10 @@ add_executable(mmap_demo
         src/client/opengl/debug.hpp
         src/client/opengl/texture.cpp
         src/client/opengl/texture.hpp
+        src/client/opengl/frame_buffer.cpp
+        src/client/opengl/frame_buffer.hpp
+        src/client/opengl/render_buffer.cpp
+        src/client/opengl/render_buffer.hpp
 
         src/client/sdl/sdl.hpp
         src/client/sdl/poll_event_iterator.cpp
@@ -196,8 +211,7 @@ add_executable(mmap_demo
         src/client/debug/profiler.hpp
         src/client/debug/profiler_administrator.hpp
 
-        src/client/constant/rendering.hpp
-        )
+        src/client/constant/rendering.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}

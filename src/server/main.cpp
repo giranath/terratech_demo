@@ -44,8 +44,9 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
     game_time::highres_clock frame_time;
     while(game.is_running() && g_signal_status == 0) {
-        game.update(frame_time.elapsed_time<gameplay::base_game::frame_duration>());
+        const auto last_frame_duration = frame_time.elapsed_time<gameplay::base_game::frame_duration>();
         frame_time.restart();
+        game.update(last_frame_duration);
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
     // If exiting game loop because of signal, call stop

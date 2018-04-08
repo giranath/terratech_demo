@@ -13,6 +13,9 @@
 #include <chrono>
 #include "server_unit_manager.hpp"
 #include "../common/networking/update_target.hpp"
+#include "../common/task/update_player_visibility.hpp"
+#include "../common/task/update_units.hpp"
+#include "../common/networking/player_init.hpp"
 
 // The states:
 //  - lobby
@@ -131,45 +134,6 @@ public:
     std::pair<std::size_t, std::size_t> found() const noexcept {
         return found_pair;
     }
-};
-
-class update_player_visibility : public async::base_task {
-    uint8_t player_id;
-    visibility_map visibility_;
-    unit_manager& units_;
-public:
-    update_player_visibility(uint8_t player, visibility_map v, unit_manager& units)
-    : player_id(player)
-    , visibility_(v)
-    , units_(units) {
-
-    }
-
-    void execute() override {
-        visibility_.clear();
-
-        auto units = units_.units_of(player_id);
-        std::for_each(std::begin(units), std::end(units), [this](unit* u) {
-            const int start_of_x = u->get_position().x - u->visibility_radius();
-            const int start_of_y = u->get_position().z - u->visibility_radius();
-            const int end_of_x = u->get_position().x + u->visibility_radius();
-            const int end_of_y = u->get_position().z + u->visibility_radius();
-
-            for(int y = std::max(0, start_of_y); y < std::min(static_cast<int>(visibility_.height()), end_of_y); ++y) {
-                for(int x = std::max(0, start_of_x); x < std::min(static_cast<int>(visibility_.width()), end_of_x); ++x) {
-                    // Test each tiles
-                    const glm::vec3 tile_pos(x, 0, y);
-                    const glm::vec3 diff = tile_pos - u->get_position();
-
-                    if(diff.length() <= u->visibility_radius()) {
-                        visibility_.set(x, y, visibility::visible);
-                    }
-                }
-            }
-        });
-    }
-
-	visibility_map get_visibility() const { return visibility_; }
 };
 
 void authoritative_game::find_spawn_chunks() {
@@ -410,6 +374,10 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
         connected_clients.push_back(connected_client);
     }
 
+    // Send the client's informations
+    networking::player_infos infos(connected_client.id);
+    network.send_to(networking::packet::make(infos, PACKET_PLAYER_ID), connected_client.socket);
+
     // Send initial data to the newly connected client
     send_flyweights(handle);
 
@@ -417,7 +385,6 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
     send_map(connected_client);
 
     // TODO: Improve this
-
 
     // TODO: To remove
 
@@ -472,8 +439,6 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
             it->known_units.emplace(u.get_id());
         }
     }
-
-   // network.broadcast(networking::packet::make(units_to_spawn, PACKET_SPAWN_UNITS));
 }
 
 void authoritative_game::broadcast_current_state() {
@@ -532,42 +497,29 @@ void authoritative_game::on_update(frame_duration last_frame) {
         }
     }
 
-    // TODO: Move out task
-    auto update_task = push_task(async::make_task([this, last_frame_ms]() {
-        for (auto u = units().begin_of_units(); u != units().end_of_units(); u++) {
-            unit* actual_unit = static_cast<unit*>(u->second.get());
-
-            glm::vec2 target = actual_unit->get_target_position();
-            glm::vec3 target3D = { target.x, 0, target.y };
-
-            glm::vec3 direction = target3D - actual_unit->get_position();
-
-            if (direction == glm::vec3{}) continue;
-
-            direction = glm::normalize(direction);
-
-            glm::vec3 move = actual_unit->get_position() + (direction * actual_unit->get_speed() * (last_frame_ms.count() / 1000.0f));
-
-            actual_unit->set_position(move);
-        }
-    }));
+    auto update_task = push_task(std::make_unique<task::update_units>(units(), world, last_frame_ms.count() / 1000.0f));
 
     update_task.wait();
 
     // Wait that units moves to update visibility
     std::vector<async::task_executor::task_future> update_visibility;
     for(client& c : connected_clients) {
-        update_visibility.push_back(push_task(std::make_unique<update_player_visibility>(c.id, c.map_visibility, units())));
+        update_visibility.push_back(push_task(std::make_unique<task::update_player_visibility>(c.id, c.map_visibility, units())));
     }
 
-    // TODO: Update stuff
-	int i = 0;
     for(async::task_executor::task_future& future : update_visibility) {
-		auto task = future.get();
-		update_player_visibility* visibility_task = static_cast<update_player_visibility*>(task.get());
+        auto visiblity_ptr = future.get();
+        auto visibility_task_ptr = static_cast<task::update_player_visibility*>(visiblity_ptr.get());
+        if(visibility_task_ptr) {
+            uint8_t player_id = visibility_task_ptr->get_player();
+            auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [player_id](const client& c) {
+               return c.id == player_id;
+            });
 
-		connected_clients[i].map_visibility =  visibility_task->get_visibility();
-		i++;
+            if(it != std::end(connected_clients)) {
+                it->map_visibility = visibility_task_ptr->visibility();
+            }
+        }
     }
 
     // Update known chunks of every clients
@@ -615,9 +567,9 @@ void authoritative_game::on_update(frame_duration last_frame) {
     }
 
     // Broadcast current state every seconds
-    if(world_state_sync_clock.elapsed_time<std::chrono::seconds>() >= std::chrono::seconds(1)) {
+    if(world_state_sync_clock.elapsed_time<std::chrono::milliseconds>() >= std::chrono::milliseconds(250)) {
         broadcast_current_state();
-        world_state_sync_clock.substract(std::chrono::seconds(1));
+        world_state_sync_clock.substract(std::chrono::milliseconds(250));
     }
 }
 

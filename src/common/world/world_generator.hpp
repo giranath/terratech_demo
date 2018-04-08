@@ -52,7 +52,6 @@ struct oval
 class world_generator_chunk {
     friend world_generator;
     terra_chunk* chunk;
-    
 
     world_generator_chunk(terra_chunk* chunk);
 public:
