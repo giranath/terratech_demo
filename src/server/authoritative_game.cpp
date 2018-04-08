@@ -388,7 +388,6 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
 
     // TODO: Improve this
 
-
     // TODO: To remove
     spawn_unit(connected_client.id, starting_position, glm::vec2{200, 200}, 106);
 }

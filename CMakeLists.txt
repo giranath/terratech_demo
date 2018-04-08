@@ -172,6 +172,10 @@ add_executable(mmap_demo
         src/client/opengl/debug.hpp
         src/client/opengl/texture.cpp
         src/client/opengl/texture.hpp
+        src/client/opengl/frame_buffer.cpp
+        src/client/opengl/frame_buffer.hpp
+        src/client/opengl/render_buffer.cpp
+        src/client/opengl/render_buffer.hpp
 
         src/client/sdl/sdl.hpp
         src/client/sdl/poll_event_iterator.cpp
@@ -207,8 +211,7 @@ add_executable(mmap_demo
         src/client/debug/profiler.hpp
         src/client/debug/profiler_administrator.hpp
 
-        src/client/constant/rendering.hpp
-        src/client/opengl/frame_buffer.cpp src/client/opengl/frame_buffer.hpp)
+        src/client/constant/rendering.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}
