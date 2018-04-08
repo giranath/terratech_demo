@@ -15,6 +15,7 @@
 #include "../common/networking/update_target.hpp"
 #include "../common/task/update_player_visibility.hpp"
 #include "../common/task/update_units.hpp"
+#include "../common/networking/player_init.hpp"
 
 // The states:
 //  - lobby
@@ -374,6 +375,10 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
         std::lock_guard<std::mutex> lock(clients_mutex);
         connected_clients.push_back(connected_client);
     }
+
+    // Send the client's informations
+    networking::player_infos infos(connected_client.id);
+    network.send_to(networking::packet::make(infos, PACKET_PLAYER_ID), connected_client.socket);
 
     // Send initial data to the newly connected client
     send_flyweights(handle);
