@@ -22,6 +22,7 @@ class authoritative_game : public gameplay::base_game {
     void generate_world();
     void setup_listener();
 
+    glm::vec2 find_available_position(world_chunk* player_chunk);
     void send_flyweights(networking::network_manager::socket_handle client);
     void send_map(const client& connecting_client);
     void on_connection(networking::network_manager::socket_handle handle);
