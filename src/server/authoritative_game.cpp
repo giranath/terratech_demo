@@ -430,14 +430,14 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
 glm::vec2 authoritative_game::find_available_position(world_chunk* player_chunk)
 {
     bool start_position_available = false;
-    glm::vec2 player_start_position;
+    glm::vec2 player_start_position{0,0};
     for (size_t i = 0; i < world.CHUNK_WIDTH; ++i)
     {
         for (size_t j = 0; j < world.CHUNK_DEPTH; ++i)
         {
             int biome = player_chunk->biome_at(i, 0, j);
             std::vector<site*> sites = player_chunk->sites_at(i, 0, j);
-            if (biome != BIOME_WATER && sites.empty())
+            if (biome != BIOME_WATER && !sites.empty() && sites.front()->type() == SITE_NOTHING)
             {
                 player_start_position = { i,j };
                 start_position_available = true;
