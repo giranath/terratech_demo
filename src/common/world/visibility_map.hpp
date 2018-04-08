@@ -14,7 +14,7 @@ class visibility_map {
     std::vector<std::vector<visibility>> tile_visibility;
     std::size_t width_ = 0, height_ = 0;
 public:
-    visibility_map() = default;
+    visibility_map() = delete;
     visibility_map(std::size_t width, std::size_t height);
 
     void clear(bool complete = false) noexcept;

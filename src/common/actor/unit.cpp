@@ -1,10 +1,25 @@
 #include "unit.hpp"
 
+
+unit::unit() 
+	: base_unit({0,0,0}, nullptr, actor_type::unit),
+	transported_ressource{},
+	target{ nullptr },
+	target_position{0,0}
+{ }
+
 unit::unit(glm::vec3 position, glm::vec2 target_position, unit_flyweight* unit_fly, unit_manager* manager) :
 base_unit(position, unit_fly, actor_type::unit),
 transported_ressource{},
 target{manager},
 target_position{target_position}
+{}
+
+unit::unit(glm::vec3 position, unit_flyweight* unit_fly, unit_manager* manager) :
+	base_unit(position, unit_fly, actor_type::unit),
+	transported_ressource{},
+	target{ manager },
+	target_position{ position }
 {}
 
 void unit::set_target(target_handle _target)

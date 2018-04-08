@@ -136,8 +136,6 @@ public:
     }
 };
 
-
-
 void authoritative_game::find_spawn_chunks() {
     std::vector<async::task_executor::task_future> chunk_scores_tasks;
     std::transform(std::begin(world), std::end(world), std::back_inserter(chunk_scores_tasks), [this](const world_chunk& chunk) {
@@ -389,7 +387,36 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
     // TODO: Improve this
 
     // TODO: To remove
-    spawn_unit(connected_client.id, starting_position, glm::vec2{200, 200}, 106);
+
+    //make sure unit doesn't spawn in water or inside ressource
+    glm::vec2 availabe_position = find_available_position(world.chunk_at(spawn_chunks[connected_client.id - 1].x, spawn_chunks[connected_client.id - 1].y));
+    
+    spawn_unit(connected_client.id, starting_position, availabe_position, 106);
+}
+
+glm::vec2 authoritative_game::find_available_position(world_chunk* player_chunk)
+{
+    bool start_position_available = false;
+    glm::vec2 player_start_position{0,0};
+    for (size_t i = 0; i < world.CHUNK_WIDTH; ++i)
+    {
+        for (size_t j = 0; j < world.CHUNK_DEPTH; ++i)
+        {
+            int biome = player_chunk->biome_at(i, 0, j);
+            std::vector<site*> sites = player_chunk->sites_at(i, 0, j);
+            if (biome != BIOME_WATER && !sites.empty() && sites.front()->type() == SITE_NOTHING)
+            {
+                player_start_position = { i,j };
+                start_position_available = true;
+                break;
+            }
+        }
+        if (start_position_available)
+        {
+            break;
+        }
+    }
+    return player_start_position;
 }
 
 void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id) {
@@ -399,7 +426,7 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
               << std::endl;
     unit_manager& manager = units();
     server_unit_manager& units = static_cast<server_unit_manager&>(manager);
-    auto created_unit = units.add_unit_to(owner, make_unit(position, flyweight_id));
+    auto created_unit = units.add_unit_to(owner, make_unit(position, target, flyweight_id));
 
     std::vector<unit> units_to_spawn;
     units_to_spawn.push_back(*static_cast<unit*>(created_unit.get()));
@@ -412,8 +439,6 @@ void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2
             it->known_units.emplace(u.get_id());
         }
     }
-
-    network.broadcast(networking::packet::make(units_to_spawn, PACKET_SPAWN_UNITS));
 }
 
 void authoritative_game::broadcast_current_state() {
@@ -481,8 +506,6 @@ void authoritative_game::on_update(frame_duration last_frame) {
     for(client& c : connected_clients) {
         update_visibility.push_back(push_task(std::make_unique<task::update_player_visibility>(c.id, c.map_visibility, units())));
     }
-
-    // TODO: Update stuff
 
     for(async::task_executor::task_future& future : update_visibility) {
         auto visiblity_ptr = future.get();
