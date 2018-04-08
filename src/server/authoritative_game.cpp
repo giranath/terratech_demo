@@ -544,9 +544,9 @@ void authoritative_game::on_update(frame_duration last_frame) {
     }
 
     // Broadcast current state every seconds
-    if(world_state_sync_clock.elapsed_time<std::chrono::seconds>() >= std::chrono::seconds(1)) {
+    if(world_state_sync_clock.elapsed_time<std::chrono::milliseconds>() >= std::chrono::milliseconds(250)) {
         broadcast_current_state();
-        world_state_sync_clock.substract(std::chrono::seconds(1));
+        world_state_sync_clock.substract(std::chrono::milliseconds(250));
     }
 }
 

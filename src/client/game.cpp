@@ -291,7 +291,7 @@ void game::on_update(frame_duration last_frame_duration) {
             unit* my_unit = static_cast<unit*>(this->units().get(u.get_id()));
 
             if(my_unit) {
-                my_unit->set_position(u.get_position());
+                //my_unit->set_position(u.get_position());
                 my_unit->set_target_position(u.get_target_position());
             }
         }
