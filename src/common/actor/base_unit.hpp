@@ -26,7 +26,11 @@ public:
     void set_flyweight(unit_flyweight* new_flyweight) {
         flyweight = new_flyweight;
         current_health = flyweight->get_max_health();
-    }
+    } 
+	
+	unit_flyweight* get_flyweight() {
+		return flyweight;
+	}
 
     void take_damage(unsigned int damage)
     {
