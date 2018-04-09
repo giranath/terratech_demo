@@ -12,7 +12,7 @@ world_renderer::chunk_rendering::chunk_rendering(const world_chunk &chunk)
 
 world_renderer::world_renderer(world &w) noexcept
 : w{w} {
-
+    chunk_renderers.reserve(20 * 20);
 }
 
 void world_renderer::show(int x, int z) noexcept {

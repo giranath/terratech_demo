@@ -72,6 +72,10 @@ private:
     gl::texture      game_color_texture;
     gl::render_buffer game_depth_buffer;
 
+    gl::frame_buffer fow_fbo;
+    gl::texture      fow_color_texture;
+    gl::render_buffer fow_depth_buffer;
+
     // Initialization functions
     void load_flyweights();
     void setup_inputs();

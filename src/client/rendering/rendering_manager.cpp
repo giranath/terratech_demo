@@ -30,6 +30,16 @@ void mesh_rendering_system::set_texture(mesh_renderer::texture_handle handle, re
     textures[handle] = std::move(texture);
 }
 
+const gl::texture* mesh_rendering_system::texture(mesh_renderer::texture_handle handle) {
+    auto it = textures.find(handle);
+
+    if(it != textures.end()) {
+        return &it->second.texture();
+    }
+
+    return nullptr;
+}
+
 void mesh_rendering_system::set_camera(camera *cam) noexcept {
     current_camera = cam;
 }

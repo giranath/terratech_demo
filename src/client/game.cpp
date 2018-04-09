@@ -189,40 +189,37 @@ gl::buffer quad_vertexbuffer;
 
 void game::on_init() {
     auto client_informations = network.wait_packet_from(PACKET_PLAYER_ID, socket);
-    if(client_informations.first) {
+    if (client_informations.first) {
         auto infos = client_informations.second.as<networking::player_infos>();
         player_id = infos.id;
     }
 
     auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, socket);
-    if(flyweights_packet.first) {
+    if (flyweights_packet.first) {
         auto manager_u = flyweights_packet.second.as<std::unordered_map<std::string, unit_flyweight>>();
         unit_flyweight_manager manager;
-        for (auto& v : manager_u)
-        {
+        for (auto &v : manager_u) {
             manager.emplace(std::stoi(v.first), std::move(v.second));
         }
         set_flyweight_manager(manager);
 
         auto chunks_packet = network.wait_packet_from(PACKET_SETUP_CHUNK, socket);
-        if(chunks_packet.first) {
+        if (chunks_packet.first) {
             auto chunks = chunks_packet.second.as<std::vector<networking::world_chunk>>();
 
-            for(networking::world_chunk& received_chunk : chunks) {
-                world_chunk& game_chunk = game_world.add(received_chunk.x, received_chunk.y);
+            for (networking::world_chunk &received_chunk : chunks) {
+                world_chunk &game_chunk = game_world.add(received_chunk.x, received_chunk.y);
                 game_chunk.set_biome_at(received_chunk.regions_biome);
 
-                for(const networking::resource& res : received_chunk.sites) {
+                for (const networking::resource &res : received_chunk.sites) {
                     game_chunk.set_site_at(res.x, 0, res.y, site(res.type, res.quantity));
                 }
             }
-        }
-        else {
+        } else {
             throw std::runtime_error("failed to load chunks");
         }
 
-    }
-    else {
+    } else {
         throw std::runtime_error("failed to load flyweights");
     }
 
@@ -230,7 +227,7 @@ void game::on_init() {
     setup_inputs();
 
     // Only show know chunks
-    for(const world_chunk& known_chunks : game_world) {
+    for (const world_chunk &known_chunks : game_world) {
         discovered_chunks.push_back(known_chunks.position());
     }
 
@@ -252,7 +249,26 @@ void game::on_init() {
         GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
         glDrawBuffers(1, draw_buffers);
 
-        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            throw std::runtime_error("failed to create Framebuffer");
+        }
+    }
+    fow_fbo = gl::frame_buffer::make();
+    {
+        gl::bind(gl::framebuffer_bind<>(fow_fbo));
+
+        fow_color_texture = gl::texture::make(800, 600);
+        fow_depth_buffer = gl::render_buffer::make();
+        {
+            gl::bind(gl::renderbuffer_bind<GL_RENDERBUFFER>(fow_depth_buffer));
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 800, 600);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fow_depth_buffer);
+        }
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, fow_color_texture, 0);
+        GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
+        glDrawBuffers(1, draw_buffers);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             throw std::runtime_error("failed to create Framebuffer");
         }
     }
@@ -464,29 +480,50 @@ void game::render() {
                                           virtual_textures[unit->second->texture()].id , PROGRAM_BILLBOARD);
         mesh_rendering.push(std::move(renderer));
     }
-
-    // Construct fog of war
-    rendering::mesh_renderer fow_renderer(&fog_of_war, glm::mat4{1.f}, virtual_textures["fog_of_war"].id, PROGRAM_STANDARD);
-    mesh_rendering.push(std::move(fow_renderer));
-
     // Render every meshes
     mesh_rendering.render();
 
+    // Construct fog of war
+    gl::bind(gl::framebuffer_bind<>(fow_fbo));
+    glViewport(0, 0, 800, 600);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    gl::program* current_program = mesh_rendering.program(PROGRAM_STANDARD);
+    gl::bind(*current_program);
+
+    auto projection_uniform = current_program->find_uniform<glm::mat4>("projection_matrix");
+    auto view_uniform = current_program->find_uniform<glm::mat4>("view_matrix");
+    auto is_textured = current_program->find_uniform<int>("is_textured");
+    auto model_uniform = current_program->find_uniform<glm::mat4>("model_matrix");
+    model_uniform.set(glm::mat4{1.f});
+    is_textured.set(0);
+
+    projection_uniform.set(game_camera.projection());
+    view_uniform.set(game_camera.view());
+
+    glActiveTexture(GL_TEXTURE0);
+    gl::bind(gl::texture_bind<GL_TEXTURE_2D>(*mesh_rendering.texture(virtual_textures["fog_of_war"].id)));
+
+    fog_of_war.render();
+
+    //Render on screen.
     gl::bind(gl::framebuffer_bind<>(gl::frame_buffer::SCREEN));
     glViewport(0, 0, 800, 600);
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //mesh_rendering.
     gl::program* fullscreen_prog = mesh_rendering.program(2);
     auto texture_uniform = fullscreen_prog->find_uniform<int>("game_texture");
-    texture_uniform.set(0);
+    auto texture_uniform2 = fullscreen_prog->find_uniform<int>("fow_texture");
+
     gl::bind(*fullscreen_prog);
+    texture_uniform.set(0);
+    texture_uniform2.set(1);
 
     gl::bind(quad_VertexArrayID);
 
     glActiveTexture(GL_TEXTURE0);
     gl::bind(gl::texture_bind<GL_TEXTURE_2D>(game_color_texture));
+    glActiveTexture(GL_TEXTURE1);
+    gl::bind(gl::texture_bind<GL_TEXTURE_2D>(fow_color_texture));
     glEnableVertexAttribArray(0);
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(quad_vertexbuffer));
     glVertexAttribPointer(
