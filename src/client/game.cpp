@@ -184,6 +184,9 @@ game::game(networking::network_manager& manager, networking::network_manager::so
     discovered_chunks.reserve(20 * 20);
 }
 
+gl::vertex_array quad_VertexArrayID;
+gl::buffer quad_vertexbuffer;
+
 void game::on_init() {
     auto client_informations = network.wait_packet_from(PACKET_PLAYER_ID, socket);
     if(client_informations.first) {
@@ -234,7 +237,41 @@ void game::on_init() {
     // Setup camera
     game_camera.reset({-100.f, 10.f, -200.f});
 
+    fbo = gl::frame_buffer::make();
+    {
+        gl::bind(gl::framebuffer_bind<>(fbo));
+
+        game_color_texture = gl::texture::make(800, 600);
+        game_depth_buffer = gl::render_buffer::make();
+        {
+            gl::bind(gl::renderbuffer_bind<GL_RENDERBUFFER>(game_depth_buffer));
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 800, 600);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, game_depth_buffer);
+        }
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, game_color_texture, 0);
+        GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
+        glDrawBuffers(1, draw_buffers);
+
+        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            throw std::runtime_error("failed to create Framebuffer");
+        }
+    }
+
     load_datas();
+
+    quad_VertexArrayID = gl::vertex_array::make();
+    gl::bind(quad_VertexArrayID);
+    static const GLfloat g_quad_vertex_buffer_data[] = {
+            -1.0f, -1.0f, 0.0f,
+            1.0f, -1.0f, 0.0f,
+            -1.0f,  1.0f, 0.0f,
+            -1.0f,  1.0f, 0.0f,
+            1.0f, -1.0f, 0.0f,
+            1.0f,  1.0f, 0.0f,
+    };
+    quad_vertexbuffer = gl::buffer::make();
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(quad_vertexbuffer));
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_quad_vertex_buffer_data), g_quad_vertex_buffer_data, GL_STATIC_DRAW);
 }
 
 void game::on_release() {
@@ -393,6 +430,10 @@ void game::update_fog_of_war() {
 }
 
 void game::render() {
+    gl::bind(gl::framebuffer_bind<>(fbo));
+    glViewport(0, 0, 800, 600);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     // Render world
     const glm::vec3 top_left = game_camera.world_coordinate_of(    glm::vec2{-1.f,  1.f}, { 0,0,0 }, {0,1,0});
     const glm::vec3 top_right = game_camera.world_coordinate_of(   glm::vec2{ 1.f,  1.f}, { 0,0,0 }, {0,1,0});
@@ -428,6 +469,34 @@ void game::render() {
     // Render every meshes
     mesh_rendering.render();
 
+    gl::bind(gl::framebuffer_bind<>(gl::frame_buffer::SCREEN));
+    glViewport(0, 0, 800, 600);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //mesh_rendering.
+    gl::program* fullscreen_prog = mesh_rendering.program(2);
+    auto texture_uniform = fullscreen_prog->find_uniform<int>("game_texture");
+    texture_uniform.set(0);
+    gl::bind(*fullscreen_prog);
+
+    gl::bind(quad_VertexArrayID);
+
+    glActiveTexture(GL_TEXTURE0);
+    gl::bind(gl::texture_bind<GL_TEXTURE_2D>(game_color_texture));
+    glEnableVertexAttribArray(0);
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(quad_vertexbuffer));
+    glVertexAttribPointer(
+            0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+            3,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            (void*)0            // array buffer offset
+    );
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDisableVertexAttribArray(0);
+
     // Calculates FPS
     ++frame_count;
     if(fps_clock.elapsed_time<std::chrono::seconds>() >= std::chrono::seconds(1)) {
@@ -444,6 +513,7 @@ void game::render() {
 
         frame_count = 0;
     }
+
 }
 
 bool inside_world_bound(glm::vec3 position) {

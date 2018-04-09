@@ -38,6 +38,16 @@ void mesh_rendering_system::set_program(mesh_renderer::program_handle handle, gl
     programs[handle] = std::move(program);
 }
 
+gl::program* mesh_rendering_system::program(mesh_renderer::program_handle handle) {
+    auto it = programs.find(handle);
+
+    if(it != programs.end()) {
+        return &it->second;
+    }
+
+    return nullptr;
+}
+
 void mesh_rendering_system::push(const mesh_renderer &renderer) {
     meshes.push_back(renderer);
 }

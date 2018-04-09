@@ -43,6 +43,7 @@ public:
     void set_texture(mesh_renderer::texture_handle handle, virtual_texture&& texture);
 
     void set_program(mesh_renderer::program_handle handle, gl::program&& program);
+    gl::program* program(mesh_renderer::program_handle handle);
 
     void push(const mesh_renderer &renderer);
 

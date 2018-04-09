@@ -1,2 +1,3 @@
 0 standard.vert  standard.frag
 1 billboard.vert billboard.frag
+2 fullscreen.vert fullscreen.frag

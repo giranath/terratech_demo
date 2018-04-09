@@ -14,6 +14,8 @@
 #include "../common/game/base_game.hpp"
 #include "../common/networking/network_manager.hpp"
 #include "../common/world/visibility_map.hpp"
+#include "opengl/frame_buffer.hpp"
+#include "opengl/render_buffer.hpp"
 
 #include <chrono>
 #include <array>
@@ -65,6 +67,10 @@ private:
     rendering::mesh fog_of_war;
 
     std::vector<glm::i32vec2> discovered_chunks;
+
+    gl::frame_buffer fbo;
+    gl::texture      game_color_texture;
+    gl::render_buffer game_depth_buffer;
 
     // Initialization functions
     void load_flyweights();
