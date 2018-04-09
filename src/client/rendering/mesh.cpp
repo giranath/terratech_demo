@@ -28,7 +28,10 @@ mesh mesh_builder::build() const noexcept {
 }
 
 mesh::mesh(gl::buffer &&vertices, gl::buffer &&uvs, gl::buffer &&colors, std::size_t count) noexcept
-        : vertices{std::move(vertices)}, uvs{std::move(uvs)}, colors{std::move(colors)}, count{count} {
+: vertices{std::move(vertices)}
+, uvs{std::move(uvs)}
+, colors{std::move(colors)}
+, count{count} {
 
 }
 

@@ -385,42 +385,45 @@ void game::update_fog_of_war() {
     std::for_each(std::begin(world_rendering), std::end(world_rendering), [this, &fow_builder](const rendering::world_renderer::chunk_rendering& chunk_renderer) {
         auto chunk_pos = chunk_renderer.pos;
 
-        for(std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
-            for(std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
-                const std::size_t world_pos_x = chunk_pos.x * world::CHUNK_WIDTH + x;
-                const std::size_t world_pos_z = chunk_pos.y * world::CHUNK_DEPTH + z;
+        if(chunk_renderer.is_visible) {
+            for(std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
+                for(std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
+                    const std::size_t world_pos_x = chunk_pos.x * world::CHUNK_WIDTH + x;
+                    const std::size_t world_pos_z = chunk_pos.y * world::CHUNK_DEPTH + z;
 
-                const glm::vec3 start_of_square(world_pos_x * rendering::chunk_renderer::SQUARE_SIZE,
-                                                10.f,
-                                                world_pos_z * rendering::chunk_renderer::SQUARE_SIZE);
-                const glm::vec3 right_of_square(rendering::chunk_renderer::SQUARE_SIZE, 0.f, 0.f);
-                const glm::vec3 back_of_square(0.f, 0.f, rendering::chunk_renderer::SQUARE_SIZE);
+                    const glm::vec3 start_of_square(world_pos_x * rendering::chunk_renderer::SQUARE_SIZE,
+                                                    1.f,
+                                                    world_pos_z * rendering::chunk_renderer::SQUARE_SIZE);
+                    const glm::vec3 right_of_square(rendering::chunk_renderer::SQUARE_SIZE, 0.f, 0.f);
+                    const glm::vec3 back_of_square(0.f, 0.f, rendering::chunk_renderer::SQUARE_SIZE);
 
-                glm::vec3 color;
-                bool hide_under;
+                    glm::vec3 color;
+                    bool hide_under;
 
-                switch(local_visibility.at(world_pos_x, world_pos_z)) {
-                    case visibility::unexplored:
-                        hide_under = true;
-                        color = glm::vec3(0.f, 0.f, 0.f);
-                        break;
-                    case visibility::explored:
-                        hide_under = true;
-                        color = glm::vec3(0.5f, 0.5f, 0.5f);
-                        break;
-                    case visibility::visible:
-                        hide_under = false;
-                        break;
-                }
+                    switch(local_visibility.at(world_pos_x, world_pos_z)) {
+                        case visibility::unexplored:
+                            hide_under = true;
+                            color = glm::vec3(0.f, 0.f, 0.f);
+                            break;
+                        case visibility::explored:
+                            hide_under = true;
+                            color = glm::vec3(0.5f, 0.5f, 0.5f);
+                            break;
+                        case visibility::visible:
+                            hide_under = true;
+                            color = glm::vec3(1.f, 1.f, 1.f);
+                            break;
+                    }
 
-                if(hide_under) {
-                    fow_builder.add_vertex(start_of_square,                                    glm::vec2{}, color);
-                    fow_builder.add_vertex(start_of_square + right_of_square,                  glm::vec2{}, color);
-                    fow_builder.add_vertex(start_of_square + right_of_square + back_of_square, glm::vec2{}, color);
+                    if(hide_under) {
+                        fow_builder.add_vertex(start_of_square,                                    glm::vec2{}, color);
+                        fow_builder.add_vertex(start_of_square + right_of_square,                  glm::vec2{}, color);
+                        fow_builder.add_vertex(start_of_square + right_of_square + back_of_square, glm::vec2{}, color);
 
-                    fow_builder.add_vertex(start_of_square,                                    glm::vec2{}, color);
-                    fow_builder.add_vertex(start_of_square + right_of_square + back_of_square, glm::vec2{}, color);
-                    fow_builder.add_vertex(start_of_square + back_of_square,                   glm::vec2{}, color);
+                        fow_builder.add_vertex(start_of_square,                                    glm::vec2{}, color);
+                        fow_builder.add_vertex(start_of_square + right_of_square + back_of_square, glm::vec2{}, color);
+                        fow_builder.add_vertex(start_of_square + back_of_square,                   glm::vec2{}, color);
+                    }
                 }
             }
         }
