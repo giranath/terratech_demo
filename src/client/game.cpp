@@ -234,45 +234,6 @@ void game::on_init() {
     // Setup camera
     game_camera.reset({-100.f, 10.f, -200.f});
 
-    fbo = gl::frame_buffer::make();
-    {
-        gl::bind(gl::framebuffer_bind<>(fbo));
-
-        game_color_texture = gl::texture::make(800, 600);
-        game_depth_buffer = gl::render_buffer::make();
-        {
-            gl::bind(gl::renderbuffer_bind<GL_RENDERBUFFER>(game_depth_buffer));
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 800, 600);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, game_depth_buffer);
-        }
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, game_color_texture, 0);
-        GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
-        glDrawBuffers(1, draw_buffers);
-
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            throw std::runtime_error("failed to create Framebuffer");
-        }
-    }
-    fow_fbo = gl::frame_buffer::make();
-    {
-        gl::bind(gl::framebuffer_bind<>(fow_fbo));
-
-        fow_color_texture = gl::texture::make(800, 600);
-        fow_depth_buffer = gl::render_buffer::make();
-        {
-            gl::bind(gl::renderbuffer_bind<GL_RENDERBUFFER>(fow_depth_buffer));
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 800, 600);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fow_depth_buffer);
-        }
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, fow_color_texture, 0);
-        GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
-        glDrawBuffers(1, draw_buffers);
-
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            throw std::runtime_error("failed to create Framebuffer");
-        }
-    }
-
     load_datas();
 
     quad_VertexArrayID = gl::vertex_array::make();
@@ -450,7 +411,7 @@ void game::update_fog_of_war() {
 
 void game::render() {
     gl::bind(gl::framebuffer_bind<>(fbo));
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Render world
@@ -485,7 +446,7 @@ void game::render() {
 
     // Construct fog of war
     gl::bind(gl::framebuffer_bind<>(fow_fbo));
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     gl::program* current_program = mesh_rendering.program(PROGRAM_STANDARD);
     gl::bind(*current_program);
@@ -507,7 +468,7 @@ void game::render() {
 
     //Render on screen.
     gl::bind(gl::framebuffer_bind<>(gl::frame_buffer::SCREEN));
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     gl::program* fullscreen_prog = mesh_rendering.program(2);
@@ -646,7 +607,46 @@ void game::handle_event(SDL_Event event) {
 }
 
 void game::resize(int new_width, int new_height) {
-    glViewport(0, 0, new_width, new_height);
+    fbo = gl::frame_buffer::make();
+    {
+        gl::bind(gl::framebuffer_bind<>(fbo));
+
+        game_color_texture = gl::texture::make(new_width, new_height);
+        game_depth_buffer = gl::render_buffer::make();
+        {
+            gl::bind(gl::renderbuffer_bind<GL_RENDERBUFFER>(game_depth_buffer));
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, new_width, new_height);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, game_depth_buffer);
+        }
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, game_color_texture, 0);
+        GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
+        glDrawBuffers(1, draw_buffers);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            throw std::runtime_error("failed to create Framebuffer");
+        }
+    }
+    fow_fbo = gl::frame_buffer::make();
+    {
+        gl::bind(gl::framebuffer_bind<>(fow_fbo));
+
+        fow_color_texture = gl::texture::make(new_width, new_height);
+        fow_depth_buffer = gl::render_buffer::make();
+        {
+            gl::bind(gl::renderbuffer_bind<GL_RENDERBUFFER>(fow_depth_buffer));
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, new_width, new_height);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fow_depth_buffer);
+        }
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, fow_color_texture, 0);
+        GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
+        glDrawBuffers(1, draw_buffers);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            throw std::runtime_error("failed to create Framebuffer");
+        }
+    }
+
+    //glViewport(0, 0, new_width, new_height);
 
     const float aspect = static_cast<float>(new_width) / new_height;
     if(aspect >= 1.0f) {
