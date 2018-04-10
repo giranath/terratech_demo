@@ -235,6 +235,13 @@ void game::on_init() {
     game_camera.reset({-100.f, 10.f, -200.f});
 
     load_datas();
+
+    network.on_disconnection.attach([this](const networking::network_manager::socket_handle disconnected_socket) {
+        if(disconnected_socket == socket) {
+            std::cout << "disconnected from server" << std::endl;
+            stop();
+        }
+    });
 }
 
 void game::on_release() {

@@ -9,6 +9,7 @@
 #include "../common/time/clock.hpp"
 
 class authoritative_game : public gameplay::base_game {
+    static const uint8_t MAX_CLIENT_COUNT = 2;
     infinite_world world;
     std::vector<client> connected_clients;
     std::mutex clients_mutex;
