@@ -93,6 +93,7 @@ public:
             return &pair;
         }
     };
+
     T& operator[](size_t key)
     {
         auto it = std::find(keys.begin(), keys.end(), key);
@@ -100,6 +101,7 @@ public:
         {
             return values[std::distance(keys.begin(), it)];
         }
+
         assert(false);
     }
 

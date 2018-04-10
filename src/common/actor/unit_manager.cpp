@@ -37,7 +37,7 @@ target_handle unit_manager::add(unit _unit, uint32_t id)
 
     units.add(id, _unit);
 
-    base_unit* u = &buildings[id];
+    base_unit* u = &units[id];
     uint32_t type = id_unit.unit_type;
 
     u->set_id(id);
