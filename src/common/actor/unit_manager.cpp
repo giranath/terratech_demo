@@ -15,7 +15,8 @@ unit_manager::unit_manager(){}
 
 base_unit* unit_manager::get(uint32_t id)
 {
-    uint32_t type = get_unit_type(id);
+    unit_id id_parts(id);
+    uint32_t type = id_parts.unit_type;
     if (type == 0 && units.contains(id))
     {
         std::lock_guard<std::mutex> lock(units_mutex);
