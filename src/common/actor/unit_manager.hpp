@@ -63,8 +63,8 @@ public:
 
     base_unit* get(uint32_t id);
 
-    target_handle unit_manager::add(unit _unit, uint32_t id);
-    target_handle unit_manager::add(building _unit, uint32_t id);
+    target_handle add(unit _unit, uint32_t id);
+    target_handle add(building _unit, uint32_t id);
 
     void remove(uint32_t id);
 
@@ -77,32 +77,32 @@ public:
     size_t count_buildings() const noexcept;
 
     template <class output_iterator>
-    output_iterator unit_manager::units_of(uint8_t player_id, output_iterator ot) {
+    output_iterator units_of(uint8_t player_id, output_iterator ot) {
+        for(auto it = std::begin(units); it != std::end(units); ++it) {
+            const unit_id id(it->second.get_id());
 
-        return std::copy_if(std::begin(units), std::end(units), ot, [player_id](unit_iterator::value_type u) {
-            return unit_id(u->get_id()).player_id == player_id;
-        });
+            if(id.player_id == player_id) {
+                *ot = &it->second;
+                ++ot;
+            }
+        }
+
+        return ot;
     }
 
-    template<typename CollisionShape>
-    std::vector<unit*> units_in(CollisionShape shape) {
+    template<typename CollisionShape, typename OutputIterator>
+    OutputIterator units_in(CollisionShape shape, OutputIterator ot) {
         static_assert(collision::is_collision_shape<CollisionShape>::value, "you must specify a collision shape");
 
-        std::vector<unit*> units_ptrs;
-        units_ptrs.reserve(count_units());
+        for(auto it = std::begin(units); it != std::end(units); ++it) {
+            unit* u = &it->second;
+            if(collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5), shape)) {
+                *ot = u;
+                ++ot;
+            }
+        }
 
-        std::transform(begin_of_units(), end_of_units(), std::back_inserter(units_ptrs), [](auto& p) {
-            return static_cast<unit*>(p.second.get());
-        });
-
-        auto end = std::copy_if(std::begin(units_ptrs), std::end(units_ptrs), std::begin(units_ptrs), [shape](unit* u) {
-            return collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5),
-                                     shape);
-        });
-
-        units_ptrs.resize(std::distance(std::begin(units_ptrs), end));
-
-        return units_ptrs;
+        return ot;
     }
 
 };

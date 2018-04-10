@@ -447,7 +447,7 @@ void authoritative_game::broadcast_current_state() {
         std::vector<unit> updated_units;
         std::transform(units().begin_of_units(), units().end_of_units(), std::back_inserter(updated_units),
                        [](const auto &p) {
-                           return *static_cast<unit *>(p.second.get());
+                           return p.second;
                        });
         std::vector<unit> known_units;
         known_units.reserve(updated_units.size());
@@ -527,14 +527,15 @@ void authoritative_game::on_update(frame_duration last_frame) {
         // The players always knows about it's units
         c.known_units.clear();
 
-        /*auto players_units = units().units_of(c.id);
+        std::vector<unit*> players_units;
+        units().units_of(c.id, std::back_inserter(players_units));
         std::vector<uint32_t> unit_ids;
         unit_ids.resize(players_units.size());
         std::transform(std::begin(players_units), std::end(players_units), std::begin(unit_ids), [](const unit* u) {
             return u->get_id();
         });
         c.known_units.insert(std::begin(unit_ids), std::end(unit_ids));
-        */
+
         bool has_explored = false;
         for(std::size_t y = 0; y < c.map_visibility.height(); ++y) {
             for(std::size_t x = 0; x < c.map_visibility.width(); ++x) {
@@ -550,7 +551,9 @@ void authoritative_game::on_update(frame_duration last_frame) {
                 }
 
                 if(c.map_visibility.at(x, y) == visibility::visible) {
-                    auto units_in_tile = units().units_in(collision::aabb_shape(glm::vec2(x, y), 1.0f));
+                    std::vector<unit*> units_in_tile;
+                    units().units_in(collision::aabb_shape(glm::vec2(x, y), 1.0f), std::back_inserter(units_in_tile));
+
                     std::vector<uint32_t> units_ids(units_in_tile.size(), 0);
                     std::transform(std::begin(units_in_tile), std::end(units_in_tile), std::begin(units_ids), [](const unit* u) {
                        return u->get_id();

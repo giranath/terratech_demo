@@ -30,7 +30,7 @@ public:
     class iterator;
     friend iterator;
     
-    class iterator : std::iterator<std::forward_iterator_tag, std::pair<size_t, T>>
+    class iterator : public std::iterator<std::forward_iterator_tag, std::pair<size_t, T>>
     {
         std::pair<size_t, T> pair{};
         size_t index{};
@@ -100,7 +100,7 @@ public:
         {
             return values[std::distance(keys.begin(), it)];
         }
-        assert(false, "key noy found");
+        assert(false);
     }
 
     const T& operator[](size_t key) const
