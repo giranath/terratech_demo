@@ -11,7 +11,6 @@
 #include <glm/glm.hpp>
 
 struct client {
-    static uint8_t next_id;
     networking::network_manager::socket_handle socket;
     uint8_t id;
 
@@ -24,7 +23,8 @@ struct client {
     // Holds this player visibility
     visibility_map map_visibility;
 
-    explicit client(networking::network_manager::socket_handle socket);
+    client(networking::network_manager::socket_handle socket, uint8_t id);
+
 	client() = delete;
     bool operator==(const client& other) const noexcept;
 };
