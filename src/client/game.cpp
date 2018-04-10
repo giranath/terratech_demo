@@ -48,7 +48,6 @@ Shader load_shader(const std::string& path) {
 }
 
 void game::load_flyweights() {
-
     for(auto flyweight_iterator = std::begin(unit_flyweights()); flyweight_iterator != std::end(unit_flyweights()); ++flyweight_iterator) {
         const float half_width = flyweight_iterator->second.width() / 2.f;
         const float height = flyweight_iterator->second.height();
@@ -159,7 +158,7 @@ void game::setup_inputs() {
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
 }
 
-void game::load_datas() {
+void game::load_local_datas() {
     // Setup mesh rendering
     setup_renderer();
 
@@ -184,65 +183,11 @@ game::game(networking::network_manager& manager, networking::network_manager::so
     discovered_chunks.reserve(20 * 20);
 }
 
+// TODO: Remove these
 gl::vertex_array quad_VertexArrayID;
 gl::buffer quad_vertexbuffer;
 
-void game::on_init() {
-    network.on_disconnection.attach([this](const networking::network_manager::socket_handle disconnected_socket) {
-        if(disconnected_socket == socket) {
-            std::cout << "disconnected from server" << std::endl;
-            stop();
-        }
-    });
-
-    auto client_informations = network.wait_packet_from(PACKET_PLAYER_ID, socket);
-    if (client_informations.first) {
-        auto infos = client_informations.second.as<networking::player_infos>();
-        player_id = infos.id;
-    }
-
-    auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, socket);
-    if (flyweights_packet.first) {
-        auto manager_u = flyweights_packet.second.as<std::unordered_map<std::string, unit_flyweight>>();
-        unit_flyweight_manager manager;
-        for (auto &v : manager_u) {
-            manager.emplace(std::stoi(v.first), std::move(v.second));
-        }
-        set_flyweight_manager(manager);
-
-        auto chunks_packet = network.wait_packet_from(PACKET_SETUP_CHUNK, socket);
-        if (chunks_packet.first) {
-            auto chunks = chunks_packet.second.as<std::vector<networking::world_chunk>>();
-
-            for (networking::world_chunk &received_chunk : chunks) {
-                world_chunk &game_chunk = game_world.add(received_chunk.x, received_chunk.y);
-                game_chunk.set_biome_at(received_chunk.regions_biome);
-
-                for (const networking::resource &res : received_chunk.sites) {
-                    game_chunk.set_site_at(res.x, 0, res.y, site(res.type, res.quantity));
-                }
-            }
-        } else {
-            throw std::runtime_error("failed to load chunks");
-        }
-
-    } else {
-        throw std::runtime_error("failed to load flyweights");
-    }
-
-    // Setup controls
-    setup_inputs();
-
-    // Only show know chunks
-    for (const world_chunk &known_chunks : game_world) {
-        discovered_chunks.push_back(known_chunks.position());
-    }
-
-    // Setup camera
-    game_camera.reset({-100.f, 10.f, -200.f});
-
-    load_datas();
-
+void game::setup_screen_quad() {
     quad_VertexArrayID = gl::vertex_array::make();
     gl::bind(quad_VertexArrayID);
     static const GLfloat g_quad_vertex_buffer_data[] = {
@@ -258,34 +203,107 @@ void game::on_init() {
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_quad_vertex_buffer_data), g_quad_vertex_buffer_data, GL_STATIC_DRAW);
 }
 
+void game::on_init() {
+    // Setup disconnection handler
+    network.on_disconnection.attach([this](const networking::network_manager::socket_handle disconnected_socket) {
+        if(disconnected_socket == socket) {
+            std::cout << "disconnected from server" << std::endl;
+            stop();
+        }
+    });
+
+    wait_for_server_init_datas();
+    load_local_datas();
+
+    setup_inputs();
+
+    const std::size_t SQUARE_COUNT_PER_CHUNKS = world::CHUNK_WIDTH * world::CHUNK_DEPTH;
+    const std::size_t VERTEX_COUNT_PER_SQUARE = 6;
+    const std::size_t MAX_CHUNK_COUNT = 20;
+
+    // Only show know chunks
+    for (const world_chunk &known_chunks : game_world) {
+        discovered_chunks.push_back(known_chunks.position());
+    }
+
+    // Setup camera
+    game_camera.reset({-100.f, 10.f, -200.f});
+
+    // Setup Fog of War vertices buffer
+    //fow_vertices = gl::buffer::make();
+    //gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_vertices));
+    //glBufferData(GL_ARRAY_BUFFER, MAX_CHUNK_COUNT * SQUARE_COUNT_PER_CHUNKS * VERTEX_COUNT_PER_SQUARE * sizeof(glm::vec3), 0, GL_STREAM_DRAW);
+
+    // Setup Fog of War colors buffer
+    //fow_colors = gl::buffer::make();
+    //gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_colors));
+    //glBufferData(GL_ARRAY_BUFFER, MAX_CHUNK_COUNT * SQUARE_COUNT_PER_CHUNKS * VERTEX_COUNT_PER_SQUARE * sizeof(glm::vec3), 0, GL_STREAM_DRAW);
+
+    setup_screen_quad();
+}
+
+void game::wait_for_server_init_datas() {
+    wait_for_player_id();
+    wait_for_flyweights();
+    wait_for_initial_chunks();
+}
+
+void game::wait_for_player_id() {
+    auto client_informations = network.wait_packet_from(PACKET_PLAYER_ID, socket);
+    if (client_informations.first) {
+        auto infos = client_informations.second.as<networking::player_infos>();
+        player_id = infos.id;
+    }
+    else {
+        throw std::runtime_error("failed to receive player id");
+    }
+}
+
+void game::wait_for_flyweights() {
+    auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, socket);
+    if (flyweights_packet.first) {
+        auto manager_u = flyweights_packet.second.as<std::unordered_map<std::string, unit_flyweight>>();
+        unit_flyweight_manager manager;
+        for (auto &v : manager_u) {
+            manager.emplace(std::stoi(v.first), std::move(v.second));
+        }
+        set_flyweight_manager(manager);
+    }
+    else {
+        throw std::runtime_error("failed to load flyweights");
+    }
+}
+
+void game::wait_for_initial_chunks() {
+    auto chunks_packet = network.wait_packet_from(PACKET_SETUP_CHUNK, socket);
+    if (chunks_packet.first) {
+        auto chunks = chunks_packet.second.as<std::vector<networking::world_chunk>>();
+
+        for (networking::world_chunk &received_chunk : chunks) {
+            world_chunk &game_chunk = game_world.add(received_chunk.x, received_chunk.y);
+            game_chunk.set_biome_at(received_chunk.regions_biome);
+
+            for (const networking::resource &res : received_chunk.sites) {
+                game_chunk.set_site_at(res.x, 0, res.y, site(res.type, res.quantity));
+            }
+        }
+    }
+    else {
+        throw std::runtime_error("failed to load chunks");
+    }
+}
+
 void game::on_release() {
 
 }
 
-void game::on_update(frame_duration last_frame_duration) {
-    std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
+void game::poll_server_changes() {
+    poll_chunks_update();
+    poll_units_update();
+}
 
-    auto visibility_task = push_task(std::make_unique<task::update_player_visibility>(player_id, local_visibility, units()));
-
-    // Spawn new units
-    auto p = network.poll_packet_from(PACKET_SPAWN_UNITS, socket);
-    if(p.first) {
-        std::vector<unit> units = p.second.as<std::vector<unit>>();
-        for(const unit& u : units) {
-            add_unit(u.get_id(),
-                     u.get_position(),
-                     u.get_target_position(),
-                     u.get_type_id());
-        }
-
-        glm::vec3 target_position = units.front().get_position();
-        game_camera.reset({target_position.x * rendering::chunk_renderer::SQUARE_SIZE,
-                           game_camera.position().y,
-                           target_position.z * rendering::chunk_renderer::SQUARE_SIZE});
-    }
-
-    // Update chunks
-    p = network.poll_packet_from(PACKET_SETUP_CHUNK, socket);
+void game::poll_chunks_update() {
+    auto p = network.poll_packet_from(PACKET_SETUP_CHUNK, socket);
     if(p.first) {
         auto chunks = p.second.as<std::vector<networking::world_chunk>>();
 
@@ -303,34 +321,30 @@ void game::on_update(frame_duration last_frame_duration) {
             }
         }
     }
+}
 
-    // Update units
+void game::poll_units_update() {
     auto update_p = network.poll_packet_from(PACKET_UPDATE_UNITS, socket);
     if(update_p.first) {
         std::vector<unit> units = update_p.second.as<std::vector<unit>>();
         for(const unit& u : units) {
             unit* my_unit = static_cast<unit*>(this->units().get(u.get_id()));
-			
+
             if(my_unit) {
                 my_unit->set_position(u.get_position());
                 my_unit->set_target_position(u.get_target_position());
             }
-			else {
-				add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
-				game_camera.reset({ u.get_position().x * rendering::chunk_renderer::SQUARE_SIZE,
-					game_camera.position().y,
-					u.get_position().z * rendering::chunk_renderer::SQUARE_SIZE });
-			}
+            else {
+                add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
+                game_camera.reset({ u.get_position().x * rendering::chunk_renderer::SQUARE_SIZE,
+                                    game_camera.position().y,
+                                    u.get_position().z * rendering::chunk_renderer::SQUARE_SIZE });
+            }
         }
     }
+}
 
-    auto update_task = push_task(std::make_unique<task::update_units>(units(), game_world, last_frame_ms.count() / 1000.0f));
-
-    key_inputs.dispatch();
-
-    update_task.wait();
-
-    // Only show visibles chunks
+void game::cull_out_of_view_chunks() {
     const bounding_box<float> cam_view_box = camera_bounding_box();
     world_rendering.hide_all();
     std::for_each(std::begin(discovered_chunks), std::end(discovered_chunks), [this, &cam_view_box](const glm::i32vec2& pos) {
@@ -342,6 +356,23 @@ void game::on_update(frame_duration last_frame_duration) {
             world_rendering.show(pos.x, pos.y);
         }
     });
+
+}
+
+void game::on_update(frame_duration last_frame_duration) {
+    std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
+
+    auto visibility_task = push_task(std::make_unique<task::update_player_visibility>(player_id, local_visibility, units()));
+
+    poll_server_changes();
+
+    auto update_task = push_task(std::make_unique<task::update_units>(units(), game_world, last_frame_ms.count() / 1000.0f));
+
+    key_inputs.dispatch();
+
+    update_task.wait();
+
+    cull_out_of_view_chunks();
 
     // Update fog of war
     auto visiblity_ptr = visibility_task.get();
@@ -416,18 +447,19 @@ void game::update_fog_of_war() {
     fog_of_war = fow_builder.build();
 }
 
-void game::render() {
+void game::render_game_state() {
     gl::bind(gl::framebuffer_bind<>(fbo));
     glViewport(0, 0, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Render world
-    const glm::vec3 top_left = game_camera.world_coordinate_of(    glm::vec2{-1.f,  1.f}, { 0,0,0 }, {0,1,0});
-    const glm::vec3 top_right = game_camera.world_coordinate_of(   glm::vec2{ 1.f,  1.f}, { 0,0,0 }, {0,1,0});
-    const glm::vec3 bottom_left = game_camera.world_coordinate_of( glm::vec2{-1.f, -1.f}, { 0,0,0 }, {0,1,0});
-    const glm::vec3 bottom_right = game_camera.world_coordinate_of(glm::vec2{ 1.f, -1.f}, { 0,0,0 }, {0,1,0});
+    render_chunks();
+    render_units();
 
-    const bounding_box<float> cam_view_box(bottom_right.x, bottom_left.z, top_left.x, top_right.z);
+    mesh_rendering.render();
+}
+
+void game::render_chunks() {
+    const bounding_box<float> cam_view_box = camera_bounding_box();
     world_rendering.hide_all();
     std::for_each(std::begin(discovered_chunks), std::end(discovered_chunks), [this, &cam_view_box](const glm::i32vec2& pos) {
         const bounding_box<float> chunk_box(pos.x * world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE,
@@ -440,18 +472,18 @@ void game::render() {
     });
 
     world_rendering.render(mesh_rendering);
+}
 
-    // Render every units
+void game::render_units() {
     for(auto unit = units().begin_of_units(); unit != units().end_of_units(); ++unit) {
         rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
                                           glm::translate(glm::mat4{1.f}, unit->second->get_position() * rendering::chunk_renderer::SQUARE_SIZE),
                                           virtual_textures[unit->second->texture()].id , PROGRAM_BILLBOARD);
         mesh_rendering.push(std::move(renderer));
     }
-    // Render every meshes
-    mesh_rendering.render();
+}
 
-    // Construct fog of war
+void game::render_fog_of_war() {
     gl::bind(gl::framebuffer_bind<>(fow_fbo));
     glViewport(0, 0, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -472,8 +504,9 @@ void game::render() {
     gl::bind(gl::texture_bind<GL_TEXTURE_2D>(*mesh_rendering.texture(virtual_textures["fog_of_war"].id)));
 
     fog_of_war.render();
+}
 
-    //Render on screen.
+void game::render_on_screen() {
     gl::bind(gl::framebuffer_bind<>(gl::frame_buffer::SCREEN));
     glViewport(0, 0, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -504,8 +537,9 @@ void game::render() {
     );
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glDisableVertexAttribArray(0);
+}
 
-    // Calculates FPS
+void game::calculate_fps() {
     ++frame_count;
     if(fps_clock.elapsed_time<std::chrono::seconds>() >= std::chrono::seconds(1)) {
         fps_clock.substract(std::chrono::seconds(1)); // Keep time accumulation
@@ -521,7 +555,14 @@ void game::render() {
 
         frame_count = 0;
     }
+}
 
+void game::render() {
+    render_game_state();
+    render_fog_of_war();
+    render_on_screen();
+
+    calculate_fps();
 }
 
 bool inside_world_bound(glm::vec3 position) {
@@ -558,10 +599,15 @@ void game::handle_event(SDL_Event event) {
                 auto clicked_units = units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
                                                                 test.z / rendering::chunk_renderer::SQUARE_SIZE));
 
-                if(!clicked_units.empty()) {
-                    unit* clicked_unit = clicked_units.front();
 
-                    selected_unit_id = clicked_unit->get_id();
+                auto it = std::find_if(std::begin(clicked_units), std::end(clicked_units), [this](const unit* u) {
+                    const unit_id id(u->get_id());
+
+                    return id.player_id == player_id;
+                });
+
+                if(it != std::end(clicked_units)) {
+                    selected_unit_id = (*it)->get_id();
                     std::cout << "selected unit is " << selected_unit_id << std::endl;
                 }
             }
@@ -652,8 +698,6 @@ void game::resize(int new_width, int new_height) {
             throw std::runtime_error("failed to create Framebuffer");
         }
     }
-
-    //glViewport(0, 0, new_width, new_height);
 
     const float aspect = static_cast<float>(new_width) / new_height;
     if(aspect >= 1.0f) {

@@ -64,6 +64,9 @@ private:
     networking::network_manager::socket_handle socket;
 
     visibility_map local_visibility;
+    //gl::buffer fow_vertices;
+    //gl::buffer fow_colors;
+    //std::size_t fow_size;
     rendering::mesh fog_of_war;
 
     std::vector<glm::i32vec2> discovered_chunks;
@@ -84,11 +87,30 @@ private:
     void load_virtual_textures();
     void load_shaders();
 
-    void load_datas();
+    void load_local_datas();
+
+    void wait_for_server_init_datas();
+    void wait_for_player_id();
+    void wait_for_flyweights();
+    void wait_for_initial_chunks();
+
+    void setup_screen_quad();
 
     void update_fog_of_war();
 
     bounding_box<float> camera_bounding_box() const noexcept;
+
+    void render_game_state();
+    void render_chunks();
+    void render_units();
+    void render_fog_of_war();
+    void render_on_screen();
+    void calculate_fps();
+
+    void poll_server_changes();
+    void poll_chunks_update();
+    void poll_units_update();
+    void cull_out_of_view_chunks();
 
 public:
     game(networking::network_manager& manager, networking::network_manager::socket_handle socket);

@@ -367,7 +367,7 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
 
     client connected_client(handle, static_cast<uint8_t>(connected_clients.size()));
 
-    glm::i32vec2 spawn_position = spawn_chunks[connected_client.id - 1];
+    glm::i32vec2 spawn_position = spawn_chunks[connected_client.id];
     glm::vec3 starting_position(spawn_position.x * world::CHUNK_WIDTH,
                                 0.f,
                                 spawn_position.y * world::CHUNK_DEPTH);
