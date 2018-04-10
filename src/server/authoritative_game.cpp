@@ -527,14 +527,14 @@ void authoritative_game::on_update(frame_duration last_frame) {
         // The players always knows about it's units
         c.known_units.clear();
 
-        auto players_units = units().units_of(c.id);
+        /*auto players_units = units().units_of(c.id);
         std::vector<uint32_t> unit_ids;
         unit_ids.resize(players_units.size());
         std::transform(std::begin(players_units), std::end(players_units), std::begin(unit_ids), [](const unit* u) {
             return u->get_id();
         });
         c.known_units.insert(std::begin(unit_ids), std::end(unit_ids));
-
+        */
         bool has_explored = false;
         for(std::size_t y = 0; y < c.map_visibility.height(); ++y) {
             for(std::size_t x = 0; x < c.map_visibility.width(); ++x) {

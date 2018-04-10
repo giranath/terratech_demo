@@ -15,7 +15,7 @@ update_player_visibility::update_player_visibility(uint8_t player, const visibil
 void update_player_visibility::execute() {
     visibility_.clear();
 
-    auto units = units_.units_of(player_id);
+    /*auto units = units_.units_of(player_id);
     std::for_each(std::begin(units), std::end(units), [this](unit* u) {
         const int start_of_x = std::floor(u->get_position().x - u->visibility_radius());
         const int start_of_y = std::floor(u->get_position().z - u->visibility_radius());
@@ -34,7 +34,7 @@ void update_player_visibility::execute() {
                 }
             }
         }
-    });
+    });*/
 }
 
 uint8_t update_player_visibility::get_player() const noexcept {

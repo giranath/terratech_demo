@@ -45,32 +45,39 @@ class arena
         }
         return { current_test, false };
     }    
-    
+protected:
+
+    size_t get_last_added() const
+    {
+        return last_added;
+    }
 public :
+
     arena() :
         pool{ new char[sizeof(OBJECT) * NB_OBJECT] },
         last_added{} {
     }
 
-    OBJECT* add()
+    virtual void* add()
     {
         auto next_av = next_available();
         if (next_av.second)
         {
-            OBJECT* obj = new (pool + (next_av.first * sizeof(OBJECT))) OBJECT{10};
+            void* raw_memory = pool + (next_av.first * sizeof(OBJECT));
             available.set(next_av.first);
             last_added = next_av.first;
-            return obj;
+            return raw_memory;
         }
         throw std::bad_alloc{};
-        return nullptr;
     }
 
-    void destroy(const void* to_remove)
+    virtual void destroy(const void* to_remove)
     {
         auto v = static_cast<const char*>(to_remove) - pool;
         size_t position_debut = v / sizeof(OBJECT);
         available.reset(position_debut);
     }
+
+    virtual ~arena() = default;
 };
 #endif

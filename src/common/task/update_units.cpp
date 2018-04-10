@@ -28,7 +28,7 @@ update_units::update_units(unit_manager &units, world& w, float elapsed_seconds)
 }
 
 void update_units::execute() {
-    for (auto u = units.begin_of_units(); u != units.end_of_units(); u++) {
+    /*for (auto u = units.begin_of_units(); u != units.end_of_units(); u++) {
         auto actual_unit = static_cast<unit*>(u->second.get());
 
         const glm::vec2 target = actual_unit->get_target_position();
@@ -55,7 +55,7 @@ void update_units::execute() {
                 }
             }
         }
-    }
+    }*/
 }
 
 }
