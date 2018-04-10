@@ -30,9 +30,9 @@ public:
     class iterator;
     friend iterator;
     
-    class iterator : public std::iterator<std::forward_iterator_tag, std::pair<size_t, T>>
+    class iterator : public std::iterator<std::forward_iterator_tag, std::pair<size_t, T*>>
     {
-        std::pair<size_t, T> pair{};
+        std::pair<size_t, T*> pair{};
         size_t index{};
         array_map* owner{};
     public:
@@ -42,7 +42,7 @@ public:
             if (owner)
             {
                 pair.first = owner->keys[index];
-                pair.second = owner->values[index];
+                pair.second = &owner->values[index];
             }
         }
         iterator() = default;
@@ -54,7 +54,7 @@ public:
             if (owner)
             {
                 pair.first = owner->keys[index];
-                pair.second = owner->values[index];
+                pair.second = &owner->values[index];
             }
         }
 
@@ -62,7 +62,7 @@ public:
         {
             ++index;
             pair.first = owner->keys[index];
-            pair.second = owner->values[index];
+            pair.second = &owner->values[index];
             return *this;
         }
 
@@ -83,12 +83,12 @@ public:
             return index != rhs.index;
         }
 
-        std::pair<size_t, T>& operator*()
+        std::pair<size_t, T*>& operator*()
         {
             return pair;
         }
 
-        std::pair<size_t, T>* operator->()
+        std::pair<size_t, T*>* operator->()
         {
             return &pair;
         }

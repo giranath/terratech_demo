@@ -29,7 +29,7 @@ update_units::update_units(unit_manager &units, world& w, float elapsed_seconds)
 
 void update_units::execute() {
     for (auto u = units.begin_of_units(); u != units.end_of_units(); u++) {
-        auto actual_unit = static_cast<unit*>(&u->second);
+        auto actual_unit = u->second;
 
         const glm::vec2 target = actual_unit->get_target_position();
         const glm::vec3 target3D = { target.x, 0, target.y };

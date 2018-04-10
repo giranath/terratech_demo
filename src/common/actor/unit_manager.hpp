@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <memory>
 #include <array>
+#include <mutex>
 
 struct unit_id
 {
@@ -47,8 +48,7 @@ public:
     using unit_iterator = array_map<unit, MAX_UNIT>::iterator;
     using building_iterator = array_map<building, MAX_UNIT>::iterator;
 private:
-    
-
+    mutable std::mutex units_mutex;
     std::array<std::unordered_map<uint32_t, unit_ptr>, 3> manager_data;
     
     array_map<unit, MAX_UNIT> units;
@@ -78,11 +78,12 @@ public:
 
     template <class output_iterator>
     output_iterator units_of(uint8_t player_id, output_iterator ot) {
+        std::lock_guard<std::mutex> lock(units_mutex);
         for(auto it = std::begin(units); it != std::end(units); ++it) {
-            const unit_id id(it->second.get_id());
+            const unit_id id(it->second->get_id());
 
             if(id.player_id == player_id) {
-                *ot = &it->second;
+                *ot = it->second;
                 ++ot;
             }
         }
@@ -92,10 +93,11 @@ public:
 
     template<typename CollisionShape, typename OutputIterator>
     OutputIterator units_in(CollisionShape shape, OutputIterator ot) {
+        std::lock_guard<std::mutex> lock(units_mutex);
         static_assert(collision::is_collision_shape<CollisionShape>::value, "you must specify a collision shape");
 
         for(auto it = std::begin(units); it != std::end(units); ++it) {
-            unit* u = &it->second;
+            unit* u = it->second;
             if(collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5), shape)) {
                 *ot = u;
                 ++ot;

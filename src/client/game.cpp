@@ -415,9 +415,9 @@ void game::render() {
 
     // Render every units
     for(auto unit = units().begin_of_units(); unit != units().end_of_units(); ++unit) {
-        rendering::mesh_renderer renderer(&unit_meshes[unit->second.get_type_id()],
-                                          glm::translate(glm::mat4{1.f}, unit->second.get_position() * rendering::chunk_renderer::SQUARE_SIZE),
-                                          virtual_textures[unit->second.texture()].id , PROGRAM_BILLBOARD);
+        rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
+                                          glm::translate(glm::mat4{1.f}, unit->second->get_position() * rendering::chunk_renderer::SQUARE_SIZE),
+                                          virtual_textures[unit->second->texture()].id , PROGRAM_BILLBOARD);
         mesh_rendering.push(std::move(renderer));
     }
 

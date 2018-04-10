@@ -18,9 +18,8 @@ base_unit* unit_manager::get(uint32_t id)
     uint32_t type = get_unit_type(id);
     if (type == 0 && units.contains(id))
     {
-        
+        std::lock_guard<std::mutex> lock(units_mutex);
         return &units[id];
-
     }
     else if (type == 1 && buildings.contains(id))
     {
@@ -32,6 +31,8 @@ base_unit* unit_manager::get(uint32_t id)
 
 target_handle unit_manager::add(unit _unit, uint32_t id)
 {
+    std::lock_guard<std::mutex> lock(units_mutex);
+
     unit_id id_unit;
     id_unit.from_uint32_t(id);
 
@@ -65,6 +66,7 @@ void unit_manager::remove(uint32_t id)
 
     if (id_unit.unit_type == 0)
     {
+        std::lock_guard<std::mutex> lock(units_mutex);
         units.remove(id);
     }
     else if (id_unit.unit_type == 1)
@@ -82,6 +84,7 @@ unit_manager::unit_iterator unit_manager::end_of_units() {
 }
 
 size_t unit_manager::count_units() const noexcept {
+    std::lock_guard<std::mutex> lock(units_mutex);
     return units.size();
 }
 

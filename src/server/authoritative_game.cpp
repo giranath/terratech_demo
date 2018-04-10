@@ -447,7 +447,7 @@ void authoritative_game::broadcast_current_state() {
         std::vector<unit> updated_units;
         std::transform(units().begin_of_units(), units().end_of_units(), std::back_inserter(updated_units),
                        [](const auto &p) {
-                           return p.second;
+                           return *p.second;
                        });
         std::vector<unit> known_units;
         known_units.reserve(updated_units.size());
