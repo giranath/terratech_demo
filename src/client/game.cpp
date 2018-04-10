@@ -188,6 +188,13 @@ gl::vertex_array quad_VertexArrayID;
 gl::buffer quad_vertexbuffer;
 
 void game::on_init() {
+    network.on_disconnection.attach([this](const networking::network_manager::socket_handle disconnected_socket) {
+        if(disconnected_socket == socket) {
+            std::cout << "disconnected from server" << std::endl;
+            stop();
+        }
+    });
+
     auto client_informations = network.wait_packet_from(PACKET_PLAYER_ID, socket);
     if (client_informations.first) {
         auto infos = client_informations.second.as<networking::player_infos>();

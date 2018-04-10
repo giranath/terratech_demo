@@ -288,6 +288,8 @@ void authoritative_game::setup_listener() {
 
         if(it != std::end(connected_clients)) {
             connected_clients.erase(it);
+            std::cout << "stopping server" << std::endl;
+            stop();
         }
     });
 
@@ -359,7 +361,11 @@ void authoritative_game::send_map(const client& connecting_client) {
 }
 
 void authoritative_game::on_connection(networking::network_manager::socket_handle handle) {
-    client connected_client(handle);
+    if(connected_clients.size() >= MAX_CLIENT_COUNT) {
+        return;
+    }
+
+    client connected_client(handle, static_cast<uint8_t>(connected_clients.size()));
 
     glm::i32vec2 spawn_position = spawn_chunks[connected_client.id - 1];
     glm::vec3 starting_position(spawn_position.x * world::CHUNK_WIDTH,
