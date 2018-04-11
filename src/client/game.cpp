@@ -365,6 +365,7 @@ void game::poll_units_update() {
 }
 
 void game::cull_out_of_view_chunks() {
+    profiler_us cull_prof("cull chunks");
     const bounding_box<float> cam_view_box = camera_bounding_box();
     world_rendering.hide_all();
     std::for_each(std::begin(discovered_chunks), std::end(discovered_chunks), [this, &cam_view_box](const glm::i32vec2& pos) {
@@ -373,6 +374,7 @@ void game::cull_out_of_view_chunks() {
                                             pos.x * world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE + world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE,
                                             pos.y * world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE + world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE);
         if(cam_view_box.intersect(chunk_box)) {
+            profiler_us prof("show chunk");
             world_rendering.show(pos.x, pos.y);
         }
     });
@@ -490,6 +492,7 @@ void game::render_game_state() {
 }
 
 void game::render_chunks() {
+    profiler_us render_prof("render chunks");
     const bounding_box<float> cam_view_box = camera_bounding_box();
     world_rendering.hide_all();
     std::for_each(std::begin(discovered_chunks), std::end(discovered_chunks), [this, &cam_view_box](const glm::i32vec2& pos) {
@@ -498,6 +501,7 @@ void game::render_chunks() {
                                             pos.x * world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE + world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE,
                                             pos.y * world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE + world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE);
         if(cam_view_box.intersect(chunk_box)) {
+            profiler_us prof("show chunk");
             world_rendering.show(pos.x, pos.y);
         }
     });
