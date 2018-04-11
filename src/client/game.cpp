@@ -341,6 +341,8 @@ void game::poll_units_update() {
     auto update_p = network.poll_packet_from(PACKET_UPDATE_UNITS, socket);
     if(update_p.first) {
         std::vector<unit> units = update_p.second.as<std::vector<unit>>();
+
+        // TODO: Détecter unités qui ne sont plus à jour
         for(const unit& u : units) {
             unit_id id(u.get_id());
             unit* my_unit = static_cast<unit*>(this->units().get(u.get_id()));

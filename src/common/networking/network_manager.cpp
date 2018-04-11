@@ -215,8 +215,8 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                     rsa_pub.Load(ss);
 
                     // Generate random AES key
-                    std::default_random_engine engine{static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())};
-                    connection.aes_key = crypto::aes::make_key(engine);
+                    std::random_device rd;
+                    connection.aes_key = crypto::aes::make_key(rd);
 
                     client_aes_key client_key;
                     client_key.key.clear();
