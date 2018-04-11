@@ -80,6 +80,7 @@ add_library(common
         src/common/actor/unit_manager.hpp
         src/common/actor/unit_manager.cpp
         src/common/actor/unit_flyweight.cpp
+        src/common/actor/actor_arena.hpp
 
         src/common/async/task_executor.cpp
         src/common/async/task_executor.hpp

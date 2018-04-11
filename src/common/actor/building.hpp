@@ -3,9 +3,11 @@
 
 #include "actor.hpp"
 #include "unit.hpp"
+#include "base_unit.hpp"
 #include "unit_flyweight.hpp"
 #include <glm/glm.hpp>
-class building : actor
+
+class building : public base_unit
 {
     glm::vec3 waypoint;
 

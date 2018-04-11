@@ -3,15 +3,20 @@
 
 #include "base_unit.hpp"
 #include "unit.hpp"
+#include "building.hpp"
 #include "target_handle.hpp"
 #include "../collision/circle_shape.hpp"
 #include "../collision/collision_detector.hpp"
+#include "../memory/arena.hpp"
+#include "../actor/actor_arena.hpp"
 
 #include <vector>
 #include <cstdint>
 #include <algorithm>
 #include <unordered_map>
 #include <memory>
+#include <array>
+#include <mutex>
 
 struct unit_id
 {
@@ -37,11 +42,18 @@ struct unit_id
 
 class unit_manager
 {
+    static const size_t MAX_UNIT = 400;
 public:
     using unit_ptr = std::unique_ptr<base_unit>;
-    using iterator = std::unordered_map<uint32_t, unit_ptr>::iterator;
+    using unit_iterator = array_map<unit, MAX_UNIT>::iterator;
+    using building_iterator = array_map<building, MAX_UNIT>::iterator;
 private:
-    std::vector<std::unordered_map<uint32_t, unit_ptr>> units;
+    mutable std::mutex units_mutex;
+    mutable std::mutex buildings_mutex;
+    std::array<std::unordered_map<uint32_t, unit_ptr>, 3> manager_data;
+    
+    array_map<unit, MAX_UNIT> units;
+    array_map<building, MAX_UNIT> buildings;
 
 public:
     unit_manager();
@@ -52,35 +64,79 @@ public:
 
     base_unit* get(uint32_t id);
 
-    target_handle add(unit_ptr unit, uint32_t id);
+    target_handle add(unit _unit, uint32_t id);
+    target_handle add(building _unit, uint32_t id);
 
     void remove(uint32_t id);
 
-    iterator begin_of_units();
-    iterator end_of_units();
-
+    unit_iterator begin_of_units();
+    unit_iterator end_of_units();
     std::size_t count_units() const noexcept;
-    std::vector<unit*> units_of(uint8_t player_id);
 
-    template<typename CollisionShape>
-    std::vector<unit*> units_in(CollisionShape shape) {
+    building_iterator begin_of_buildings();
+    building_iterator end_of_buildings();
+    size_t count_buildings() const noexcept;
+
+    template <class output_iterator>
+    output_iterator units_of(uint8_t player_id, output_iterator ot) {
+        std::lock_guard<std::mutex> lock(units_mutex);
+        for(auto it = std::begin(units); it != std::end(units); ++it) {
+            const unit_id id(it->second->get_id());
+
+            if(id.player_id == player_id) {
+                *ot = it->second;
+                ++ot;
+            }
+        }
+
+        return ot;
+    }
+
+    template<typename CollisionShape, typename OutputIterator>
+    OutputIterator units_in(CollisionShape shape, OutputIterator ot) {
+        std::lock_guard<std::mutex> lock(units_mutex);
         static_assert(collision::is_collision_shape<CollisionShape>::value, "you must specify a collision shape");
 
-        std::vector<unit*> units_ptrs;
-        units_ptrs.reserve(count_units());
+        for(auto it = std::begin(units); it != std::end(units); ++it) {
+            unit* u = it->second;
+            if(collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5), shape)) {
+                *ot = u;
+                ++ot;
+            }
+        }
 
-        std::transform(begin_of_units(), end_of_units(), std::back_inserter(units_ptrs), [](auto& p) {
-            return static_cast<unit*>(p.second.get());
-        });
+        return ot;
+    }
 
-        auto end = std::copy_if(std::begin(units_ptrs), std::end(units_ptrs), std::begin(units_ptrs), [shape](unit* u) {
-            return collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5),
-                                     shape);
-        });
+    template <class output_iterator>
+    output_iterator buildingss_of(uint8_t player_id, output_iterator ot) {
+        std::lock_guard<std::mutex> lock(buildings_mutex);
+        for (auto it = std::begin(buildings); it != std::end(buildings); ++it) {
+            const unit_id id(it->second->get_id());
 
-        units_ptrs.resize(std::distance(std::begin(units_ptrs), end));
+            if (id.player_id == player_id) {
+                *ot = it->second;
+                ++ot;
+            }
+        }
 
-        return units_ptrs;
+        return ot;
+    }
+
+    template<typename CollisionShape, typename OutputIterator>
+    OutputIterator buildings_in(CollisionShape shape, OutputIterator ot) {
+        std::lock_guard<std::mutex> lock(buildings_mutex);
+        static_assert(collision::is_collision_shape<CollisionShape>::value, "you must specify a collision shape");
+
+        for (auto it = std::begin(buildings); it != std::end(buildings); ++it) {
+            unit* u = it->second;
+            if (collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5), shape)) {
+                *ot = u;
+                ++ot;
+            }
+        }
+
+        return ot;
     }
 
 };
