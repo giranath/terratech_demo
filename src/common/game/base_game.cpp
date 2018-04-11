@@ -61,12 +61,12 @@ target_handle base_game::add_unit(uint32_t id, glm::vec3 position, int flyweight
 }
 
 
-unit_manager::unit_ptr base_game::make_unit(glm::vec3 position, glm::vec2 target, int flyweight_id) {
-    return std::make_unique<unit>(position, target, &unit_flyweights_[flyweight_id], units_.get());
+unit base_game::make_unit(glm::vec3 position, glm::vec2 target, int flyweight_id) {
+    return unit(position, target, &unit_flyweights_[flyweight_id], units_.get());
 }
 
-unit_manager::unit_ptr base_game::make_unit(glm::vec3 position, int flyweight_id) {
-	return std::make_unique<unit>(position, position, &unit_flyweights_[flyweight_id], units_.get());
+unit base_game::make_unit(glm::vec3 position, int flyweight_id) {
+	return unit(position, position, &unit_flyweights_[flyweight_id], units_.get());
 }
 
 void base_game::load_flyweight(const nlohmann::json& json) {

@@ -11,73 +11,96 @@ uint32_t unit_manager::actor_type_to_uint32_t(base_unit* unit)
     return static_cast<uint32_t>(unit->get_type()) << 16;
 }
 
-unit_manager::unit_manager() :
-    units{ static_cast<uint32_t>(actor_type::MAX_ACTOR_TYPE) }
-{}
+unit_manager::unit_manager(){}
 
 base_unit* unit_manager::get(uint32_t id)
 {
-    uint32_t type = get_unit_type(id);
-
-    auto it = units[type].find(id);
-    if (it != units[type].end())
+    unit_id id_parts(id);
+    uint32_t type = id_parts.unit_type;
+    if (type == 0 && units.contains(id))
     {
-        return it->second.get();
+        std::lock_guard<std::mutex> lock(units_mutex);
+        return &units[id];
+    }
+    else if (type == 1 && buildings.contains(id))
+    {
+        std::lock_guard<std::mutex> lock(buildings_mutex);
+        return &buildings[id];
     }
 
     return nullptr;
 }
 
-target_handle unit_manager::add(unit_ptr unit, uint32_t id)
+target_handle unit_manager::add(unit _unit, uint32_t id)
 {
-    if (unit)
-    {
-        unit_id id_unit;
-        id_unit.from_uint32_t(id);
-        uint32_t type = id_unit.unit_type;
+    std::lock_guard<std::mutex> lock(units_mutex);
 
-        base_unit* temp_ptr = unit.get();
-        units[type][id] = std::move(unit);
-        temp_ptr->set_id(id);
-        return target_handle{ this, temp_ptr };
-    }
+    unit_id id_unit;
+    id_unit.from_uint32_t(id);
 
-    return {};
+    units.add(id, _unit);
+
+    base_unit* u = &units[id];
+    uint32_t type = id_unit.unit_type;
+
+    u->set_id(id);
+    return target_handle{ this, u };
+}
+
+target_handle unit_manager::add(building _unit, uint32_t id)
+{
+    std::lock_guard<std::mutex> lock(buildings_mutex);
+    unit_id id_unit;
+    id_unit.from_uint32_t(id);
+        
+    buildings.add(id, _unit);
+
+    base_unit* u = &buildings[id];
+    uint32_t type = id_unit.unit_type;
+
+    u->set_id(id);
+    return target_handle{ this, u };
 }
 
 void unit_manager::remove(uint32_t id)
 {
     unit_id id_unit;
     id_unit.from_uint32_t(id);
-    uint32_t type = id_unit.unit_type;
-    units[type].erase(id);
+
+    if (id_unit.unit_type == 0)
+    {
+        std::lock_guard<std::mutex> lock(units_mutex);
+        units.remove(id);
+    }
+    else if (id_unit.unit_type == 1)
+    {
+        std::lock_guard<std::mutex> lock(buildings_mutex);
+        buildings.remove(id);
+    }
 }
 
-unit_manager::iterator unit_manager::begin_of_units() {
-    return units[static_cast<std::size_t>(actor_type::unit)].begin();
+unit_manager::unit_iterator unit_manager::begin_of_units() {
+    return units.begin();
 }
 
-unit_manager::iterator unit_manager::end_of_units() {
-    return units[static_cast<std::size_t>(actor_type::unit)].end();
+unit_manager::unit_iterator unit_manager::end_of_units() {
+    return units.end();
 }
 
-std::size_t unit_manager::count_units() const noexcept {
-    return units[static_cast<std::size_t>(actor_type::unit)].size();
+size_t unit_manager::count_units() const noexcept {
+    std::lock_guard<std::mutex> lock(units_mutex);
+    return units.size();
 }
 
-std::vector<unit*> unit_manager::units_of(uint8_t player_id) {
-    std::vector<unit*> units_pts;
-    units_pts.reserve(count_units());
+unit_manager::building_iterator unit_manager::begin_of_buildings() {
+    return buildings.begin();
+}
 
-    std::transform(begin_of_units(), end_of_units(), std::back_inserter(units_pts), [](auto& p) {
-        return static_cast<unit*>(p.second.get());
-    });
+unit_manager::building_iterator unit_manager::end_of_buildings() {
+    return buildings.end();
+}
 
-	auto end = std::copy_if(std::begin(units_pts), std::end(units_pts), std::begin(units_pts), [player_id](unit* u) {
-        return unit_id(u->get_id()).player_id == player_id;
-    });
-
-	units_pts.resize(std::distance(std::begin(units_pts), end));
-
-    return units_pts;
+size_t unit_manager::count_buildings() const noexcept {
+    std::lock_guard<std::mutex> lock(buildings_mutex);
+    return buildings.size();
 }

@@ -15,7 +15,8 @@ update_player_visibility::update_player_visibility(uint8_t player, const visibil
 void update_player_visibility::execute() {
     visibility_.clear();
 
-    auto units = units_.units_of(player_id);
+    std::vector<unit*> units;
+    units_.units_of(player_id, std::back_inserter(units));
     std::for_each(std::begin(units), std::end(units), [this](unit* u) {
         const int start_of_x = std::floor(u->get_position().x - u->visibility_radius());
         const int start_of_y = std::floor(u->get_position().z - u->visibility_radius());

@@ -651,8 +651,9 @@ void game::handle_event(SDL_Event event) {
             // clicked outside the map
             if (inside_world_bound(test))
             {
-                auto clicked_units = units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
-                                                                test.z / rendering::chunk_renderer::SQUARE_SIZE));
+                std::vector<unit*> clicked_units;
+                units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
+                                 std::back_inserter(clicked_units));
 
 
                 auto it = std::find_if(std::begin(clicked_units), std::end(clicked_units), [this](const unit* u) {
