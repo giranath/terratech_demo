@@ -26,7 +26,8 @@ class chunk_renderer {
 public:
     static constexpr float SQUARE_SIZE = 32.f;
 
-    explicit chunk_renderer(const world_chunk &chunk) noexcept;
+    explicit chunk_renderer(const world_chunk& chunk) noexcept;
+    explicit chunk_renderer(const world_chunk& chunk, bool) noexcept;
 
     void build() noexcept;
 

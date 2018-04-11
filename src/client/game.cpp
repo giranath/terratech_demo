@@ -415,7 +415,6 @@ bounding_box<float> game::camera_bounding_box() const noexcept {
 }
 
 void game::update_fog_of_war() {
-    //rendering::mesh_builder fow_builder;
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> colors;
 

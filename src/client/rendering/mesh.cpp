@@ -35,6 +35,34 @@ mesh::mesh(gl::buffer &&vertices, gl::buffer &&uvs, gl::buffer &&colors, std::si
 
 }
 
+mesh::mesh(std::size_t size)
+: vertices(gl::buffer::make())
+, uvs(gl::buffer::make())
+, colors(gl::buffer::make())
+, count(size) {
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices));
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * count, NULL, GL_STREAM_DRAW);
+
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(colors));
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * count, NULL, GL_STREAM_DRAW);
+
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(uvs));
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * count, NULL, GL_STREAM_DRAW);
+}
+
+void mesh::update(glm::vec3* vertices, glm::vec3* colors, glm::vec2* uvs, std::size_t size, std::size_t offset) {
+    assert(offset + size <= count);
+
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(this->vertices));
+    glBufferSubData(GL_ARRAY_BUFFER, offset, size, vertices);
+
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(this->colors));
+    glBufferSubData(GL_ARRAY_BUFFER, offset, size, colors);
+
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(this->uvs));
+    glBufferSubData(GL_ARRAY_BUFFER, offset, size, uvs);
+}
+
 void mesh::render() const noexcept {
     glEnableVertexAttribArray(0);
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices));

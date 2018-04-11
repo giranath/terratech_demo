@@ -32,7 +32,9 @@ class mesh {
 
 public:
     mesh() = default;
+    mesh(std::size_t size);
 
+    void update(glm::vec3* vertices, glm::vec3* colors, glm::vec2* uvs, std::size_t size, std::size_t offset = 0);
     void render() const noexcept;
 };
 

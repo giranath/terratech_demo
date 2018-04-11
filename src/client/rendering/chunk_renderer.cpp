@@ -21,6 +21,12 @@ chunk_renderer::chunk_renderer(const world_chunk &chunk) noexcept
     build();
 }
 
+chunk_renderer::chunk_renderer(const world_chunk& chunk, bool) noexcept
+: chunk(chunk)
+, floor_mesh(world::CHUNK_WIDTH * world::CHUNK_DEPTH) {
+
+}
+
 std::map<int, glm::vec3> chunk_renderer::make_biome_colors() {
     // Here we asign a color to a biome
     // see https://i.stack.imgur.com/vlvQQ.png for color code
