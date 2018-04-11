@@ -27,6 +27,12 @@ mesh mesh_builder::build() const noexcept {
     return mesh{std::move(vertices_buffer), std::move(uvs_buffer), std::move(colors_buffer), vertices.size()};
 }
 
+void mesh_builder::rebuild(mesh& m) const noexcept {
+    if(!vertices.empty()) {
+        m.update(&vertices[0], &colors[0], &uvs[0], vertices.size());
+    }
+}
+
 mesh::mesh(gl::buffer &&vertices, gl::buffer &&uvs, gl::buffer &&colors, std::size_t count) noexcept
 : vertices{std::move(vertices)}
 , uvs{std::move(uvs)}
@@ -50,7 +56,7 @@ mesh::mesh(std::size_t size)
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * count, NULL, GL_STREAM_DRAW);
 }
 
-void mesh::update(glm::vec3* vertices, glm::vec3* colors, glm::vec2* uvs, std::size_t size, std::size_t offset) {
+void mesh::update(const glm::vec3* vertices, const glm::vec3* colors, const glm::vec2* uvs, std::size_t size, std::size_t offset) {
     assert(offset + size <= count);
 
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(this->vertices));
