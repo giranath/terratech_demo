@@ -342,11 +342,15 @@ void game::poll_units_update() {
     if(update_p.first) {
         std::vector<unit> units = update_p.second.as<std::vector<unit>>();
         for(const unit& u : units) {
+            unit_id id(u.get_id());
             unit* my_unit = static_cast<unit*>(this->units().get(u.get_id()));
 
             if(my_unit) {
-                //my_unit->set_position(u.get_position());
-                //my_unit->set_target_position(u.get_target_position());
+                // Assumes that our units are correctly placed
+                if(id.player_id != player_id) {
+                    my_unit->set_position(u.get_position());
+                    my_unit->set_target_position(u.get_target_position());
+                }
             }
             else {
                 add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
