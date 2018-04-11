@@ -75,6 +75,41 @@ void mesh::render() const noexcept {
     glDisableVertexAttribArray(0);
 }
 
+void make_circle(mesh_builder &builder, float radius, glm::vec3 color, glm::vec3 position, float resolution) {
+	// Front face
+	builder.add_vertex({ position.x, position.y, position.z }, {}, color);
+
+	int actual_resolution = 360 / resolution;
+	float step = 360 / resolution;
+
+	for (int i = 0; i <= actual_resolution; i++) {
+		float offset_sin_cur = glm::sin(glm::radians(i * step)) * radius;
+		float offset_cos_cur = glm::cos(glm::radians(i * step)) * radius;
+
+		float offset_sin_next = glm::sin(glm::radians((i + 1) * step)) * radius;
+		float offset_cos_next = glm::cos(glm::radians((i + 1) * step)) * radius;
+
+		float uv_sin_cur = (offset_sin_cur / radius / 2) + 0.5f;
+		float uv_cos_cur = (offset_cos_cur / radius / 2) + 0.5f;
+
+		float uv_sin_next = (offset_sin_next / radius / 2) + 0.5f;
+		float uv_cos_next = (offset_cos_next / radius / 2) + 0.5f;
+
+
+		builder.add_vertex({ position.x + offset_sin_cur, position.y, position.z + offset_cos_cur }, { uv_cos_cur, uv_sin_cur }, color);
+		builder.add_vertex({ position.x + offset_sin_next, position.y, position.z + offset_cos_next }, { uv_cos_next, uv_sin_next }, color);
+		builder.add_vertex({ position.x, position.y, position.z }, { 0.5, 0.5 }, color);
+	}
+}
+
+mesh make_circle(float radius, glm::vec3 color, glm::vec3 position, float resolution) {
+	mesh_builder builder;
+
+	make_circle(builder, radius, color, position, resolution);
+
+	return builder.build();
+}
+
 void make_cube(mesh_builder &cube_builder, float size, glm::vec3 color, glm::vec3 position) {
     // Front face
     cube_builder.add_vertex({position.x, position.y, position.z}, {}, color);

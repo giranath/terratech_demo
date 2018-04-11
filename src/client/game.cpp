@@ -75,6 +75,14 @@ void game::load_flyweights() {
     }
 }
 
+void game::setup_selection_circles(){
+	selection_meshes.reserve(MAX_SELECTED_UNITS);
+
+	for (size_t i = 0; i < MAX_SELECTED_UNITS; i++) {
+		selection_meshes.emplace_back(rendering::make_circle(1, { 0,1.0f,0 }, {0, 0, 0}, 36));
+	}
+}
+
 void game::setup_renderer() {
     mesh_rendering.set_camera(&game_camera);
 
@@ -231,10 +239,14 @@ void game::on_init() {
         discovered_chunks.push_back(known_chunks.position());
     }
 
+
     // Setup camera
     game_camera.reset({-100.f, 10.f, -200.f});
 
     load_datas();
+	
+	// Setup selections circles
+	setup_selection_circles();
 
     network.on_disconnection.attach([this](const networking::network_manager::socket_handle disconnected_socket) {
         if(disconnected_socket == socket) {
@@ -419,6 +431,17 @@ void game::render() {
     });
 
     world_rendering.render(mesh_rendering);
+
+	// Render selection circle
+	if(selected_unit_id != -1)
+	{
+		base_unit* selected_unit = units().get(selected_unit_id);
+
+		rendering::mesh_renderer renderer(&selection_meshes[0],
+										  glm::translate(glm::mat4{ 1.f }, selected_unit->get_position() * rendering::chunk_renderer::SQUARE_SIZE),
+										  virtual_textures[selected_unit->texture()].id, PROGRAM_STANDARD);
+		mesh_rendering.push(std::move(renderer));
+	}
 
     // Render every units
     for(auto unit = units().begin_of_units(); unit != units().end_of_units(); ++unit) {

@@ -39,6 +39,10 @@ public:
 void make_cube(mesh_builder &builder, float size, glm::vec3 color, glm::vec3 position = {});
 
 mesh make_cube(float size, glm::vec3 color, glm::vec3 position = {});
+
+void make_circle(mesh_builder &builder, float radius, glm::vec3 color, glm::vec3 position, float resolution);
+
+mesh make_circle(float radius, glm::vec3 color, glm::vec3 position, float resolution);
 }
 
 #endif

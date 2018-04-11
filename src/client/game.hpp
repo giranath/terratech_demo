@@ -39,6 +39,10 @@ private:
     // World
     world game_world;
 
+	// Selection
+	static const int MAX_SELECTED_UNITS = 12;
+	std::vector<rendering::mesh> selection_meshes;
+
     // Units
     unit_mesh_collection unit_meshes;
 
@@ -72,7 +76,8 @@ private:
     void setup_renderer();
     void load_textures();
     void load_virtual_textures();
-    void load_shaders();
+    void load_shaders(); 
+	void setup_selection_circles();
 
     void load_datas();
 
