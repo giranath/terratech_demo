@@ -191,9 +191,7 @@ gl::buffer quad_vertexbuffer;
 void game::setup_fog_of_war() {
     const std::size_t SQUARE_COUNT_PER_CHUNKS = world::CHUNK_WIDTH * world::CHUNK_DEPTH;
     const std::size_t VERTEX_COUNT_PER_SQUARE = 6;
-    const std::size_t MAX_CHUNK_COUNT = 10;
-
-    std::cout << "creating buffers of size " << MAX_CHUNK_COUNT * SQUARE_COUNT_PER_CHUNKS * VERTEX_COUNT_PER_SQUARE * sizeof(glm::vec3) << " bytes" << std::endl;
+    const std::size_t MAX_CHUNK_COUNT = 20;
 
     fow_vao = gl::vertex_array::make();
     gl::bind(fow_vao);
@@ -347,8 +345,8 @@ void game::poll_units_update() {
             unit* my_unit = static_cast<unit*>(this->units().get(u.get_id()));
 
             if(my_unit) {
-                my_unit->set_position(u.get_position());
-                my_unit->set_target_position(u.get_target_position());
+                //my_unit->set_position(u.get_position());
+                //my_unit->set_target_position(u.get_target_position());
             }
             else {
                 add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
@@ -467,7 +465,6 @@ void game::update_fog_of_war() {
     // Update fog of war buffers
     fow_size = vertices.size();
     if(fow_size > 0) {
-        std::cout << "filling " << fow_size * sizeof(glm::vec3) << " bytes in buffers" << std::endl;
         gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_vertices));
         glBufferSubData(GL_ARRAY_BUFFER, 0, fow_size * sizeof(glm::vec3), &vertices[0]);
 
