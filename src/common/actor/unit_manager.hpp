@@ -52,11 +52,11 @@ private:
     mutable std::mutex buildings_mutex;
     std::array<std::unordered_map<uint32_t, unit_ptr>, 3> manager_data;
     
-    array_map<unit, MAX_UNIT> units;
-    array_map<building, MAX_UNIT> buildings;
+    array_map<unit, MAX_UNIT> units{};
+    array_map<building, MAX_UNIT> buildings{};
 
 public:
-    unit_manager();
+    unit_manager() = default;
 
     uint32_t get_unit_type(uint32_t id);
 
