@@ -129,7 +129,7 @@ public:
         static_assert(collision::is_collision_shape<CollisionShape>::value, "you must specify a collision shape");
 
         for (auto it = std::begin(buildings); it != std::end(buildings); ++it) {
-            unit* u = it->second;
+            building* u = it->second;
             if (collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5), shape)) {
                 *ot = u;
                 ++ot;

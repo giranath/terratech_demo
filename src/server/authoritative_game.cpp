@@ -406,7 +406,7 @@ glm::vec2 authoritative_game::find_available_position(world_chunk* player_chunk)
     glm::vec2 player_start_position{0,0};
     for (size_t i = 0; i < world.CHUNK_WIDTH; ++i)
     {
-        for (size_t j = 0; j < world.CHUNK_DEPTH; ++i)
+        for (size_t j = 0; j < world.CHUNK_DEPTH; ++j)
         {
             int biome = player_chunk->biome_at(i, 0, j);
             std::vector<site*> sites = player_chunk->sites_at(i, 0, j);

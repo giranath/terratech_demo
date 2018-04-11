@@ -147,8 +147,13 @@ public:
     }
     bool contains(uint32_t key) const 
     {
-        auto it = std::find(keys.begin(), keys.end(), key);
-        return it != keys.end();
+        for(std::size_t i = 0; i < position; ++i) {
+            if(keys[i] == key) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     iterator begin()
