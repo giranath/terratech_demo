@@ -64,10 +64,11 @@ private:
     networking::network_manager::socket_handle socket;
 
     visibility_map local_visibility;
-    //gl::buffer fow_vertices;
-    //gl::buffer fow_colors;
-    //std::size_t fow_size;
-    rendering::mesh fog_of_war;
+    gl::vertex_array fow_vao;
+    gl::buffer fow_vertices;
+    gl::buffer fow_colors;
+    std::size_t fow_size;
+    //rendering::mesh fog_of_war;
 
     std::vector<glm::i32vec2> discovered_chunks;
 
@@ -94,6 +95,7 @@ private:
     void wait_for_flyweights();
     void wait_for_initial_chunks();
 
+    void setup_fog_of_war();
     void setup_screen_quad();
 
     void update_fog_of_war();

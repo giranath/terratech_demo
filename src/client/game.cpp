@@ -177,7 +177,8 @@ game::game(networking::network_manager& manager, networking::network_manager::so
 , network{manager}
 , socket(socket)
 , selected_unit_id(-1)
-, local_visibility(20 * world::CHUNK_WIDTH, 20 * world::CHUNK_DEPTH){
+, local_visibility(20 * world::CHUNK_WIDTH, 20 * world::CHUNK_DEPTH)
+, fow_size(0) {
     last_fps_durations.reserve(10);
 
     discovered_chunks.reserve(20 * 20);
@@ -186,6 +187,34 @@ game::game(networking::network_manager& manager, networking::network_manager::so
 // TODO: Remove these
 gl::vertex_array quad_VertexArrayID;
 gl::buffer quad_vertexbuffer;
+
+void game::setup_fog_of_war() {
+    const std::size_t SQUARE_COUNT_PER_CHUNKS = world::CHUNK_WIDTH * world::CHUNK_DEPTH;
+    const std::size_t VERTEX_COUNT_PER_SQUARE = 6;
+    const std::size_t MAX_CHUNK_COUNT = 10;
+
+    std::cout << "creating buffers of size " << MAX_CHUNK_COUNT * SQUARE_COUNT_PER_CHUNKS * VERTEX_COUNT_PER_SQUARE * sizeof(glm::vec3) << " bytes" << std::endl;
+
+    fow_vao = gl::vertex_array::make();
+    gl::bind(fow_vao);
+
+    // Setup Fog of War vertices buffer
+    fow_vertices = gl::buffer::make();
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_vertices));
+    glBufferData(GL_ARRAY_BUFFER,
+                 MAX_CHUNK_COUNT * SQUARE_COUNT_PER_CHUNKS * VERTEX_COUNT_PER_SQUARE * sizeof(glm::vec3),
+                 NULL,
+                 GL_DYNAMIC_DRAW);
+
+    // Setup Fog of War colors buffer
+    fow_colors = gl::buffer::make();
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_colors));
+    glBufferData(GL_ARRAY_BUFFER,
+                 MAX_CHUNK_COUNT * SQUARE_COUNT_PER_CHUNKS * VERTEX_COUNT_PER_SQUARE * sizeof(glm::vec3),
+                 NULL,
+                 GL_DYNAMIC_DRAW);
+
+}
 
 void game::setup_screen_quad() {
     quad_VertexArrayID = gl::vertex_array::make();
@@ -217,10 +246,6 @@ void game::on_init() {
 
     setup_inputs();
 
-    const std::size_t SQUARE_COUNT_PER_CHUNKS = world::CHUNK_WIDTH * world::CHUNK_DEPTH;
-    const std::size_t VERTEX_COUNT_PER_SQUARE = 6;
-    const std::size_t MAX_CHUNK_COUNT = 20;
-
     // Only show know chunks
     for (const world_chunk &known_chunks : game_world) {
         discovered_chunks.push_back(known_chunks.position());
@@ -229,16 +254,7 @@ void game::on_init() {
     // Setup camera
     game_camera.reset({-100.f, 10.f, -200.f});
 
-    // Setup Fog of War vertices buffer
-    //fow_vertices = gl::buffer::make();
-    //gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_vertices));
-    //glBufferData(GL_ARRAY_BUFFER, MAX_CHUNK_COUNT * SQUARE_COUNT_PER_CHUNKS * VERTEX_COUNT_PER_SQUARE * sizeof(glm::vec3), 0, GL_STREAM_DRAW);
-
-    // Setup Fog of War colors buffer
-    //fow_colors = gl::buffer::make();
-    //gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_colors));
-    //glBufferData(GL_ARRAY_BUFFER, MAX_CHUNK_COUNT * SQUARE_COUNT_PER_CHUNKS * VERTEX_COUNT_PER_SQUARE * sizeof(glm::vec3), 0, GL_STREAM_DRAW);
-
+    setup_fog_of_war();
     setup_screen_quad();
 }
 
@@ -395,9 +411,11 @@ bounding_box<float> game::camera_bounding_box() const noexcept {
 }
 
 void game::update_fog_of_war() {
-    rendering::mesh_builder fow_builder;
+    //rendering::mesh_builder fow_builder;
+    std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> colors;
 
-    std::for_each(std::begin(world_rendering), std::end(world_rendering), [this, &fow_builder](const rendering::world_renderer::chunk_rendering& chunk_renderer) {
+    std::for_each(std::begin(world_rendering), std::end(world_rendering), [this, &vertices, &colors](const rendering::world_renderer::chunk_rendering& chunk_renderer) {
         auto chunk_pos = chunk_renderer.pos;
 
         if(chunk_renderer.is_visible) {
@@ -417,7 +435,7 @@ void game::update_fog_of_war() {
 
                     switch(local_visibility.at(world_pos_x, world_pos_z)) {
                         case visibility::unexplored:
-                            hide_under = true;
+                            hide_under = false;
                             color = glm::vec3(0.f, 0.f, 0.f);
                             break;
                         case visibility::explored:
@@ -431,20 +449,31 @@ void game::update_fog_of_war() {
                     }
 
                     if(hide_under) {
-                        fow_builder.add_vertex(start_of_square,                                    glm::vec2{}, color);
-                        fow_builder.add_vertex(start_of_square + right_of_square,                  glm::vec2{}, color);
-                        fow_builder.add_vertex(start_of_square + right_of_square + back_of_square, glm::vec2{}, color);
-
-                        fow_builder.add_vertex(start_of_square,                                    glm::vec2{}, color);
-                        fow_builder.add_vertex(start_of_square + right_of_square + back_of_square, glm::vec2{}, color);
-                        fow_builder.add_vertex(start_of_square + back_of_square,                   glm::vec2{}, color);
+                        vertices.push_back(start_of_square);
+                        vertices.push_back(start_of_square + right_of_square);
+                        vertices.push_back(start_of_square + right_of_square + back_of_square);
+                        vertices.push_back(start_of_square);
+                        vertices.push_back(start_of_square + right_of_square + back_of_square);
+                        vertices.push_back(start_of_square + back_of_square);
+                        for(int i = 0; i < 6; ++i) {
+                            colors.push_back(color);
+                        }
                     }
                 }
             }
         }
     });
 
-    fog_of_war = fow_builder.build();
+    // Update fog of war buffers
+    fow_size = vertices.size();
+    if(fow_size > 0) {
+        std::cout << "filling " << fow_size * sizeof(glm::vec3) << " bytes in buffers" << std::endl;
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_vertices));
+        glBufferSubData(GL_ARRAY_BUFFER, 0, fow_size * sizeof(glm::vec3), &vertices[0]);
+
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_colors));
+        glBufferSubData(GL_ARRAY_BUFFER, 0, fow_size * sizeof(glm::vec3), &colors[0]);
+    }
 }
 
 void game::render_game_state() {
@@ -487,23 +516,44 @@ void game::render_fog_of_war() {
     gl::bind(gl::framebuffer_bind<>(fow_fbo));
     glViewport(0, 0, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    gl::program* current_program = mesh_rendering.program(PROGRAM_STANDARD);
+    gl::bind(fow_vao);
+    gl::program* current_program = mesh_rendering.program(PROGRAM_FOW);
     gl::bind(*current_program);
 
     auto projection_uniform = current_program->find_uniform<glm::mat4>("projection_matrix");
     auto view_uniform = current_program->find_uniform<glm::mat4>("view_matrix");
-    auto is_textured = current_program->find_uniform<int>("is_textured");
     auto model_uniform = current_program->find_uniform<glm::mat4>("model_matrix");
     model_uniform.set(glm::mat4{1.f});
-    is_textured.set(0);
 
     projection_uniform.set(game_camera.projection());
     view_uniform.set(game_camera.view());
 
-    glActiveTexture(GL_TEXTURE0);
-    gl::bind(gl::texture_bind<GL_TEXTURE_2D>(*mesh_rendering.texture(virtual_textures["fog_of_war"].id)));
+    glEnableVertexAttribArray(0);
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_vertices));
+    // TODO: Move up
+    glVertexAttribPointer(
+            0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+            3,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            (void*)0            // array buffer offset
+    );
+    glEnableVertexAttribArray(1);
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_colors));
+    glVertexAttribPointer(
+            1,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+            3,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            (void*)0            // array buffer offset
+    );
 
-    fog_of_war.render();
+    glDrawArrays(GL_TRIANGLES, 0, fow_size);
+
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(0);
 }
 
 void game::render_on_screen() {
@@ -511,6 +561,7 @@ void game::render_on_screen() {
     glViewport(0, 0, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    gl::bind(quad_VertexArrayID);
     gl::program* fullscreen_prog = mesh_rendering.program(2);
     auto texture_uniform = fullscreen_prog->find_uniform<int>("game_texture");
     auto texture_uniform2 = fullscreen_prog->find_uniform<int>("fow_texture");
@@ -518,8 +569,6 @@ void game::render_on_screen() {
     gl::bind(*fullscreen_prog);
     texture_uniform.set(0);
     texture_uniform2.set(1);
-
-    gl::bind(quad_VertexArrayID);
 
     glActiveTexture(GL_TEXTURE0);
     gl::bind(gl::texture_bind<GL_TEXTURE_2D>(game_color_texture));
