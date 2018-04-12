@@ -122,6 +122,7 @@ void network_manager::thread_work() {
         std::vector<std::pair<socket_handle, packet>> packets_to_send;
         {
             std::lock_guard<async::spinlock> lock(waiting_spin_lock);
+
             packets_to_send.swap(waiting_queue);
         }
 
@@ -269,6 +270,8 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                 }
             }
                 break;
+            default:
+                break;
         }
     }
     else {
@@ -278,10 +281,10 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
 
 void network_manager::handle_disconnection(connected_socket& connection) {
     std::lock_guard<async::spinlock> lock(to_disconnect_lock);
-
     active_sockets.remove(connection.socket);
     to_disconnect.push_back(connection.handle);
     if(connection.current_state == connected_socket::state::connected) {
+        connection.current_state = connected_socket::state::disconnected;
         on_disconnection.call(connection.handle);
     }
 }
