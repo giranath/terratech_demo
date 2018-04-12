@@ -282,13 +282,12 @@ void authoritative_game::setup_listener() {
         std::cout << disconnected << " has disconnected" << std::endl;
 
         std::lock_guard<std::mutex> lock(clients_mutex);
-        auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [disconnected](const client& c) {
+        std::vector<client>::iterator it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [disconnected](const client& c) {
             return c.socket == disconnected;
         });
 
         if(it != std::end(connected_clients)) {
-            connected_clients.erase(it);
-            std::cout << "stopping server" << std::endl;
+            removed_client.push_back(it->id);
             stop();
         }
     });
@@ -588,7 +587,32 @@ void authoritative_game::on_update(frame_duration last_frame) {
         broadcast_current_state();
         world_state_sync_clock.substract(std::chrono::milliseconds(250));
     }
+
+    for (auto& u : removed_client)
+    {
+        auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [u](const client& c) {
+            return c.id == u;
+        });
+        if (it != connected_clients.end())
+        {
+            connected_clients.erase(it);
+
+        }
+    }
+    removed_client.clear();
 }
 
 void authoritative_game::on_release() {
+    for (auto& u : removed_client)
+    {
+        auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [u](const client& c) {
+            return c.id == u;
+        });
+        if (it != connected_clients.end())
+        {
+            connected_clients.erase(it);
+
+        }
+    }
+    removed_client.clear();
 }
