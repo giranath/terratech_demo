@@ -29,11 +29,10 @@ class mesh {
     gl::buffer colors{};
     std::size_t count{};
 
-    mesh(gl::buffer &&vertices, gl::buffer &&uvs, gl::buffer &&colors, std::size_t count) noexcept;
-
 public:
     mesh() = default;
     mesh(std::size_t size);
+    mesh(gl::buffer&& vertices, gl::buffer&& uvs, gl::buffer&& colors, std::size_t count) noexcept;
 
     void update(const glm::vec3* vertices, const glm::vec3* colors, const glm::vec2* uvs, std::size_t size, std::size_t offset = 0);
     void render() const noexcept;

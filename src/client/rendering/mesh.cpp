@@ -3,14 +3,14 @@
 namespace rendering {
 
 void mesh_builder::add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color) {
-    vertices.push_back(std::move(vertex));
-    uvs.push_back(std::move(uv));
-    colors.push_back(std::move(color));
+    vertices.push_back(vertex);
+    uvs.push_back(uv);
+    colors.push_back(color);
 }
 
 mesh mesh_builder::build() const noexcept {
-	if (vertices.empty())
-		return mesh{};
+    if (vertices.empty())
+        return mesh{};
 
     gl::buffer vertices_buffer = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices_buffer));
@@ -33,7 +33,7 @@ void mesh_builder::rebuild(mesh& m) const noexcept {
     }
 }
 
-mesh::mesh(gl::buffer &&vertices, gl::buffer &&uvs, gl::buffer &&colors, std::size_t count) noexcept
+mesh::mesh(gl::buffer&& vertices, gl::buffer&& uvs, gl::buffer&& colors, std::size_t count) noexcept
 : vertices{std::move(vertices)}
 , uvs{std::move(uvs)}
 , colors{std::move(colors)}
@@ -56,17 +56,17 @@ mesh::mesh(std::size_t size)
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * count, NULL, GL_STREAM_DRAW);
 }
 
-void mesh::update(const glm::vec3* vertices, const glm::vec3* colors, const glm::vec2* uvs, std::size_t size, std::size_t offset) {
+void mesh::update(const glm::vec3* vertices_, const glm::vec3* colors_, const glm::vec2* uvs_, std::size_t size, std::size_t offset) {
     assert(offset + size <= count);
 
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(this->vertices));
-    glBufferSubData(GL_ARRAY_BUFFER, offset, size, vertices);
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices));
+    glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(glm::vec3), size * sizeof(glm::vec3), vertices_);
 
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(this->colors));
-    glBufferSubData(GL_ARRAY_BUFFER, offset, size, colors);
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(colors));
+    glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(glm::vec3), size * sizeof(glm::vec3), colors_);
 
-    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(this->uvs));
-    glBufferSubData(GL_ARRAY_BUFFER, offset, size, uvs);
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(uvs));
+    glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(glm::vec2), size * sizeof(glm::vec2), uvs_);
 }
 
 void mesh::render() const noexcept {

@@ -6,13 +6,39 @@
 namespace rendering {
 
 world_renderer::chunk_rendering::chunk_rendering(const world_chunk &chunk)
-: renderer{chunk}, pos{chunk.position()}, is_visible{true} {
+: renderer{chunk}
+, pos{chunk.position()}
+, is_visible{true} {
 
 };
 
+world_renderer::chunk_rendering::chunk_rendering(const world_chunk& chunk,
+                                                 gl::buffer&& vertices, gl::buffer&& colors, gl::buffer&& uvs)
+: renderer(chunk, std::move(vertices), std::move(colors), std::move(uvs))
+, pos{chunk.position()}
+, is_visible(true) {
+
+}
+
 world_renderer::world_renderer(world &w) noexcept
-: w{w} {
+: w{w}
+, next_buffer_index(0) {
     chunk_renderers.reserve(20 * 20);
+
+    // Prepare chunk renderer buffers
+    for(int i = 0; i < 20 * 20; ++i) {
+        vertex_buffers[i] = gl::buffer::make();
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertex_buffers[i]));
+        glBufferData(GL_ARRAY_BUFFER, world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6 * sizeof(glm::vec3), NULL, GL_STREAM_DRAW);
+
+        color_buffers[i] = gl::buffer::make();
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(color_buffers[i]));
+        glBufferData(GL_ARRAY_BUFFER, world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6 * sizeof(glm::vec3), NULL, GL_STREAM_DRAW);
+
+        uv_buffers[i] = gl::buffer::make();
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(uv_buffers[i]));
+        glBufferData(GL_ARRAY_BUFFER, world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6 * sizeof(glm::vec2), NULL, GL_STREAM_DRAW);
+    }
 }
 
 void world_renderer::show(int x, int z) noexcept {
@@ -23,7 +49,16 @@ void world_renderer::show(int x, int z) noexcept {
     if(it != std::end(chunk_renderers)) {
         it->is_visible = true;
     }
+    else if(next_buffer_index < MAX_BUFFER_SIZE) {
+        chunk_renderers.emplace_back(*w.chunk_at(x, z),
+                                     std::move(vertex_buffers[next_buffer_index]),
+                                     std::move(color_buffers[next_buffer_index]),
+                                     std::move(uv_buffers[next_buffer_index]));
+        ++next_buffer_index;
+    }
+    // Create new chunk
     else {
+        std::cerr << "Creating new chunk" << std::endl;
         chunk_renderers.emplace_back(*w.chunk_at(x, z));
     }
 }

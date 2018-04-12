@@ -23,7 +23,7 @@ namespace glm {
 class actor
 {
     glm::vec3 position;
-    bool is_visible;
+    bool is_visible_;
     bool is_active;
     actor_type type;
 public:
@@ -35,7 +35,7 @@ public:
 
     actor(glm::vec3 position, bool is_visible, bool is_active, actor_type type) :
         position{ position },
-        is_visible{ is_visible },
+        is_visible_{ is_visible },
         is_active{ is_active },
         type{type}
     {
@@ -57,7 +57,7 @@ public:
 
     void set_visibility(bool _is_visible)
     {
-        is_visible = _is_visible;
+        is_visible_ = _is_visible;
     }
 
     void set_active(bool _is_active)
@@ -68,6 +68,10 @@ public:
     actor_type get_type()
     {
         return type;
+    }
+
+    bool is_visible() const noexcept {
+        return is_visible_;
     }
 
     friend void from_json(const nlohmann::json& j, actor& u);
