@@ -38,7 +38,7 @@ private:
     // Inputs
     input::key_input_handler key_inputs;
     bool is_scrolling;
-    LeftClickMode current_click_mode;
+    int current_click_mode;
 
     // Textures
     std::unordered_map<int, gl::texture> textures;

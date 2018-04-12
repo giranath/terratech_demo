@@ -25,7 +25,7 @@ public:
 };
 
 template<int Mode, typename Predicate>
-std::unique_ptr<change_click_mode<Mode, Predicate> make_change_click_mode_command(int& mode, Predicate pred) {
+std::unique_ptr<change_click_mode<Mode, Predicate>> make_change_click_mode_command(int& mode, Predicate pred) {
     return std::make_unique<change_click_mode<Mode, Predicate>>(mode, pred);
 }
 

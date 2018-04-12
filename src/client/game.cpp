@@ -159,10 +159,10 @@ void game::setup_inputs() {
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
 
     // Building commands
-    key_inputs.register_action(SDLK_ESCAPE, std::make_unique<input::change_click_mode<CLICK_MODE_MOVE>>(current_click_mode, []() {
+    key_inputs.register_action(SDLK_ESCAPE, input::make_change_click_mode_command<CLICK_MODE_MOVE>(current_click_mode, []() {
         return true;
     }));
-    key_inputs.register_action(SDLK_b, std::make_unique<input::change_click_mode<CLICK_MODE_BUILD>>(current_click_mode, []() {
+    key_inputs.register_action(SDLK_b, input::make_change_click_mode_command<CLICK_MODE_BUILD>(current_click_mode, []() {
         return false;
     }));
 }
