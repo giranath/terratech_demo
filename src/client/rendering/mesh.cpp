@@ -2,15 +2,21 @@
 
 namespace rendering {
 
+mesh_builder::mesh_builder(std::size_t capacity) {
+    vertices.reserve(capacity);
+    uvs.reserve(capacity);
+    colors.reserve(capacity);
+}
+
 void mesh_builder::add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color) {
-    vertices.push_back(std::move(vertex));
-    uvs.push_back(std::move(uv));
-    colors.push_back(std::move(color));
+    vertices.push_back(vertex);
+    uvs.push_back(uv);
+    colors.push_back(color);
 }
 
 mesh mesh_builder::build() const noexcept {
-	if (vertices.empty())
-		return mesh{};
+    if (vertices.empty())
+        return mesh{};
 
     gl::buffer vertices_buffer = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices_buffer));
@@ -27,9 +33,47 @@ mesh mesh_builder::build() const noexcept {
     return mesh{std::move(vertices_buffer), std::move(uvs_buffer), std::move(colors_buffer), vertices.size()};
 }
 
-mesh::mesh(gl::buffer &&vertices, gl::buffer &&uvs, gl::buffer &&colors, std::size_t count) noexcept
-        : vertices{std::move(vertices)}, uvs{std::move(uvs)}, colors{std::move(colors)}, count{count} {
+void mesh_builder::rebuild(mesh& m) const noexcept {
+    if(!vertices.empty()) {
+        m.update(&vertices[0], &colors[0], &uvs[0], vertices.size());
+        m.resize(vertices.size());
+    }
+}
 
+mesh::mesh(gl::buffer&& vertices, gl::buffer&& uvs, gl::buffer&& colors, std::size_t count) noexcept
+: vertices{std::move(vertices)}
+, uvs{std::move(uvs)}
+, colors{std::move(colors)}
+, count{count} {
+
+}
+
+mesh::mesh(std::size_t size)
+: vertices(gl::buffer::make())
+, uvs(gl::buffer::make())
+, colors(gl::buffer::make())
+, count(size) {
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices));
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * count, NULL, GL_STREAM_DRAW);
+
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(colors));
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * count, NULL, GL_STREAM_DRAW);
+
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(uvs));
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * count, NULL, GL_STREAM_DRAW);
+}
+
+void mesh::update(const glm::vec3* vertices_, const glm::vec3* colors_, const glm::vec2* uvs_, std::size_t size, std::size_t offset) {
+    assert(offset + size <= count);
+
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices));
+    glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(glm::vec3), size * sizeof(glm::vec3), vertices_);
+
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(colors));
+    glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(glm::vec3), size * sizeof(glm::vec3), colors_);
+
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(uvs));
+    glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(glm::vec2), size * sizeof(glm::vec2), uvs_);
 }
 
 void mesh::render() const noexcept {
@@ -73,6 +117,10 @@ void mesh::render() const noexcept {
     glDisableVertexAttribArray(2);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(0);
+}
+
+void mesh::resize(std::size_t size) noexcept {
+    count = size;
 }
 
 void make_cube(mesh_builder &cube_builder, float size, glm::vec3 color, glm::vec3 position) {

@@ -17,8 +17,17 @@ glm::vec3 get_rgb(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 chunk_renderer::chunk_renderer(const world_chunk &chunk) noexcept
-        : chunk{chunk}, floor_mesh{} {
+: chunk{chunk}, floor_mesh{} {
     build();
+}
+
+chunk_renderer::chunk_renderer(const world_chunk& chunk, gl::buffer&& vertices, gl::buffer&& colors, gl::buffer&& uvs,
+                                                         gl::buffer&& svertices, gl::buffer&& scolors, gl::buffer&& suvs) noexcept
+: chunk(chunk)
+, floor_mesh(std::move(vertices), std::move(uvs), std::move(colors), world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6)
+, sites_mesh(std::move(svertices), std::move(suvs), std::move(scolors), world::CHUNK_WIDTH * world::CHUNK_DEPTH * 36){
+    rebuild_floor_mesh();
+    rebuild_site_meshes();
 }
 
 std::map<int, glm::vec3> chunk_renderer::make_biome_colors() {
@@ -48,13 +57,13 @@ std::map<int, std::vector<bounding_box<float>>> make_biome_textures() {
     return texture_rects;
 }
 
-void chunk_renderer::build_floor_mesh() noexcept {
+rendering::mesh_builder chunk_renderer::build_floor() {
     auto biome_colors = make_biome_colors();
     auto biome_textures = make_biome_textures();
 
     std::default_random_engine engine(std::time(NULL));
 
-    rendering::mesh_builder floor_mesh_builder;
+    rendering::mesh_builder floor_mesh_builder(world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6);
     for (std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
         for (std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
             const int CURRENT_BIOME = chunk.biome_at(x, 0, z);
@@ -81,7 +90,15 @@ void chunk_renderer::build_floor_mesh() noexcept {
         }
     }
 
-    floor_mesh = floor_mesh_builder.build();
+    return floor_mesh_builder;
+}
+
+void chunk_renderer::build_floor_mesh() noexcept {
+    floor_mesh = build_floor().build();
+}
+
+void chunk_renderer::rebuild_floor_mesh() noexcept {
+    build_floor().rebuild(floor_mesh);
 }
 
 glm::vec3 get_site_color(int type) {
@@ -105,9 +122,9 @@ glm::vec3 get_site_color(int type) {
     }
 }
 
-void chunk_renderer::build_site_meshes() noexcept {
+rendering::mesh_builder chunk_renderer::build_sites() {
     const float SITE_SIZE = SQUARE_SIZE * 0.5f;
-    rendering::mesh_builder sites_builder;
+    rendering::mesh_builder sites_builder(world::CHUNK_WIDTH * world::CHUNK_DEPTH * 36);
     for (std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
         for (std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
             auto sites = chunk.sites_at(x, 0, z);
@@ -121,7 +138,15 @@ void chunk_renderer::build_site_meshes() noexcept {
         }
     }
 
-    sites_mesh = sites_builder.build();
+    return sites_builder;
+}
+
+void chunk_renderer::build_site_meshes() noexcept {
+    sites_mesh = build_sites().build();
+}
+
+void chunk_renderer::rebuild_site_meshes() noexcept {
+    build_sites().rebuild(sites_mesh);
 }
 
 void chunk_renderer::build() noexcept {

@@ -15,6 +15,8 @@
 #include "../common/networking/network_manager.hpp"
 #include "../common/world/visibility_map.hpp"
 #include "../common/memory/static_vector.hpp"
+#include "opengl/frame_buffer.hpp"
+#include "opengl/render_buffer.hpp"
 
 #include <chrono>
 #include <array>
@@ -63,10 +65,22 @@ private:
     networking::network_manager::socket_handle socket;
 
     visibility_map local_visibility;
-    rendering::mesh fog_of_war;
+    gl::vertex_array fow_vao;
+    gl::buffer fow_vertices;
+    gl::buffer fow_colors;
+    std::size_t fow_size;
+    //rendering::mesh fog_of_war;
 
-    //std::vector<glm::i32vec2> discovered_chunks;
     static_vector<glm::i32vec2, 20 * 20> discovered_chunks;
+
+    gl::frame_buffer fbo;
+    gl::texture      game_color_texture;
+    gl::render_buffer game_depth_buffer;
+
+    gl::frame_buffer fow_fbo;
+    gl::texture      fow_color_texture;
+    gl::render_buffer fow_depth_buffer;
+
     // Initialization functions
     void load_flyweights();
     void setup_inputs();
@@ -75,11 +89,31 @@ private:
     void load_virtual_textures();
     void load_shaders();
 
-    void load_datas();
+    void load_local_datas();
+
+    void wait_for_server_init_datas();
+    void wait_for_player_id();
+    void wait_for_flyweights();
+    void wait_for_initial_chunks();
+
+    void setup_fog_of_war();
+    void setup_screen_quad();
 
     void update_fog_of_war();
 
     bounding_box<float> camera_bounding_box() const noexcept;
+
+    void render_game_state();
+    void render_chunks();
+    void render_units();
+    void render_fog_of_war();
+    void render_on_screen();
+    void calculate_fps();
+
+    void poll_server_changes();
+    void poll_chunks_update();
+    void poll_units_update();
+    void cull_out_of_view_chunks();
 
 public:
     game(networking::network_manager& manager, networking::network_manager::socket_handle socket);

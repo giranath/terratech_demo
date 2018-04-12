@@ -21,6 +21,11 @@ extern "C" void sign_handler(int signo) {
     if(signo == SIGTERM) {
         g_signal_status = 1;
     }
+#ifdef WIN32
+    else if(signo == SIGBREAK) {
+        g_signal_status = 1;
+    }
+#endif
 }
 
 int main(int /*argc*/, char* /*argv*/[]) {
@@ -41,6 +46,12 @@ int main(int /*argc*/, char* /*argv*/[]) {
     if(std::signal(SIGTERM, sign_handler) == SIG_ERR) {
         std::cerr << "can't catch SIGTERM" << std::endl;
     }
+
+#ifdef WIN32
+    if(std::signal(SIGBREAK, sign_handler) == SIG_ERR) {
+        std::cerr << "can't catch SIGBREAK" << std::endl;
+    }
+#endif
 
     game_time::highres_clock frame_time;
     while(game.is_running() && g_signal_status == 0) {
