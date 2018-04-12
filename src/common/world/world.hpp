@@ -14,9 +14,9 @@ public:
 private:
     chunk_collection chunks;
 public:
-    static const uint32_t CHUNK_WIDTH = 16;
+    static const uint32_t CHUNK_WIDTH = 32;
     static const uint32_t CHUNK_HEIGHT = 1;
-    static const uint32_t CHUNK_DEPTH = 16;
+    static const uint32_t CHUNK_DEPTH = 32;
 
     virtual world_chunk* chunk_at(int x, int z);
     virtual const world_chunk* chunk_at(int x, int z) const;
