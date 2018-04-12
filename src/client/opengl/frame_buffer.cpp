@@ -4,6 +4,8 @@
 
 namespace gl {
 
+const frame_buffer frame_buffer::SCREEN{};
+
 frame_buffer::frame_buffer() noexcept
 : id(0) {
 

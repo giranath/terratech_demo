@@ -19,7 +19,7 @@
     "Texture": "MeatGolem",
     "TransportCapacity": 0,
     "Transportable": true,
-    "WalkSpeed": 2.0,
+    "WalkSpeed": 10.0,
 	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
     "Width": 100.0,
     "Wood": 0,

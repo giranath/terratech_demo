@@ -15,10 +15,12 @@ class mesh_builder {
     std::vector<glm::vec2> uvs;
 public:
     mesh_builder() = default;
+    mesh_builder(std::size_t capacity);
 
     void add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color = {1.f, 1.f, 1.f});
 
     mesh build() const noexcept;
+    void rebuild(mesh& m) const noexcept;
 };
 
 class mesh {
@@ -28,11 +30,14 @@ class mesh {
     gl::buffer colors{};
     std::size_t count{};
 
-    mesh(gl::buffer &&vertices, gl::buffer &&uvs, gl::buffer &&colors, std::size_t count) noexcept;
+    void resize(std::size_t size) noexcept;
 
 public:
     mesh() = default;
+    mesh(std::size_t size);
+    mesh(gl::buffer&& vertices, gl::buffer&& uvs, gl::buffer&& colors, std::size_t count) noexcept;
 
+    void update(const glm::vec3* vertices, const glm::vec3* colors, const glm::vec2* uvs, std::size_t size, std::size_t offset = 0);
     void render() const noexcept;
 };
 

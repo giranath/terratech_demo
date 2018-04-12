@@ -53,14 +53,14 @@ actor_type str_to_actor_type(const char* t) {
 
 void to_json(nlohmann::json& j, const actor& u) {
     j["position"] = u.position;
-    j["is_visible"] = u.is_visible;
+    j["is_visible"] = u.is_visible_;
     j["is_active"] = u.is_active;
     j["type"] = actor_type_to_str(u.type);
 }
 
 void from_json(const nlohmann::json& j, actor& u) {
     u.position = j["position"].get<glm::vec3>();
-    u.is_visible = j["is_visible"];
+    u.is_visible_ = j["is_visible"];
     u.is_active = j["is_active"];
     u.type = str_to_actor_type(j["type"].get<std::string>().c_str());
 }
