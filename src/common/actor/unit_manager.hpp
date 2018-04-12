@@ -56,7 +56,7 @@ private:
     array_map<building, MAX_UNIT> buildings;
 
 public:
-    unit_manager();
+    unit_manager() = default;
 
     uint32_t get_unit_type(uint32_t id);
 
