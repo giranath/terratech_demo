@@ -541,7 +541,7 @@ void game::render_units() {
             rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
                                               glm::translate(glm::mat4{1.f}, unit->second->get_position() *
                                                                              rendering::chunk_renderer::SQUARE_SIZE),
-                                              virtual_textures[unit->second->texture()].id, PROGRAM_BILLBOARD);
+                                              virtual_textures[unit->second->texture()].id, PROGRAM_BILLBOARD, 2);
             mesh_rendering.push(std::move(renderer));
         }
     }
