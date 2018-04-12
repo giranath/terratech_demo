@@ -4,6 +4,7 @@
 #include "../common/time/clock.hpp"
 #include "../common/networking/tcp_socket.hpp"
 #include "../common/networking/network_manager.hpp"
+#include "../common/memory/static_vector.hpp"
 
 #ifdef WIN32
 #include <SDL_net.h>

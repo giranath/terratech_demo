@@ -61,7 +61,7 @@ void game::load_flyweights() {
             area = rendering::virtual_texture::area_type(0.f, 0.f, 1.f, 1.f);
         }
 
-        rendering::mesh_builder builder;
+        rendering::static_mesh_builder<6> builder;
         builder.add_vertex(glm::vec3{-half_width, 0.f,    0.f}, glm::vec2{area.left(),  area.top()});
         builder.add_vertex(glm::vec3{ half_width, 0.f,    0.f}, glm::vec2{area.right(), area.top()});
         builder.add_vertex(glm::vec3{ half_width, height, 0.f}, glm::vec2{area.right(), area.bottom()});
@@ -654,7 +654,7 @@ void game::handle_event(SDL_Event event) {
             // clicked outside the map
             if (inside_world_bound(test))
             {
-                unit* clicked_unit;
+                unit* clicked_unit = nullptr;
                 int size = 0;
                 units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
                 &clicked_unit, [this, &size](unit* u) {

@@ -17,7 +17,7 @@ public:
         position{0}
     {}
 
-    void push_back(T& value)
+    void push_back(const T& value)
     {
         (*values)[position] = value;
         ++position;
@@ -46,6 +46,10 @@ public:
         assert(pos < position);
 
         return (*values)[pos];
+    }
+    size_t size() const
+    {
+        return position;
     }
 
     auto begin()
