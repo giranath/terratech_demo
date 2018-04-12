@@ -29,6 +29,8 @@ class mesh {
     gl::buffer colors{};
     std::size_t count{};
 
+    void resize(std::size_t size) noexcept;
+
 public:
     mesh() = default;
     mesh(std::size_t size);

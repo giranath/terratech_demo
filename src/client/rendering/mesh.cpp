@@ -30,6 +30,7 @@ mesh mesh_builder::build() const noexcept {
 void mesh_builder::rebuild(mesh& m) const noexcept {
     if(!vertices.empty()) {
         m.update(&vertices[0], &colors[0], &uvs[0], vertices.size());
+        m.resize(vertices.size());
     }
 }
 
@@ -110,6 +111,10 @@ void mesh::render() const noexcept {
     glDisableVertexAttribArray(2);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(0);
+}
+
+void mesh::resize(std::size_t size) noexcept {
+    count = size;
 }
 
 void make_cube(mesh_builder &cube_builder, float size, glm::vec3 color, glm::vec3 position) {
