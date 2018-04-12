@@ -61,7 +61,7 @@ void game::load_flyweights() {
             area = rendering::virtual_texture::area_type(0.f, 0.f, 1.f, 1.f);
         }
 
-        rendering::mesh_builder builder;
+        rendering::static_mesh_builder<6> builder;
         builder.add_vertex(glm::vec3{-half_width, 0.f,    0.f}, glm::vec2{area.left(),  area.top()});
         builder.add_vertex(glm::vec3{ half_width, 0.f,    0.f}, glm::vec2{area.right(), area.top()});
         builder.add_vertex(glm::vec3{ half_width, height, 0.f}, glm::vec2{area.right(), area.bottom()});
@@ -180,7 +180,6 @@ game::game(networking::network_manager& manager, networking::network_manager::so
 , local_visibility(20 * world::CHUNK_WIDTH, 20 * world::CHUNK_DEPTH)
 , fow_size(0) {
     last_fps_durations.reserve(10);
-
     discovered_chunks.reserve(20 * 20);
 }
 
@@ -417,6 +416,7 @@ bounding_box<float> game::camera_bounding_box() const noexcept {
 }
 
 void game::update_fog_of_war() {
+    //TODO reserve vertices
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> colors;
 
@@ -654,19 +654,21 @@ void game::handle_event(SDL_Event event) {
             // clicked outside the map
             if (inside_world_bound(test))
             {
-                std::vector<unit*> clicked_units;
+                unit* clicked_unit = nullptr;
+                int size = 0;
                 units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
-                                 std::back_inserter(clicked_units));
-
-
-                auto it = std::find_if(std::begin(clicked_units), std::end(clicked_units), [this](const unit* u) {
-                    const unit_id id(u->get_id());
-
-                    return id.player_id == player_id;
+                &clicked_unit, [this, &size](unit* u) {
+                    unit_id id(u->get_id());
+                    if (id.player_id == player_id && size == 0)
+                    {
+                        ++size;
+                        return true;
+                    }
+                    return false;
                 });
-
-                if(it != std::end(clicked_units)) {
-                    selected_unit_id = (*it)->get_id();
+                if (clicked_unit)
+                {
+                    selected_unit_id = clicked_unit->get_id();
                     std::cout << "selected unit is " << selected_unit_id << std::endl;
                 }
             }
@@ -689,6 +691,7 @@ void game::handle_event(SDL_Event event) {
                                                      test.z / rendering::chunk_renderer::SQUARE_SIZE));
 
                     // Send to server
+                    //TODO should remove
                     std::vector<networking::update_target> updates;
                     updates.emplace_back(selected_unit_id, glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
                                                                      test.z / rendering::chunk_renderer::SQUARE_SIZE));

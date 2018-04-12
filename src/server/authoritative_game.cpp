@@ -282,13 +282,12 @@ void authoritative_game::setup_listener() {
         std::cout << disconnected << " has disconnected" << std::endl;
 
         std::lock_guard<std::mutex> lock(clients_mutex);
-        auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [disconnected](const client& c) {
+        std::vector<client>::iterator it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [disconnected](const client& c) {
             return c.socket == disconnected;
         });
 
         if(it != std::end(connected_clients)) {
-            connected_clients.erase(it);
-            std::cout << "stopping server" << std::endl;
+            removed_client.push_back(it->id);
             stop();
         }
     });
@@ -398,6 +397,11 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
     glm::vec2 availabe_position = find_available_position(world.chunk_at(spawn_chunks[connected_client.id - 1].x, spawn_chunks[connected_client.id - 1].y));
     
     spawn_unit(connected_client.id, starting_position, availabe_position, 106);
+	spawn_unit(connected_client.id, starting_position, availabe_position, 102);
+	spawn_unit(connected_client.id, starting_position, availabe_position, 102);
+	spawn_unit(connected_client.id, starting_position, availabe_position, 102);
+	spawn_unit(connected_client.id, starting_position, availabe_position, 102);
+	spawn_unit(connected_client.id, starting_position, availabe_position, 102);
 }
 
 glm::vec2 authoritative_game::find_available_position(world_chunk* player_chunk)
@@ -558,7 +562,10 @@ void authoritative_game::on_update(frame_duration last_frame) {
 
                 if(c.map_visibility.at(x, y) == visibility::visible) {
                     std::vector<unit*> units_in_tile;
-                    units().units_in(collision::aabb_shape(glm::vec2(x, y), 1.0f), std::back_inserter(units_in_tile));
+                    units().units_in(collision::aabb_shape(glm::vec2(x, y), 1.0f), std::back_inserter(units_in_tile), [](unit*)
+                    {
+                        return true;
+                    });
 
                     std::vector<uint32_t> units_ids(units_in_tile.size(), 0);
                     std::transform(std::begin(units_in_tile), std::end(units_in_tile), std::begin(units_ids), [](const unit* u) {
@@ -580,7 +587,32 @@ void authoritative_game::on_update(frame_duration last_frame) {
         broadcast_current_state();
         world_state_sync_clock.substract(std::chrono::milliseconds(250));
     }
+
+    for (auto& u : removed_client)
+    {
+        auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [u](const client& c) {
+            return c.id == u;
+        });
+        if (it != connected_clients.end())
+        {
+            connected_clients.erase(it);
+
+        }
+    }
+    removed_client.clear();
 }
 
 void authoritative_game::on_release() {
+    for (auto& u : removed_client)
+    {
+        auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [u](const client& c) {
+            return c.id == u;
+        });
+        if (it != connected_clients.end())
+        {
+            connected_clients.erase(it);
+
+        }
+    }
+    removed_client.clear();
 }

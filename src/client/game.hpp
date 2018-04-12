@@ -14,6 +14,7 @@
 #include "../common/game/base_game.hpp"
 #include "../common/networking/network_manager.hpp"
 #include "../common/world/visibility_map.hpp"
+#include "../common/memory/static_vector.hpp"
 #include "opengl/frame_buffer.hpp"
 #include "opengl/render_buffer.hpp"
 
