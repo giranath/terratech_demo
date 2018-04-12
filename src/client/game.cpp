@@ -78,7 +78,7 @@ void game::setup_selection_circles(){
 	selection_meshes.reserve(MAX_SELECTED_UNITS);
 
 	for (size_t i = 0; i < MAX_SELECTED_UNITS; i++) {
-		selection_meshes.emplace_back(rendering::make_circle(100, { 0,1.0f,0 }, 36, virtual_textures["Selection"].area));
+		selection_meshes.emplace_back(rendering::make_circle(1, { 0,1.0f,0 }, 16, virtual_textures["Selection"].area));
 	}
 }
 
@@ -525,13 +525,10 @@ void game::render_units() {
 		base_unit* selected_unit = units().get(selected_unit_id);
 
 		rendering::mesh_renderer renderer(&selection_meshes[0],
-			glm::translate(glm::mat4{ 1.f }, selected_unit->get_position() * rendering::chunk_renderer::SQUARE_SIZE + glm::vec3(0.f, 1.f, 0.f)),
-			virtual_textures["Selection"].id, PROGRAM_STANDARD, 1);
-
-		game_camera.reset({ selected_unit->get_position().x * rendering::chunk_renderer::SQUARE_SIZE,
-			game_camera.position().y,
-			selected_unit->get_position().z * rendering::chunk_renderer::SQUARE_SIZE });
-
+			glm::scale(
+				glm::translate(glm::mat4(1.f), selected_unit->get_position() * rendering::chunk_renderer::SQUARE_SIZE + glm::vec3(0.f, 1.f, 0.f)),
+			    glm::vec3(selected_unit->get_flyweight()->width() * 0.5f, 1, selected_unit->get_flyweight()->width() * 0.5f))
+			, virtual_textures["Selection"].id, PROGRAM_STANDARD, 1);
 
 		mesh_rendering.push(std::move(renderer));
 	}
