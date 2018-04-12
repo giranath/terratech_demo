@@ -19,14 +19,20 @@ class chunk_renderer {
 
     static std::map<int, glm::vec3> make_biome_colors();
 
+    rendering::mesh_builder build_floor();
     void build_floor_mesh() noexcept;
+    void rebuild_floor_mesh() noexcept;
 
+    rendering::mesh_builder build_sites();
     void build_site_meshes() noexcept;
+    void rebuild_site_meshes() noexcept;
 
 public:
-    static constexpr float SQUARE_SIZE = 32.f;
+    static constexpr float SQUARE_SIZE = 64.f;
 
-    explicit chunk_renderer(const world_chunk &chunk) noexcept;
+    explicit chunk_renderer(const world_chunk& chunk) noexcept;
+    chunk_renderer(const world_chunk& chunk, gl::buffer&& vertices, gl::buffer&& colors, gl::buffer&& uvs,
+                                             gl::buffer&& svertices, gl::buffer&& scolors, gl::buffer&& suvs) noexcept;
 
     void build() noexcept;
 

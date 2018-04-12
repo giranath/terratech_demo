@@ -59,8 +59,8 @@ template<class T>
 class profiler_administrator
 {
     static_assert(is_time<T>::value, "the type is not a time");
-	static const int RECORD_BUFFER_MAX = 4096;
-	static const int RECORD_BUFFER = 2;
+    static const int RECORD_BUFFER_MAX = 4096;
+    static const int RECORD_BUFFER = 2;
 
 #ifndef NPROFILER
     struct log_record {
@@ -78,7 +78,7 @@ class profiler_administrator
     };
 
     std::vector<log_record> records[RECORD_BUFFER];
-	std::atomic<int> current_record_buffer = 0;
+    std::atomic<int> current_record_buffer = 0;
     std::thread background_thread;
     std::atomic<bool> is_running;
 
@@ -86,18 +86,18 @@ class profiler_administrator
         std::ofstream out_stream("log_time.csv");
         admin->write_header(out_stream);
 
-		int current_buffer = 0;
-		int buffer_to_write = 0;
+        int current_buffer = 0;
+        int buffer_to_write = 0;
 
-		while (admin->is_running)
-		{
-			if (current_buffer == admin->current_record_buffer)
-				continue;
-			else
-			{
-				buffer_to_write = current_buffer;
-				current_buffer = admin->current_record_buffer;
-			}
+        while (admin->is_running)
+        {
+            if (current_buffer == admin->current_record_buffer)
+                continue;
+            else
+            {
+                buffer_to_write = current_buffer;
+                current_buffer = admin->current_record_buffer;
+            }
 
             auto& v = admin->records[buffer_to_write];
 
@@ -112,8 +112,8 @@ class profiler_administrator
     profiler_administrator()
     : background_thread(background_thread_function, this)
     , is_running{true} {
-		for (int i = 0; i < RECORD_BUFFER; i++)
-			records[i].reserve(RECORD_BUFFER_MAX);
+        for (int i = 0; i < RECORD_BUFFER; i++)
+            records[i].reserve(RECORD_BUFFER_MAX);
     }
 
     ~profiler_administrator() {
@@ -148,12 +148,12 @@ public:
     void log_time(const std::string& name, const TimePoint& begin, const TimePoint& end)
     {
 #ifndef NPROFILER
-		if (records[current_record_buffer].size() == RECORD_BUFFER_MAX)
-		{
-			current_record_buffer = (current_record_buffer + 1) % RECORD_BUFFER;
-			std::cout << records[current_record_buffer].size() << std::endl;
-			records[current_record_buffer].clear();
-		}
+        if (records[current_record_buffer].size() == RECORD_BUFFER_MAX)
+        {
+            current_record_buffer = (current_record_buffer + 1) % RECORD_BUFFER;
+            std::cout << records[current_record_buffer].size() << std::endl;
+            records[current_record_buffer].clear();
+        }
 
         records[current_record_buffer].emplace_back(name, get_current_time(), std::chrono::duration_cast<T>(end - begin).count());
 #endif

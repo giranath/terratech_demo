@@ -35,13 +35,16 @@ public:
     ~profiler()
     {
         time_point end = Clock::now();
-        parents.pop_back();
-
         std::string full_name = "/";
-        for(auto parent : parents) {
-            full_name += parent + "/";
+
+        if(!parents.empty()) {
+            parents.pop_back();
+
+            for (auto parent : parents) {
+                full_name += parent + "/";
+            }
+            full_name += name;
         }
-        full_name += name;
 
         profiler_administrator<T>::get_instance().log_time(full_name, begin, end);
     }

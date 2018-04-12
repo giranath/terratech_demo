@@ -41,8 +41,10 @@ public:
     void set_camera(camera *camera) noexcept;
 
     void set_texture(mesh_renderer::texture_handle handle, virtual_texture&& texture);
+    const gl::texture* texture(mesh_renderer::texture_handle handle);
 
     void set_program(mesh_renderer::program_handle handle, gl::program&& program);
+    gl::program* program(mesh_renderer::program_handle handle);
 
     void push(const mesh_renderer &renderer);
 

@@ -12,6 +12,8 @@ class frame_buffer {
 
     frame_buffer(GLuint id) noexcept;
 public:
+    static const frame_buffer SCREEN;
+
     frame_buffer() noexcept;
 
     frame_buffer(const frame_buffer&) = delete;
@@ -31,7 +33,7 @@ public:
     static frame_buffer make() noexcept;
 };
 
-template<GLenum TARGET>
+template<GLenum TARGET = GL_FRAMEBUFFER>
 class framebuffer_bind {
     const frame_buffer& buf;
 public:

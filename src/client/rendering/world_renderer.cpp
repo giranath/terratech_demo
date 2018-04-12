@@ -6,13 +6,55 @@
 namespace rendering {
 
 world_renderer::chunk_rendering::chunk_rendering(const world_chunk &chunk)
-: renderer{chunk}, pos{chunk.position()}, is_visible{true} {
+: renderer{chunk}
+, pos{chunk.position()}
+, is_visible{true} {
 
 };
 
-world_renderer::world_renderer(world &w) noexcept
-: w{w} {
+world_renderer::chunk_rendering::chunk_rendering(const world_chunk& chunk,
+                                                 gl::buffer&& vertices, gl::buffer&& colors, gl::buffer&& uvs,
+                                                 gl::buffer&& svertices, gl::buffer&& scolors, gl::buffer&& suvs)
+: renderer(chunk, std::move(vertices), std::move(colors), std::move(uvs), std::move(svertices), std::move(scolors), std::move(suvs))
+, pos{chunk.position()}
+, is_visible(true) {
 
+}
+
+world_renderer::world_renderer(world &w) noexcept
+: w{w}
+, next_buffer_index(0) {
+    chunk_renderers.reserve(MAX_BUFFER_SIZE);
+
+    // Floor buffers
+    for(int i = 0; i < MAX_BUFFER_SIZE; ++i) {
+        vertex_buffers[i] = gl::buffer::make();
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertex_buffers[i]));
+        glBufferData(GL_ARRAY_BUFFER, world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6 * sizeof(glm::vec3), NULL, GL_STREAM_DRAW);
+
+        color_buffers[i] = gl::buffer::make();
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(color_buffers[i]));
+        glBufferData(GL_ARRAY_BUFFER, world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6 * sizeof(glm::vec3), NULL, GL_STREAM_DRAW);
+
+        uv_buffers[i] = gl::buffer::make();
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(uv_buffers[i]));
+        glBufferData(GL_ARRAY_BUFFER, world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6 * sizeof(glm::vec2), NULL, GL_STREAM_DRAW);
+    }
+
+    // Site buffers
+    for(int i = 0; i < MAX_BUFFER_SIZE; ++i) {
+        vertex_buffers[i + MAX_BUFFER_SIZE] = gl::buffer::make();
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertex_buffers[i + MAX_BUFFER_SIZE]));
+        glBufferData(GL_ARRAY_BUFFER, world::CHUNK_WIDTH * world::CHUNK_DEPTH * 36 * sizeof(glm::vec3), NULL, GL_STREAM_DRAW);
+
+        color_buffers[i + MAX_BUFFER_SIZE] = gl::buffer::make();
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(color_buffers[i + MAX_BUFFER_SIZE]));
+        glBufferData(GL_ARRAY_BUFFER, world::CHUNK_WIDTH * world::CHUNK_DEPTH * 36 * sizeof(glm::vec3), NULL, GL_STREAM_DRAW);
+
+        uv_buffers[i + MAX_BUFFER_SIZE] = gl::buffer::make();
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(uv_buffers[i + MAX_BUFFER_SIZE]));
+        glBufferData(GL_ARRAY_BUFFER, world::CHUNK_WIDTH * world::CHUNK_DEPTH * 36 * sizeof(glm::vec2), NULL, GL_STREAM_DRAW);
+    }
 }
 
 void world_renderer::show(int x, int z) noexcept {
@@ -23,7 +65,19 @@ void world_renderer::show(int x, int z) noexcept {
     if(it != std::end(chunk_renderers)) {
         it->is_visible = true;
     }
+    else if(next_buffer_index < MAX_BUFFER_SIZE) {
+        chunk_renderers.emplace_back(*w.chunk_at(x, z),
+                                     std::move(vertex_buffers[next_buffer_index]),
+                                     std::move(color_buffers[next_buffer_index]),
+                                     std::move(uv_buffers[next_buffer_index]),
+                                     std::move(vertex_buffers[MAX_BUFFER_SIZE + next_buffer_index]),
+                                     std::move(color_buffers[MAX_BUFFER_SIZE + next_buffer_index]),
+                                     std::move(uv_buffers[MAX_BUFFER_SIZE + next_buffer_index]));
+        ++next_buffer_index;
+    }
+    // Create new chunk
     else {
+        std::cerr << "Creating new chunk" << std::endl;
         chunk_renderers.emplace_back(*w.chunk_at(x, z));
     }
 }

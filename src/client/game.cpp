@@ -48,7 +48,6 @@ Shader load_shader(const std::string& path) {
 }
 
 void game::load_flyweights() {
-
     for(auto flyweight_iterator = std::begin(unit_flyweights()); flyweight_iterator != std::end(unit_flyweights()); ++flyweight_iterator) {
         const float half_width = flyweight_iterator->second.width() / 2.f;
         const float height = flyweight_iterator->second.height();
@@ -159,7 +158,7 @@ void game::setup_inputs() {
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
 }
 
-void game::load_datas() {
+void game::load_local_datas() {
     // Setup mesh rendering
     setup_renderer();
 
@@ -178,100 +177,147 @@ game::game(networking::network_manager& manager, networking::network_manager::so
 , network{manager}
 , socket(socket)
 , selected_unit_id(-1)
-, local_visibility(20 * world::CHUNK_WIDTH, 20 * world::CHUNK_DEPTH){
+, local_visibility(20 * world::CHUNK_WIDTH, 20 * world::CHUNK_DEPTH)
+, fow_size(0) {
     last_fps_durations.reserve(10);
 
     discovered_chunks.reserve(20 * 20);
 }
 
+// TODO: Remove these
+gl::vertex_array quad_VertexArrayID;
+gl::buffer quad_vertexbuffer;
+
+void game::setup_fog_of_war() {
+    const std::size_t SQUARE_COUNT_PER_CHUNKS = world::CHUNK_WIDTH * world::CHUNK_DEPTH;
+    const std::size_t VERTEX_COUNT_PER_SQUARE = 6;
+    const std::size_t MAX_CHUNK_COUNT = 20;
+
+    fow_vao = gl::vertex_array::make();
+    gl::bind(fow_vao);
+
+    // Setup Fog of War vertices buffer
+    fow_vertices = gl::buffer::make();
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_vertices));
+    glBufferData(GL_ARRAY_BUFFER,
+                 MAX_CHUNK_COUNT * SQUARE_COUNT_PER_CHUNKS * VERTEX_COUNT_PER_SQUARE * sizeof(glm::vec3),
+                 NULL,
+                 GL_DYNAMIC_DRAW);
+
+    // Setup Fog of War colors buffer
+    fow_colors = gl::buffer::make();
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_colors));
+    glBufferData(GL_ARRAY_BUFFER,
+                 MAX_CHUNK_COUNT * SQUARE_COUNT_PER_CHUNKS * VERTEX_COUNT_PER_SQUARE * sizeof(glm::vec3),
+                 NULL,
+                 GL_DYNAMIC_DRAW);
+
+}
+
+void game::setup_screen_quad() {
+    quad_VertexArrayID = gl::vertex_array::make();
+    gl::bind(quad_VertexArrayID);
+    static const GLfloat g_quad_vertex_buffer_data[] = {
+            -1.0f, -1.0f, 0.0f,
+            1.0f, -1.0f, 0.0f,
+            -1.0f,  1.0f, 0.0f,
+            -1.0f,  1.0f, 0.0f,
+            1.0f, -1.0f, 0.0f,
+            1.0f,  1.0f, 0.0f,
+    };
+    quad_vertexbuffer = gl::buffer::make();
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(quad_vertexbuffer));
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_quad_vertex_buffer_data), g_quad_vertex_buffer_data, GL_STATIC_DRAW);
+}
+
 void game::on_init() {
-    auto client_informations = network.wait_packet_from(PACKET_PLAYER_ID, socket);
-    if(client_informations.first) {
-        auto infos = client_informations.second.as<networking::player_infos>();
-        player_id = infos.id;
-    }
-
-    auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, socket);
-    if(flyweights_packet.first) {
-        auto manager_u = flyweights_packet.second.as<std::unordered_map<std::string, unit_flyweight>>();
-        unit_flyweight_manager manager;
-        for (auto& v : manager_u)
-        {
-            manager.emplace(std::stoi(v.first), std::move(v.second));
-        }
-        set_flyweight_manager(manager);
-
-        auto chunks_packet = network.wait_packet_from(PACKET_SETUP_CHUNK, socket);
-        if(chunks_packet.first) {
-            auto chunks = chunks_packet.second.as<std::vector<networking::world_chunk>>();
-
-            for(networking::world_chunk& received_chunk : chunks) {
-                world_chunk& game_chunk = game_world.add(received_chunk.x, received_chunk.y);
-                game_chunk.set_biome_at(received_chunk.regions_biome);
-
-                for(const networking::resource& res : received_chunk.sites) {
-                    game_chunk.set_site_at(res.x, 0, res.y, site(res.type, res.quantity));
-                }
-            }
-        }
-        else {
-            throw std::runtime_error("failed to load chunks");
-        }
-
-    }
-    else {
-        throw std::runtime_error("failed to load flyweights");
-    }
-
-    // Setup controls
-    setup_inputs();
-
-    // Only show know chunks
-    for(const world_chunk& known_chunks : game_world) {
-        discovered_chunks.push_back(known_chunks.position());
-    }
-
-    // Setup camera
-    game_camera.reset({-100.f, 10.f, -200.f});
-
-    load_datas();
-
+    // Setup disconnection handler
     network.on_disconnection.attach([this](const networking::network_manager::socket_handle disconnected_socket) {
         if(disconnected_socket == socket) {
             std::cout << "disconnected from server" << std::endl;
             stop();
         }
     });
+
+    wait_for_server_init_datas();
+    load_local_datas();
+
+    setup_inputs();
+
+    // Only show know chunks
+    for (const world_chunk &known_chunks : game_world) {
+        discovered_chunks.push_back(known_chunks.position());
+    }
+
+    // Setup camera
+    game_camera.reset({-100.f, 10.f, -200.f});
+
+    setup_fog_of_war();
+    setup_screen_quad();
+}
+
+void game::wait_for_server_init_datas() {
+    wait_for_player_id();
+    wait_for_flyweights();
+    wait_for_initial_chunks();
+}
+
+void game::wait_for_player_id() {
+    auto client_informations = network.wait_packet_from(PACKET_PLAYER_ID, socket);
+    if (client_informations.first) {
+        auto infos = client_informations.second.as<networking::player_infos>();
+        player_id = infos.id;
+    }
+    else {
+        throw std::runtime_error("failed to receive player id");
+    }
+}
+
+void game::wait_for_flyweights() {
+    auto flyweights_packet = network.wait_packet_from(PACKET_SETUP_FLYWEIGHTS, socket);
+    if (flyweights_packet.first) {
+        auto manager_u = flyweights_packet.second.as<std::unordered_map<std::string, unit_flyweight>>();
+        unit_flyweight_manager manager;
+        for (auto &v : manager_u) {
+            manager.emplace(std::stoi(v.first), std::move(v.second));
+        }
+        set_flyweight_manager(manager);
+    }
+    else {
+        throw std::runtime_error("failed to load flyweights");
+    }
+}
+
+void game::wait_for_initial_chunks() {
+    auto chunks_packet = network.wait_packet_from(PACKET_SETUP_CHUNK, socket);
+    if (chunks_packet.first) {
+        auto chunks = chunks_packet.second.as<std::vector<networking::world_chunk>>();
+
+        for (networking::world_chunk &received_chunk : chunks) {
+            world_chunk &game_chunk = game_world.add(received_chunk.x, received_chunk.y);
+            game_chunk.set_biome_at(received_chunk.regions_biome);
+
+            for (const networking::resource &res : received_chunk.sites) {
+                game_chunk.set_site_at(res.x, 0, res.y, site(res.type, res.quantity));
+            }
+        }
+    }
+    else {
+        throw std::runtime_error("failed to load chunks");
+    }
 }
 
 void game::on_release() {
 
 }
 
-void game::on_update(frame_duration last_frame_duration) {
-    std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
+void game::poll_server_changes() {
+    poll_chunks_update();
+    poll_units_update();
+}
 
-    auto visibility_task = push_task(std::make_unique<task::update_player_visibility>(player_id, local_visibility, units()));
-
-    // Spawn new units
-    auto p = network.poll_packet_from(PACKET_SPAWN_UNITS, socket);
-    if(p.first) {
-        std::vector<unit> units = p.second.as<std::vector<unit>>();
-        for(const unit& u : units) {
-            add_unit(u.get_id(),
-                     u.get_position(),
-                     u.get_target_position(),
-                     u.get_type_id());
-        }
-
-        glm::vec3 target_position = units.front().get_position();
-        game_camera.reset({target_position.x * rendering::chunk_renderer::SQUARE_SIZE,
-                           game_camera.position().y,
-                           target_position.z * rendering::chunk_renderer::SQUARE_SIZE});
-    }
-
-    // Update chunks
-    p = network.poll_packet_from(PACKET_SETUP_CHUNK, socket);
+void game::poll_chunks_update() {
+    auto p = network.poll_packet_from(PACKET_SETUP_CHUNK, socket);
     if(p.first) {
         auto chunks = p.second.as<std::vector<networking::world_chunk>>();
 
@@ -289,34 +335,37 @@ void game::on_update(frame_duration last_frame_duration) {
             }
         }
     }
+}
 
-    // Update units
+void game::poll_units_update() {
     auto update_p = network.poll_packet_from(PACKET_UPDATE_UNITS, socket);
     if(update_p.first) {
         std::vector<unit> units = update_p.second.as<std::vector<unit>>();
+
+        // TODO: Détecter unités qui ne sont plus à jour
         for(const unit& u : units) {
+            unit_id id(u.get_id());
             unit* my_unit = static_cast<unit*>(this->units().get(u.get_id()));
-			
+
             if(my_unit) {
-                my_unit->set_position(u.get_position());
-                my_unit->set_target_position(u.get_target_position());
+                // Assumes that our units are correctly placed
+                if(id.player_id != player_id) {
+                    my_unit->set_position(u.get_position());
+                    my_unit->set_target_position(u.get_target_position());
+                }
             }
-			else {
-				add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
-				game_camera.reset({ u.get_position().x * rendering::chunk_renderer::SQUARE_SIZE,
-					game_camera.position().y,
-					u.get_position().z * rendering::chunk_renderer::SQUARE_SIZE });
-			}
+            else {
+                add_unit(u.get_id(), u.get_position(), u.get_target_position(), u.get_type_id());
+                game_camera.reset({ u.get_position().x * rendering::chunk_renderer::SQUARE_SIZE,
+                                    game_camera.position().y,
+                                    u.get_position().z * rendering::chunk_renderer::SQUARE_SIZE });
+            }
         }
     }
+}
 
-    auto update_task = push_task(std::make_unique<task::update_units>(units(), game_world, last_frame_ms.count() / 1000.0f));
-
-    key_inputs.dispatch();
-
-    update_task.wait();
-
-    // Only show visibles chunks
+void game::cull_out_of_view_chunks() {
+    profiler_us cull_prof("cull chunks");
     const bounding_box<float> cam_view_box = camera_bounding_box();
     world_rendering.hide_all();
     std::for_each(std::begin(discovered_chunks), std::end(discovered_chunks), [this, &cam_view_box](const glm::i32vec2& pos) {
@@ -325,9 +374,27 @@ void game::on_update(frame_duration last_frame_duration) {
                                             pos.x * world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE + world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE,
                                             pos.y * world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE + world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE);
         if(cam_view_box.intersect(chunk_box)) {
+            profiler_us prof("show chunk");
             world_rendering.show(pos.x, pos.y);
         }
     });
+
+}
+
+void game::on_update(frame_duration last_frame_duration) {
+    std::chrono::milliseconds last_frame_ms = std::chrono::duration_cast<std::chrono::milliseconds>(last_frame_duration);
+
+    auto visibility_task = push_task(std::make_unique<task::update_player_visibility>(player_id, local_visibility, units()));
+
+    poll_server_changes();
+
+    auto update_task = push_task(std::make_unique<task::update_units>(units(), game_world, last_frame_ms.count() / 1000.0f));
+
+    key_inputs.dispatch();
+
+    update_task.wait();
+
+    cull_out_of_view_chunks();
 
     // Update fog of war
     auto visiblity_ptr = visibility_task.get();
@@ -350,63 +417,83 @@ bounding_box<float> game::camera_bounding_box() const noexcept {
 }
 
 void game::update_fog_of_war() {
-    rendering::mesh_builder fow_builder;
+    std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> colors;
 
-    std::for_each(std::begin(world_rendering), std::end(world_rendering), [this, &fow_builder](const rendering::world_renderer::chunk_rendering& chunk_renderer) {
+    std::for_each(std::begin(world_rendering), std::end(world_rendering), [this, &vertices, &colors](const rendering::world_renderer::chunk_rendering& chunk_renderer) {
         auto chunk_pos = chunk_renderer.pos;
 
-        for(std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
-            for(std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
-                const std::size_t world_pos_x = chunk_pos.x * world::CHUNK_WIDTH + x;
-                const std::size_t world_pos_z = chunk_pos.y * world::CHUNK_DEPTH + z;
+        if(chunk_renderer.is_visible) {
+            for(std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
+                for(std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
+                    const std::size_t world_pos_x = chunk_pos.x * world::CHUNK_WIDTH + x;
+                    const std::size_t world_pos_z = chunk_pos.y * world::CHUNK_DEPTH + z;
 
-                const glm::vec3 start_of_square(world_pos_x * rendering::chunk_renderer::SQUARE_SIZE,
-                                                10.f,
-                                                world_pos_z * rendering::chunk_renderer::SQUARE_SIZE);
-                const glm::vec3 right_of_square(rendering::chunk_renderer::SQUARE_SIZE, 0.f, 0.f);
-                const glm::vec3 back_of_square(0.f, 0.f, rendering::chunk_renderer::SQUARE_SIZE);
+                    const glm::vec3 start_of_square(world_pos_x * rendering::chunk_renderer::SQUARE_SIZE,
+                                                    1.f,
+                                                    world_pos_z * rendering::chunk_renderer::SQUARE_SIZE);
+                    const glm::vec3 right_of_square(rendering::chunk_renderer::SQUARE_SIZE, 0.f, 0.f);
+                    const glm::vec3 back_of_square(0.f, 0.f, rendering::chunk_renderer::SQUARE_SIZE);
 
-                glm::vec3 color;
-                bool hide_under;
+                    glm::vec3 color;
+                    bool hide_under;
 
-                switch(local_visibility.at(world_pos_x, world_pos_z)) {
-                    case visibility::unexplored:
-                        hide_under = true;
-                        color = glm::vec3(0.f, 0.f, 0.f);
-                        break;
-                    case visibility::explored:
-                        hide_under = true;
-                        color = glm::vec3(0.5f, 0.5f, 0.5f);
-                        break;
-                    case visibility::visible:
-                        hide_under = false;
-                        break;
-                }
+                    switch(local_visibility.at(world_pos_x, world_pos_z)) {
+                        case visibility::unexplored:
+                            hide_under = false;
+                            color = glm::vec3(0.f, 0.f, 0.f);
+                            break;
+                        case visibility::explored:
+                            hide_under = true;
+                            color = glm::vec3(0.5f, 0.5f, 0.5f);
+                            break;
+                        case visibility::visible:
+                            hide_under = true;
+                            color = glm::vec3(1.f, 1.f, 1.f);
+                            break;
+                    }
 
-                if(hide_under) {
-                    fow_builder.add_vertex(start_of_square,                                    glm::vec2{}, color);
-                    fow_builder.add_vertex(start_of_square + right_of_square,                  glm::vec2{}, color);
-                    fow_builder.add_vertex(start_of_square + right_of_square + back_of_square, glm::vec2{}, color);
-
-                    fow_builder.add_vertex(start_of_square,                                    glm::vec2{}, color);
-                    fow_builder.add_vertex(start_of_square + right_of_square + back_of_square, glm::vec2{}, color);
-                    fow_builder.add_vertex(start_of_square + back_of_square,                   glm::vec2{}, color);
+                    if(hide_under) {
+                        vertices.push_back(start_of_square);
+                        vertices.push_back(start_of_square + right_of_square);
+                        vertices.push_back(start_of_square + right_of_square + back_of_square);
+                        vertices.push_back(start_of_square);
+                        vertices.push_back(start_of_square + right_of_square + back_of_square);
+                        vertices.push_back(start_of_square + back_of_square);
+                        for(int i = 0; i < 6; ++i) {
+                            colors.push_back(color);
+                        }
+                    }
                 }
             }
         }
     });
 
-    fog_of_war = fow_builder.build();
+    // Update fog of war buffers
+    fow_size = vertices.size();
+    if(fow_size > 0) {
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_vertices));
+        glBufferSubData(GL_ARRAY_BUFFER, 0, fow_size * sizeof(glm::vec3), &vertices[0]);
+
+        gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_colors));
+        glBufferSubData(GL_ARRAY_BUFFER, 0, fow_size * sizeof(glm::vec3), &colors[0]);
+    }
 }
 
-void game::render() {
-    // Render world
-    const glm::vec3 top_left = game_camera.world_coordinate_of(    glm::vec2{-1.f,  1.f}, { 0,0,0 }, {0,1,0});
-    const glm::vec3 top_right = game_camera.world_coordinate_of(   glm::vec2{ 1.f,  1.f}, { 0,0,0 }, {0,1,0});
-    const glm::vec3 bottom_left = game_camera.world_coordinate_of( glm::vec2{-1.f, -1.f}, { 0,0,0 }, {0,1,0});
-    const glm::vec3 bottom_right = game_camera.world_coordinate_of(glm::vec2{ 1.f, -1.f}, { 0,0,0 }, {0,1,0});
+void game::render_game_state() {
+    gl::bind(gl::framebuffer_bind<>(fbo));
+    glViewport(0, 0, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    const bounding_box<float> cam_view_box(bottom_right.x, bottom_left.z, top_left.x, top_right.z);
+    render_chunks();
+    render_units();
+
+    mesh_rendering.render();
+}
+
+void game::render_chunks() {
+    profiler_us render_prof("render chunks");
+    const bounding_box<float> cam_view_box = camera_bounding_box();
     world_rendering.hide_all();
     std::for_each(std::begin(discovered_chunks), std::end(discovered_chunks), [this, &cam_view_box](const glm::i32vec2& pos) {
         const bounding_box<float> chunk_box(pos.x * world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE,
@@ -414,28 +501,103 @@ void game::render() {
                                             pos.x * world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE + world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE,
                                             pos.y * world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE + world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE);
         if(cam_view_box.intersect(chunk_box)) {
+            profiler_us prof("show chunk");
             world_rendering.show(pos.x, pos.y);
         }
     });
 
     world_rendering.render(mesh_rendering);
+}
 
-    // Render every units
+void game::render_units() {
     for(auto unit = units().begin_of_units(); unit != units().end_of_units(); ++unit) {
-        rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
-                                          glm::translate(glm::mat4{1.f}, unit->second->get_position() * rendering::chunk_renderer::SQUARE_SIZE),
-                                          virtual_textures[unit->second->texture()].id , PROGRAM_BILLBOARD);
-        mesh_rendering.push(std::move(renderer));
+        if(unit->second->is_visible()) {
+            rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
+                                              glm::translate(glm::mat4{1.f}, unit->second->get_position() *
+                                                                             rendering::chunk_renderer::SQUARE_SIZE),
+                                              virtual_textures[unit->second->texture()].id, PROGRAM_BILLBOARD);
+            mesh_rendering.push(std::move(renderer));
+        }
     }
+}
 
-    // Construct fog of war
-    rendering::mesh_renderer fow_renderer(&fog_of_war, glm::mat4{1.f}, virtual_textures["fog_of_war"].id, PROGRAM_STANDARD);
-    mesh_rendering.push(std::move(fow_renderer));
+void game::render_fog_of_war() {
+    gl::bind(gl::framebuffer_bind<>(fow_fbo));
+    glViewport(0, 0, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    gl::bind(fow_vao);
+    gl::program* current_program = mesh_rendering.program(PROGRAM_FOW);
+    gl::bind(*current_program);
 
-    // Render every meshes
-    mesh_rendering.render();
+    auto projection_uniform = current_program->find_uniform<glm::mat4>("projection_matrix");
+    auto view_uniform = current_program->find_uniform<glm::mat4>("view_matrix");
+    auto model_uniform = current_program->find_uniform<glm::mat4>("model_matrix");
+    model_uniform.set(glm::mat4{1.f});
 
-    // Calculates FPS
+    projection_uniform.set(game_camera.projection());
+    view_uniform.set(game_camera.view());
+
+    glEnableVertexAttribArray(0);
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_vertices));
+    // TODO: Move up
+    glVertexAttribPointer(
+            0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+            3,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            (void*)0            // array buffer offset
+    );
+    glEnableVertexAttribArray(1);
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(fow_colors));
+    glVertexAttribPointer(
+            1,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+            3,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            (void*)0            // array buffer offset
+    );
+
+    glDrawArrays(GL_TRIANGLES, 0, fow_size);
+
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(0);
+}
+
+void game::render_on_screen() {
+    gl::bind(gl::framebuffer_bind<>(gl::frame_buffer::SCREEN));
+    glViewport(0, 0, G_TO_REMOVE_SCREEN_WIDTH, G_TO_REMOVE_SCREEN_HEIGHT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    gl::bind(quad_VertexArrayID);
+    gl::program* fullscreen_prog = mesh_rendering.program(2);
+    auto texture_uniform = fullscreen_prog->find_uniform<int>("game_texture");
+    auto texture_uniform2 = fullscreen_prog->find_uniform<int>("fow_texture");
+
+    gl::bind(*fullscreen_prog);
+    texture_uniform.set(0);
+    texture_uniform2.set(1);
+
+    glActiveTexture(GL_TEXTURE0);
+    gl::bind(gl::texture_bind<GL_TEXTURE_2D>(game_color_texture));
+    glActiveTexture(GL_TEXTURE1);
+    gl::bind(gl::texture_bind<GL_TEXTURE_2D>(fow_color_texture));
+    glEnableVertexAttribArray(0);
+    gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(quad_vertexbuffer));
+    glVertexAttribPointer(
+            0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+            3,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            (void*)0            // array buffer offset
+    );
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDisableVertexAttribArray(0);
+}
+
+void game::calculate_fps() {
     ++frame_count;
     if(fps_clock.elapsed_time<std::chrono::seconds>() >= std::chrono::seconds(1)) {
         fps_clock.substract(std::chrono::seconds(1)); // Keep time accumulation
@@ -451,6 +613,14 @@ void game::render() {
 
         frame_count = 0;
     }
+}
+
+void game::render() {
+    render_game_state();
+    render_fog_of_war();
+    render_on_screen();
+
+    calculate_fps();
 }
 
 bool inside_world_bound(glm::vec3 position) {
@@ -488,10 +658,15 @@ void game::handle_event(SDL_Event event) {
                 units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
                                  std::back_inserter(clicked_units));
 
-                if(!clicked_units.empty()) {
-                    unit* clicked_unit = clicked_units.front();
 
-                    selected_unit_id = clicked_unit->get_id();
+                auto it = std::find_if(std::begin(clicked_units), std::end(clicked_units), [this](const unit* u) {
+                    const unit_id id(u->get_id());
+
+                    return id.player_id == player_id;
+                });
+
+                if(it != std::end(clicked_units)) {
+                    selected_unit_id = (*it)->get_id();
                     std::cout << "selected unit is " << selected_unit_id << std::endl;
                 }
             }
@@ -544,7 +719,44 @@ void game::handle_event(SDL_Event event) {
 }
 
 void game::resize(int new_width, int new_height) {
-    glViewport(0, 0, new_width, new_height);
+    fbo = gl::frame_buffer::make();
+    {
+        gl::bind(gl::framebuffer_bind<>(fbo));
+
+        game_color_texture = gl::texture::make(new_width, new_height);
+        game_depth_buffer = gl::render_buffer::make();
+        {
+            gl::bind(gl::renderbuffer_bind<GL_RENDERBUFFER>(game_depth_buffer));
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, new_width, new_height);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, game_depth_buffer);
+        }
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, game_color_texture, 0);
+        GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
+        glDrawBuffers(1, draw_buffers);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            throw std::runtime_error("failed to create Framebuffer");
+        }
+    }
+    fow_fbo = gl::frame_buffer::make();
+    {
+        gl::bind(gl::framebuffer_bind<>(fow_fbo));
+
+        fow_color_texture = gl::texture::make(new_width, new_height);
+        fow_depth_buffer = gl::render_buffer::make();
+        {
+            gl::bind(gl::renderbuffer_bind<GL_RENDERBUFFER>(fow_depth_buffer));
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, new_width, new_height);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fow_depth_buffer);
+        }
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, fow_color_texture, 0);
+        GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
+        glDrawBuffers(1, draw_buffers);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            throw std::runtime_error("failed to create Framebuffer");
+        }
+    }
 
     const float aspect = static_cast<float>(new_width) / new_height;
     if(aspect >= 1.0f) {
