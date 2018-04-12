@@ -25,6 +25,11 @@ class game : public gameplay::base_game {
 public:
     using unit_mesh_collection = std::map<int, rendering::mesh>;
 private:
+    enum LeftClickMode {
+        CLICK_MODE_MOVE,
+        CLICK_MODE_BUILD
+    };
+
     struct virtual_texture_value {
         int id;
         rendering::virtual_texture::area_type area;
@@ -33,6 +38,7 @@ private:
     // Inputs
     input::key_input_handler key_inputs;
     bool is_scrolling;
+    LeftClickMode current_click_mode;
 
     // Textures
     std::unordered_map<int, gl::texture> textures;

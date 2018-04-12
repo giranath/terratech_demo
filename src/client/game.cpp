@@ -1,5 +1,6 @@
 #include "game.hpp"
 #include "control/all_commands.hpp"
+#include "control/build_commands.hpp"
 #include "debug/profiler.hpp"
 #include "constant/rendering.hpp"
 
@@ -156,6 +157,14 @@ void game::setup_inputs() {
 
     // Wireframe
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
+
+    // Building commands
+    key_inputs.register_action(SDLK_ESCAPE, std::make_unique<input::change_click_mode<CLICK_MODE_MOVE>>(current_click_mode, []() {
+        return true;
+    }));
+    key_inputs.register_action(SDLK_b, std::make_unique<input::change_click_mode<CLICK_MODE_BUILD>>(current_click_mode, []() {
+        return false;
+    }));
 }
 
 void game::load_local_datas() {
@@ -169,6 +178,7 @@ void game::load_local_datas() {
 game::game(networking::network_manager& manager, networking::network_manager::socket_handle socket)
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<unit_manager>())
 , is_scrolling(false)
+, current_click_mode(CLICK_MODE_MOVE)
 , game_world()
 , world_rendering(game_world)
 , game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)

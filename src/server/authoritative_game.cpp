@@ -397,7 +397,7 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
     //make sure unit doesn't spawn in water or inside ressource
     glm::vec2 availabe_position = find_available_position(world.chunk_at(spawn_chunks[connected_client.id - 1].x, spawn_chunks[connected_client.id - 1].y));
     
-    spawn_unit(connected_client.id, starting_position, availabe_position, 106);
+    spawn_unit(connected_client.id, starting_position, availabe_position, 100);
 }
 
 glm::vec2 authoritative_game::find_available_position(world_chunk* player_chunk)
