@@ -71,7 +71,7 @@ private:
     std::size_t fow_size;
     //rendering::mesh fog_of_war;
 
-    static_vector<glm::i32vec2, 20 * 20> discovered_chunks;
+    std::vector<glm::i32vec2> discovered_chunks;
 
     gl::frame_buffer fbo;
     gl::texture      game_color_texture;

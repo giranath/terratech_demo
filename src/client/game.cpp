@@ -180,6 +180,7 @@ game::game(networking::network_manager& manager, networking::network_manager::so
 , local_visibility(20 * world::CHUNK_WIDTH, 20 * world::CHUNK_DEPTH)
 , fow_size(0) {
     last_fps_durations.reserve(10);
+    discovered_chunks.reserve(20 * 20);
 }
 
 // TODO: Remove these
@@ -415,6 +416,7 @@ bounding_box<float> game::camera_bounding_box() const noexcept {
 }
 
 void game::update_fog_of_war() {
+    //TODO reserve vertices
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> colors;
 
@@ -664,8 +666,11 @@ void game::handle_event(SDL_Event event) {
                     }
                     return false;
                 });
-                selected_unit_id = clicked_unit->get_id();
-                std::cout << "selected unit is " << selected_unit_id << std::endl;
+                if (clicked_unit)
+                {
+                    selected_unit_id = clicked_unit->get_id();
+                    std::cout << "selected unit is " << selected_unit_id << std::endl;
+                }
             }
         }
         else if(event.button.button == SDL_BUTTON_RIGHT) {

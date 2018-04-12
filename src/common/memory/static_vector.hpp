@@ -20,12 +20,18 @@ public:
     void push_back(T& value)
     {
         (*values)[position] = value;
+        ++position;
     }
 
     template <class ... args>
     void emplace_back(args&&... a)
     {
         (*values)[position] = T(std::forward<args>(a) ...);
+        ++position;
+    }
+    void clear()
+    {
+        position = 0;
     }
 
     T& operator[](size_t pos)
