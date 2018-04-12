@@ -2,6 +2,12 @@
 
 namespace rendering {
 
+mesh_builder::mesh_builder(std::size_t capacity) {
+    vertices.reserve(capacity);
+    uvs.reserve(capacity);
+    colors.reserve(capacity);
+}
+
 void mesh_builder::add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color) {
     vertices.push_back(vertex);
     uvs.push_back(uv);

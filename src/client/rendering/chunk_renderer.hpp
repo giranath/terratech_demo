@@ -28,7 +28,7 @@ class chunk_renderer {
     void rebuild_site_meshes() noexcept;
 
 public:
-    static constexpr float SQUARE_SIZE = 32.f;
+    static constexpr float SQUARE_SIZE = 64.f;
 
     explicit chunk_renderer(const world_chunk& chunk) noexcept;
     chunk_renderer(const world_chunk& chunk, gl::buffer&& vertices, gl::buffer&& colors, gl::buffer&& uvs,

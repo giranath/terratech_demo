@@ -63,7 +63,7 @@ rendering::mesh_builder chunk_renderer::build_floor() {
 
     std::default_random_engine engine(std::time(NULL));
 
-    rendering::mesh_builder floor_mesh_builder;
+    rendering::mesh_builder floor_mesh_builder(world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6);
     for (std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
         for (std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
             const int CURRENT_BIOME = chunk.biome_at(x, 0, z);
@@ -124,7 +124,7 @@ glm::vec3 get_site_color(int type) {
 
 rendering::mesh_builder chunk_renderer::build_sites() {
     const float SITE_SIZE = SQUARE_SIZE * 0.5f;
-    rendering::mesh_builder sites_builder;
+    rendering::mesh_builder sites_builder(world::CHUNK_WIDTH * world::CHUNK_DEPTH * 36);
     for (std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
         for (std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
             auto sites = chunk.sites_at(x, 0, z);

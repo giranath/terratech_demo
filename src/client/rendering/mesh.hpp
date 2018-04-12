@@ -15,6 +15,7 @@ class mesh_builder {
     std::vector<glm::vec2> uvs;
 public:
     mesh_builder() = default;
+    mesh_builder(std::size_t capacity);
 
     void add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color = {1.f, 1.f, 1.f});
 
