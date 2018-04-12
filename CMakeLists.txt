@@ -133,7 +133,7 @@ add_library(common
         src/common/memory/heap_allocator.cpp
         src/common/memory/heap_allocator.hpp
         src/common/memory/allocator.hpp
-
+		src/common/memory/static_vector.hpp
         src/common/util/vec_hash.hpp
 
         src/common/task/update_player_visibility.cpp

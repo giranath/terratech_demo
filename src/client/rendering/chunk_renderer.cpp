@@ -57,13 +57,13 @@ std::map<int, std::vector<bounding_box<float>>> make_biome_textures() {
     return texture_rects;
 }
 
-rendering::mesh_builder chunk_renderer::build_floor() {
+rendering::static_mesh_builder<world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6> chunk_renderer::build_floor() {
     auto biome_colors = make_biome_colors();
     auto biome_textures = make_biome_textures();
 
     std::default_random_engine engine(std::time(NULL));
 
-    rendering::mesh_builder floor_mesh_builder(world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6);
+    rendering::static_mesh_builder<world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6> floor_mesh_builder;
     for (std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
         for (std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
             const int CURRENT_BIOME = chunk.biome_at(x, 0, z);
@@ -122,9 +122,9 @@ glm::vec3 get_site_color(int type) {
     }
 }
 
-rendering::mesh_builder chunk_renderer::build_sites() {
+rendering::static_mesh_builder<world::CHUNK_WIDTH * world::CHUNK_DEPTH * 36> chunk_renderer::build_sites() {
     const float SITE_SIZE = SQUARE_SIZE * 0.5f;
-    rendering::mesh_builder sites_builder(world::CHUNK_WIDTH * world::CHUNK_DEPTH * 36);
+    rendering::static_mesh_builder<world::CHUNK_WIDTH * world::CHUNK_DEPTH * 36> sites_builder;
     for (std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
         for (std::size_t z = 0; z < world::CHUNK_DEPTH; ++z) {
             auto sites = chunk.sites_at(x, 0, z);
