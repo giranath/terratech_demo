@@ -6,6 +6,7 @@
 #include "../../common/world/world.hpp"
 #include "rendering_manager.hpp"
 #include <vector>
+#include <array>
 
 namespace rendering {
 

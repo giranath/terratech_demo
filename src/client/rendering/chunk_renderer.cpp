@@ -121,7 +121,6 @@ glm::vec3 get_site_color(int type) {
 }
 
 void chunk_renderer::build_site_meshes() noexcept {
-    /*
     const float SITE_SIZE = SQUARE_SIZE * 0.5f;
     rendering::mesh_builder sites_builder;
     for (std::size_t x = 0; x < world::CHUNK_WIDTH; ++x) {
@@ -138,7 +137,6 @@ void chunk_renderer::build_site_meshes() noexcept {
     }
 
     sites_mesh = sites_builder.build();
-     */
 }
 
 void chunk_renderer::build() noexcept {
