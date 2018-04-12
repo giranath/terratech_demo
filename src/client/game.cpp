@@ -180,8 +180,6 @@ game::game(networking::network_manager& manager, networking::network_manager::so
 , selected_unit_id(-1)
 , local_visibility(20 * world::CHUNK_WIDTH, 20 * world::CHUNK_DEPTH){
     last_fps_durations.reserve(10);
-
-    discovered_chunks.reserve(20 * 20);
 }
 
 void game::on_init() {
@@ -484,16 +482,20 @@ void game::handle_event(SDL_Event event) {
             // clicked outside the map
             if (inside_world_bound(test))
             {
-                std::vector<unit*> clicked_units;
+                unit* clicked_unit;
+                int size = 0;
                 units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
-                                 std::back_inserter(clicked_units));
-
-                if(!clicked_units.empty()) {
-                    unit* clicked_unit = clicked_units.front();
-
-                    selected_unit_id = clicked_unit->get_id();
-                    std::cout << "selected unit is " << selected_unit_id << std::endl;
-                }
+                    &clicked_unit, [this, &size](unit* u) {
+                    unit_id id(u->get_id());
+                    if (id.player_id == player_id && size == 0)
+                    {
+                        ++size;
+                        return true;
+                    }
+                    return false;
+                });
+                selected_unit_id = clicked_unit->get_id();
+                std::cout << "selected unit is " << selected_unit_id << std::endl;
             }
         }
         else if(event.button.button == SDL_BUTTON_RIGHT) {
@@ -514,6 +516,7 @@ void game::handle_event(SDL_Event event) {
                                                      test.z / rendering::chunk_renderer::SQUARE_SIZE));
 
                     // Send to server
+                    //TODO should remove
                     std::vector<networking::update_target> updates;
                     updates.emplace_back(selected_unit_id, glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
                                                                      test.z / rendering::chunk_renderer::SQUARE_SIZE));

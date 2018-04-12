@@ -558,7 +558,10 @@ void authoritative_game::on_update(frame_duration last_frame) {
 
                 if(c.map_visibility.at(x, y) == visibility::visible) {
                     std::vector<unit*> units_in_tile;
-                    units().units_in(collision::aabb_shape(glm::vec2(x, y), 1.0f), std::back_inserter(units_in_tile));
+                    units().units_in(collision::aabb_shape(glm::vec2(x, y), 1.0f), std::back_inserter(units_in_tile), [](unit*)
+                    {
+                        return true;
+                    });
 
                     std::vector<uint32_t> units_ids(units_in_tile.size(), 0);
                     std::transform(std::begin(units_in_tile), std::end(units_in_tile), std::begin(units_ids), [](const unit* u) {

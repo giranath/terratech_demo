@@ -14,6 +14,7 @@
 #include "../common/game/base_game.hpp"
 #include "../common/networking/network_manager.hpp"
 #include "../common/world/visibility_map.hpp"
+#include "../common/memory/static_vector.hpp"
 
 #include <chrono>
 #include <array>
@@ -64,8 +65,8 @@ private:
     visibility_map local_visibility;
     rendering::mesh fog_of_war;
 
-    std::vector<glm::i32vec2> discovered_chunks;
-
+    //std::vector<glm::i32vec2> discovered_chunks;
+    static_vector<glm::i32vec2, 20 * 20> discovered_chunks;
     // Initialization functions
     void load_flyweights();
     void setup_inputs();
