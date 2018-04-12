@@ -119,7 +119,7 @@ void mesh::render() const noexcept {
     glDisableVertexAttribArray(0);
 }
 
-void make_circle(mesh_builder &builder, float radius, glm::vec3 color, glm::vec3 position, float resolution, const bounding_box<float>& texture_area) {
+void make_circle(mesh_builder &builder, float radius, glm::vec3 color, float resolution, const bounding_box<float>& texture_area) {
 
 	int actual_resolution = resolution;
 	float step = 360 / actual_resolution;
@@ -143,17 +143,17 @@ void make_circle(mesh_builder &builder, float radius, glm::vec3 color, glm::vec3
 		uv_sin_next = uv_sin_next * texture_area.height() + texture_area.bottom();
 		uv_cos_next = uv_cos_next * texture_area.width() + texture_area.left();
 
-		builder.add_vertex({ position.x + offset_sin_cur, position.y, position.z + offset_cos_cur }, { uv_cos_cur, uv_sin_cur }, color);
-		builder.add_vertex({ position.x + offset_sin_next, position.y, position.z + offset_cos_next }, { uv_cos_next, uv_sin_next }, color);
-		builder.add_vertex({ position.x, position.y, position.z }, { 0.5, 0.5 }, color);
+		builder.add_vertex({offset_sin_cur, 0, offset_cos_cur}, { uv_cos_cur, uv_sin_cur }, color);
+		builder.add_vertex({offset_sin_next, 0, offset_cos_next }, { uv_cos_next, uv_sin_next }, color);
+		builder.add_vertex({0, 0, 0}, { texture_area.width() / 2 + texture_area.left(), texture_area.height() / 2 + texture_area.bottom() }, color);
 	}
 }
 
 
-mesh make_circle(float radius, glm::vec3 color, glm::vec3 position, float resolution, const bounding_box<float>& texture_area) {
+mesh make_circle(float radius, glm::vec3 color, float resolution, const bounding_box<float>& texture_area) {
 	mesh_builder builder;
 
-	make_circle(builder, radius, color, position, resolution, texture_area);
+	make_circle(builder, radius, color, resolution, texture_area);
 
 	return builder.build();
 }
