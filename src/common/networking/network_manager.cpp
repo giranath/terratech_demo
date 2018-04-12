@@ -148,7 +148,11 @@ void network_manager::thread_work() {
         // Check if a socket has received data
         if(active_sockets.check(30ms) > 0) {
             if(active_sockets.is_ready(connection_listener)) {
-                handle_connection(connection_listener.accept());
+                tcp_socket connecting_socket = connection_listener.accept();
+
+                if(connecting_socket.is_connected()) {
+                    handle_connection(std::move(connecting_socket));
+                }
             }
             else {
                 std::lock_guard<async::spinlock> lock(connections_lock);
