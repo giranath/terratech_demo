@@ -7,7 +7,7 @@
     "Essence": 0,
     "Food": 50,
     "Gold": 0,
-    "Height": 30.0,
+    "Height": 45.0,
     "Life": 50,
     "Name": "Worker",
     "PopulationCost": 1,
@@ -26,7 +26,7 @@
     "Transportable": true,
     "WalkSpeed": 1,
 	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
-    "Width": 25.0,
+    "Width": 35.0,
     "Wood": 0,
     "id": 100,
     "Visibility" : 3
