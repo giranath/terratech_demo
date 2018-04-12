@@ -159,10 +159,16 @@ void game::setup_inputs() {
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
 
     // Building commands
-    key_inputs.register_action(SDLK_ESCAPE, input::make_change_click_mode_command<CLICK_MODE_MOVE>(current_click_mode, []() {
-        return true;
+    key_inputs.register_action(SDLK_ESCAPE, input::make_change_click_mode_command<CLICK_MODE_MOVE>(current_click_mode, [this]() {
+        return current_click_mode != CLICK_MODE_MOVE;
     }));
-    key_inputs.register_action(SDLK_b, input::make_change_click_mode_command<CLICK_MODE_BUILD>(current_click_mode, []() {
+    key_inputs.register_action(SDLK_b, input::make_change_click_mode_command<CLICK_MODE_BUILD>(current_click_mode, [this]() {
+        // Return true if current unit is builder
+        if(selected_unit_id != -1 && current_click_mode == CLICK_MODE_MOVE) {
+            base_unit* u = units().get(selected_unit_id);
+            return u->get_type_id() == 100;
+        }
+
         return false;
     }));
 }
@@ -525,7 +531,7 @@ void game::render_units() {
             rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
                                               glm::translate(glm::mat4{1.f}, unit->second->get_position() *
                                                                              rendering::chunk_renderer::SQUARE_SIZE),
-                                              virtual_textures[unit->second->texture()].id, PROGRAM_BILLBOARD);
+                                              virtual_textures[unit->second->texture()].id, PROGRAM_BILLBOARD, 2);
             mesh_rendering.push(std::move(renderer));
         }
     }
@@ -652,6 +658,7 @@ void game::handle_event(SDL_Event event) {
             is_scrolling = true;
         }
         else if(event.button.button == SDL_BUTTON_LEFT) {
+            std::cout << "CURRENT_MODE " << (current_click_mode == CLICK_MODE_MOVE ? "move" : "build") << std::endl;
             const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
             const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
 
