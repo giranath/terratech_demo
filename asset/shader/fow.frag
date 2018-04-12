@@ -1,10 +1,10 @@
 #version 330
 
 // Interpolated values from the vertex shaders
-in vec3 fragment_color;
+in vec4 fragment_color;
 
 // Ouput data
-out vec3 color;
+out vec4 color;
 
 void main(){
     color = fragment_color;

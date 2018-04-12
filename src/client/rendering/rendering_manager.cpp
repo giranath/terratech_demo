@@ -5,16 +5,17 @@
 
 namespace rendering {
 
-mesh_renderer::mesh_renderer(const rendering::mesh *m, glm::mat4 model, texture_handle texture, program_handle prog)
+mesh_renderer::mesh_renderer(const rendering::mesh *m, glm::mat4 model, texture_handle texture, program_handle prog, uint8_t transparent_order)
 : rendering_mesh{m}
 , texture{texture}
 , program{prog}
-, model{model} {
+, model{model}
+, transparent_order(transparent_order) {
 
 }
 
 mesh_renderer::sort_key mesh_renderer::key() const noexcept {
-    return (program << 8) | texture;
+    return (transparent_order << 16) | (program << 8) | texture;
 }
 
 bool mesh_renderer::operator<(const mesh_renderer &other) const noexcept {
@@ -22,7 +23,7 @@ bool mesh_renderer::operator<(const mesh_renderer &other) const noexcept {
 }
 
 mesh_rendering_system::mesh_rendering_system()
-        : vao{gl::vertex_array::make()}, current_camera{} {
+: vao{gl::vertex_array::make()}, current_camera{} {
 
 }
 
@@ -67,8 +68,8 @@ void mesh_rendering_system::push(mesh_renderer &&renderer) {
 }
 
 void mesh_rendering_system::emplace(const rendering::mesh *m, glm::mat4 model, mesh_renderer::texture_handle texture,
-                                    mesh_renderer::program_handle prog) {
-    meshes.emplace_back(m, model, texture, prog);
+                                    mesh_renderer::program_handle prog, uint8_t transparency) {
+    meshes.emplace_back(m, model, texture, prog, transparency);
 }
 
 void mesh_rendering_system::render() {
@@ -80,11 +81,20 @@ void mesh_rendering_system::render() {
 
         mesh_renderer::program_handle last_program = -1;
         mesh_renderer::texture_handle last_texture = -1;
+        bool is_transparency_enabled = false;
 
         const gl::program* current_program = nullptr;
         const gl::texture* current_texture = nullptr;
 
+        glDisable(GL_BLEND);
+
         for (const mesh_renderer &renderer : meshes) {
+            if(renderer.transparent_order != 0 && !is_transparency_enabled) {
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                is_transparency_enabled = true;
+            }
+
             if (renderer.program != last_program) {
                 current_program = &programs[renderer.program];
                 gl::bind(*current_program);
