@@ -119,12 +119,10 @@ void mesh::render() const noexcept {
     glDisableVertexAttribArray(0);
 }
 
-void make_circle(mesh_builder &builder, float radius, glm::vec3 color, glm::vec3 position, float resolution) {
-	// Front face
-	builder.add_vertex({ position.x, position.y, position.z }, {}, color);
+void make_circle(mesh_builder &builder, float radius, glm::vec3 color, glm::vec3 position, float resolution, const bounding_box<float>& texture_area) {
 
-	int actual_resolution = 360 / resolution;
-	float step = 360 / resolution;
+	int actual_resolution = resolution;
+	float step = 360 / actual_resolution;
 
 	for (int i = 0; i <= actual_resolution; i++) {
 		float offset_sin_cur = glm::sin(glm::radians(i * step)) * radius;
@@ -139,6 +137,11 @@ void make_circle(mesh_builder &builder, float radius, glm::vec3 color, glm::vec3
 		float uv_sin_next = (offset_sin_next / radius / 2) + 0.5f;
 		float uv_cos_next = (offset_cos_next / radius / 2) + 0.5f;
 
+		uv_sin_cur = uv_sin_cur * texture_area.height() + texture_area.bottom();
+		uv_cos_cur = uv_cos_cur * texture_area.width() + texture_area.left();
+
+		uv_sin_next = uv_sin_next * texture_area.height() + texture_area.bottom();
+		uv_cos_next = uv_cos_next * texture_area.width() + texture_area.left();
 
 		builder.add_vertex({ position.x + offset_sin_cur, position.y, position.z + offset_cos_cur }, { uv_cos_cur, uv_sin_cur }, color);
 		builder.add_vertex({ position.x + offset_sin_next, position.y, position.z + offset_cos_next }, { uv_cos_next, uv_sin_next }, color);
@@ -146,14 +149,14 @@ void make_circle(mesh_builder &builder, float radius, glm::vec3 color, glm::vec3
 	}
 }
 
-mesh make_circle(float radius, glm::vec3 color, glm::vec3 position, float resolution) {
+
+mesh make_circle(float radius, glm::vec3 color, glm::vec3 position, float resolution, const bounding_box<float>& texture_area) {
 	mesh_builder builder;
 
-	make_circle(builder, radius, color, position, resolution);
+	make_circle(builder, radius, color, position, resolution, texture_area);
 
 	return builder.build();
 }
-
 void mesh::resize(std::size_t size) noexcept {
     count = size;
 }

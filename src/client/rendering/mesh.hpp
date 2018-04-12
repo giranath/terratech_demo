@@ -2,6 +2,8 @@
 #define MMAP_DEMO_MESH_HPP
 
 #include "../opengl/opengl.hpp"
+#include "../../common/bounding_box.hpp"
+
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -45,9 +47,9 @@ void make_cube(mesh_builder &builder, float size, glm::vec3 color, glm::vec3 pos
 
 mesh make_cube(float size, glm::vec3 color, glm::vec3 position = {});
 
-void make_circle(mesh_builder &builder, float radius, glm::vec3 color, glm::vec3 position, float resolution);
+void make_circle(mesh_builder &builder, float radius, glm::vec3 color, glm::vec3 position, float resolution, const bounding_box<float>& texture_area);
 
-mesh make_circle(float radius, glm::vec3 color, glm::vec3 position, float resolution);
+mesh make_circle(float radius, glm::vec3 color, glm::vec3 position, float resolution, const bounding_box<float>& texture_area);
 }
 
 #endif
