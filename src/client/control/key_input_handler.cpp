@@ -119,7 +119,7 @@ bool key_input_handler::is_registered(int key) const noexcept {
     return it != handlers.end();
 }
 
-void key_input_handler::handle(SDL_Event event) {
+bool key_input_handler::handle(SDL_Event event) {
     auto it = handlers.find(event.key.keysym.sym);
 
     if(it != handlers.end()) {
@@ -129,7 +129,10 @@ void key_input_handler::handle(SDL_Event event) {
         else if(event.key.state == SDL_RELEASED) {
             it->second.release(event.key.keysym.mod);
         }
+        return true;
     }
+
+    return false;
 }
 
 void key_input_handler::dispatch() {
