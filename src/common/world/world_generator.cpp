@@ -32,6 +32,9 @@ world_generator::world_generator(uint32_t seed, uint32_t chunk_width, uint32_t c
     || temperature_layer == TERRA_LAYER_INVALID) {
         throw invalid_layer_exception{};
     }
+	terra_layer_set_property_double(terra_map_get_layer(map_generator, humidity_layer), TERRA_NOISE_SCALE, 4.0);
+	terra_layer_set_property_double(terra_map_get_layer(map_generator, temperature_layer), TERRA_NOISE_SCALE, 4.0);
+
     switch (chosen_map)
     {
     case map_choice::ISLAND_MAP :
@@ -232,6 +235,7 @@ void world_generator::setup_plain_map_layer()
     auto river_layer = terra_map_add_noise_layer(map_generator, TERRA_NOISE_OCTAVE_PERLIN);
     chosen_altitude_layer = terra_map_add_noise_combinator_layer(map_generator, altitude_layer, river_layer, lowest_value_combine, nullptr);
 }
+
 void world_generator::setup_biomes() {
     // The biome table
     terra_biome_table* table = make_biome_table();

@@ -69,7 +69,7 @@ public:
     void unregister(int key);
     bool is_registered(int key) const noexcept;
 
-    void handle(SDL_Event event);
+    bool handle(SDL_Event event);
 
     void dispatch();
 };

@@ -14,8 +14,11 @@
 #include "../common/game/base_game.hpp"
 #include "../common/networking/network_manager.hpp"
 #include "../common/world/visibility_map.hpp"
+#include "../common/memory/static_vector.hpp"
 #include "opengl/frame_buffer.hpp"
 #include "opengl/render_buffer.hpp"
+#include "control/mouse_input_handler.hpp"
+#include "control/event_manager.hpp"
 
 #include <chrono>
 #include <array>
@@ -25,20 +28,13 @@ class game : public gameplay::base_game {
 public:
     using unit_mesh_collection = std::map<int, rendering::mesh>;
 private:
-    enum LeftClickMode {
-        CLICK_MODE_MOVE,
-        CLICK_MODE_BUILD
-    };
-
     struct virtual_texture_value {
         int id;
         rendering::virtual_texture::area_type area;
     };
 
     // Inputs
-    input::key_input_handler key_inputs;
-    bool is_scrolling;
-    int current_click_mode;
+    input::event_manager inputs;
 
     // Textures
     std::unordered_map<int, gl::texture> textures;
@@ -74,7 +70,6 @@ private:
     gl::buffer fow_vertices;
     gl::buffer fow_colors;
     std::size_t fow_size;
-    //rendering::mesh fog_of_war;
 
     std::vector<glm::i32vec2> discovered_chunks;
 

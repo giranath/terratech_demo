@@ -122,6 +122,7 @@ void network_manager::thread_work() {
         std::vector<std::pair<socket_handle, packet>> packets_to_send;
         {
             std::lock_guard<async::spinlock> lock(waiting_spin_lock);
+
             packets_to_send.swap(waiting_queue);
         }
 
@@ -147,7 +148,11 @@ void network_manager::thread_work() {
         // Check if a socket has received data
         if(active_sockets.check(30ms) > 0) {
             if(active_sockets.is_ready(connection_listener)) {
-                handle_connection(connection_listener.accept());
+                tcp_socket connecting_socket = connection_listener.accept();
+
+                if(connecting_socket.is_connected()) {
+                    handle_connection(std::move(connecting_socket));
+                }
             }
             else {
                 std::lock_guard<async::spinlock> lock(connections_lock);
@@ -269,6 +274,8 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
                 }
             }
                 break;
+            default:
+                break;
         }
     }
     else {
@@ -278,10 +285,10 @@ void network_manager::handle_connected_socket(connected_socket& connection) {
 
 void network_manager::handle_disconnection(connected_socket& connection) {
     std::lock_guard<async::spinlock> lock(to_disconnect_lock);
-
     active_sockets.remove(connection.socket);
     to_disconnect.push_back(connection.handle);
     if(connection.current_state == connected_socket::state::connected) {
+        connection.current_state = connected_socket::state::disconnected;
         on_disconnection.call(connection.handle);
     }
 }

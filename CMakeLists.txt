@@ -133,7 +133,7 @@ add_library(common
         src/common/memory/heap_allocator.cpp
         src/common/memory/heap_allocator.hpp
         src/common/memory/allocator.hpp
-
+		src/common/memory/static_vector.hpp
         src/common/util/vec_hash.hpp
 
         src/common/task/update_player_visibility.cpp
@@ -208,11 +208,19 @@ add_executable(mmap_demo
         src/client/control/change_unit_command.cpp
         src/client/control/change_unit_command.hpp
         src/client/control/generic_command.hpp
+        src/client/control/build_commands.cpp
+        src/client/control/build_commands.hpp
+        src/client/control/mouse_input_handler.cpp
+        src/client/control/mouse_input_handler.hpp
+        src/client/control/event_manager.cpp
+        src/client/control/event_manager.hpp
 
         src/client/debug/profiler.hpp
         src/client/debug/profiler_administrator.hpp
 
-        src/client/constant/rendering.hpp src/client/control/build_commands.cpp src/client/control/build_commands.hpp)
+        src/client/constant/rendering.hpp
+        src/client/constant/rendering.hpp
+        )
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}

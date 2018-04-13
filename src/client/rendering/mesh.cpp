@@ -2,41 +2,35 @@
 
 namespace rendering {
 
-mesh_builder::mesh_builder(std::size_t capacity) {
+dynamic_mesh_builder::dynamic_mesh_builder(std::size_t capacity) {
     vertices.reserve(capacity);
     uvs.reserve(capacity);
     colors.reserve(capacity);
 }
 
-void mesh_builder::add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color) {
-    vertices.push_back(vertex);
-    uvs.push_back(uv);
-    colors.push_back(color);
-}
-
 mesh mesh_builder::build() const noexcept {
-    if (vertices.empty())
+    if (count() == 0)
         return mesh{};
 
     gl::buffer vertices_buffer = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices_buffer));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices.front(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * count(), get_vertices(), GL_STATIC_DRAW);
 
     gl::buffer colors_buffer = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(colors_buffer));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * colors.size(), &colors.front(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * count(), get_colors(), GL_STATIC_DRAW);
 
     gl::buffer uvs_buffer = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(uvs_buffer));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * uvs.size(), &uvs.front(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * count(), get_uvs(), GL_STATIC_DRAW);
 
-    return mesh{std::move(vertices_buffer), std::move(uvs_buffer), std::move(colors_buffer), vertices.size()};
+    return mesh{std::move(vertices_buffer), std::move(uvs_buffer), std::move(colors_buffer), count()};
 }
 
 void mesh_builder::rebuild(mesh& m) const noexcept {
-    if(!vertices.empty()) {
-        m.update(&vertices[0], &colors[0], &uvs[0], vertices.size());
-        m.resize(vertices.size());
+    if(count() > 0) {
+        m.update(get_vertices(), get_colors(), get_uvs(), count());
+        m.resize(count());
     }
 }
 
@@ -174,7 +168,7 @@ void make_cube(mesh_builder &cube_builder, float size, glm::vec3 color, glm::vec
 }
 
 mesh make_cube(float size, glm::vec3 color, glm::vec3 position) {
-    mesh_builder builder;
+    static_mesh_builder<6*6> builder;
 
     make_cube(builder, size, color, position);
 
