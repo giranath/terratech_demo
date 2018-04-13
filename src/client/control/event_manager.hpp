@@ -3,6 +3,7 @@
 
 #include "key_input_handler.hpp"
 #include "mouse_input_handler.hpp"
+#include <vector>
 
 namespace input {
 
