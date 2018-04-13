@@ -26,10 +26,17 @@
 
 authoritative_game::authoritative_game()
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<server_unit_manager>())
-, world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()))
+, world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()), map_choice::PLAIN_MAP)
 , network(3) {
 
 }
+
+authoritative_game::authoritative_game(map_choice chosen_map)
+    : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<server_unit_manager>())
+    , world(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()), chosen_map)
+    , network(3) {
+}
+
 
 void authoritative_game::load_flyweights() {
     std::ifstream units_list_stream("asset/data/unit.list");
