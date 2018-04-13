@@ -4,6 +4,7 @@
 #include "../common/time/clock.hpp"
 #include "../common/networking/tcp_socket.hpp"
 #include "../common/networking/network_manager.hpp"
+#include "../common/memory/static_vector.hpp"
 
 #ifdef WIN32
 #include <SDL_net.h>
@@ -116,7 +117,7 @@ int main(int argc, char* argv[]) {
         frame_time.restart();
 
         if(game_state.fps() > 0) {
-            //std::cout << game_state.fps() << " : " << game_state.average_fps() << std::endl;
+           // std::cout << game_state.fps() << " : " << game_state.average_fps() << std::endl;
         }
         // Render last frame on screen
         {

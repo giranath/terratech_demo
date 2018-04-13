@@ -2,27 +2,88 @@
 #define MMAP_DEMO_MESH_HPP
 
 #include "../opengl/opengl.hpp"
+#include "../src/common/memory/static_vector.hpp"
 #include "../../common/bounding_box.hpp"
-
 #include <glm/glm.hpp>
 #include <vector>
 
 namespace rendering {
 
 class mesh;
-
 class mesh_builder {
+    
+public:
+    mesh_builder() = default;
+    virtual ~mesh_builder() = default;
+    virtual void add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color = { 1.f, 1.f, 1.f }) = 0;
+
+    mesh build() const noexcept;
+    void rebuild(mesh& m) const noexcept;
+    virtual size_t count() const = 0;
+    virtual const glm::vec3* get_vertices() const = 0;
+    virtual const glm::vec3* get_colors() const = 0;
+    virtual const glm::vec2* get_uvs() const = 0;
+};
+
+template <size_t MAX_CAPACITY>
+class static_mesh_builder : public mesh_builder
+{
+    static_vector<glm::vec3, MAX_CAPACITY> vertices;
+    static_vector<glm::vec3, MAX_CAPACITY> colors;
+    static_vector<glm::vec2, MAX_CAPACITY> uvs;
+public:
+    void add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color = { 1.f, 1.f, 1.f }) {
+        vertices.push_back(vertex);
+        uvs.push_back(uv);
+        colors.push_back(color);
+    }
+    size_t count() const override
+    {
+        return vertices.size();
+    }
+
+    const glm::vec3* get_vertices() const override
+    {
+        return &vertices[0];
+    }
+    const glm::vec3* get_colors() const override
+    {
+        return &colors[0];
+    }
+    const glm::vec2* get_uvs() const override
+    {
+        return &uvs[0];
+    }
+};
+
+class dynamic_mesh_builder : public mesh_builder
+{
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> colors;
     std::vector<glm::vec2> uvs;
 public:
-    mesh_builder() = default;
-    mesh_builder(std::size_t capacity);
-
-    void add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color = {1.f, 1.f, 1.f});
-
-    mesh build() const noexcept;
-    void rebuild(mesh& m) const noexcept;
+    dynamic_mesh_builder(std::size_t t);
+    void add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color = { 1.f, 1.f, 1.f }) {
+        vertices.push_back(vertex);
+        uvs.push_back(uv);
+        colors.push_back(color);
+    }
+    size_t count() const override
+    {
+        return vertices.size();
+    }
+    const glm::vec3* get_vertices() const override
+    {
+        return &vertices[0];
+    }
+    const glm::vec3* get_colors() const override
+    {
+        return &colors[0];
+    }
+    const glm::vec2* get_uvs() const override
+    {
+        return &uvs[0];
+    }
 };
 
 class mesh {

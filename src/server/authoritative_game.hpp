@@ -7,6 +7,7 @@
 #include "../common/networking/network_manager.hpp"
 #include "../common/networking/packet.hpp"
 #include "../common/time/clock.hpp"
+#include "../common/memory/static_vector.hpp"
 
 class authoritative_game : public gameplay::base_game {
     static const uint8_t MAX_CLIENT_COUNT = 2;
@@ -16,6 +17,7 @@ class authoritative_game : public gameplay::base_game {
     networking::network_manager network;
     game_time::highres_clock world_state_sync_clock;
     glm::i32vec2 spawn_chunks[2];
+    static_vector<uint8_t, 2> removed_client;
 
     void load_flyweights();
     void load_assets();

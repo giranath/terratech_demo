@@ -5,6 +5,7 @@
 #include "mesh.hpp"
 #include "../../common/world/world_chunk.hpp"
 #include "rendering_manager.hpp"
+#include "../../common/world/world.hpp"
 #include <glm/glm.hpp>
 #include <vector>
 #include <map>
@@ -19,11 +20,11 @@ class chunk_renderer {
 
     static std::map<int, glm::vec3> make_biome_colors();
 
-    rendering::mesh_builder build_floor();
+    rendering::static_mesh_builder<world::CHUNK_WIDTH * world::CHUNK_DEPTH * 6> build_floor();
     void build_floor_mesh() noexcept;
     void rebuild_floor_mesh() noexcept;
 
-    rendering::mesh_builder build_sites();
+    rendering::static_mesh_builder<world::CHUNK_WIDTH * world::CHUNK_DEPTH * 36 > build_sites();
     void build_site_meshes() noexcept;
     void rebuild_site_meshes() noexcept;
 

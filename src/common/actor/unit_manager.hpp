@@ -91,15 +91,15 @@ public:
 
         return ot;
     }
-
-    template<typename CollisionShape, typename OutputIterator>
-    OutputIterator units_in(CollisionShape shape, OutputIterator ot) {
+    
+    template<typename CollisionShape, typename OutputIterator, typename predicate>
+    OutputIterator units_in(CollisionShape shape, OutputIterator ot, predicate pred) {
         std::lock_guard<std::mutex> lock(units_mutex);
         static_assert(collision::is_collision_shape<CollisionShape>::value, "you must specify a collision shape");
 
         for(auto it = std::begin(units); it != std::end(units); ++it) {
             unit* u = it->second;
-            if(collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5), shape)) {
+            if(collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5), shape) && pred(u)) {
                 *ot = u;
                 ++ot;
             }
@@ -109,7 +109,7 @@ public:
     }
 
     template <class output_iterator>
-    output_iterator buildingss_of(uint8_t player_id, output_iterator ot) {
+    output_iterator buildings_of(uint8_t player_id, output_iterator ot) {
         std::lock_guard<std::mutex> lock(buildings_mutex);
         for (auto it = std::begin(buildings); it != std::end(buildings); ++it) {
             const unit_id id(it->second->get_id());
@@ -123,14 +123,14 @@ public:
         return ot;
     }
 
-    template<typename CollisionShape, typename OutputIterator>
-    OutputIterator buildings_in(CollisionShape shape, OutputIterator ot) {
+    template<typename CollisionShape, typename OutputIterator, typename pred>
+    OutputIterator buildings_in(CollisionShape shape, OutputIterator ot, pred) {
         std::lock_guard<std::mutex> lock(buildings_mutex);
         static_assert(collision::is_collision_shape<CollisionShape>::value, "you must specify a collision shape");
 
         for (auto it = std::begin(buildings); it != std::end(buildings); ++it) {
-            building* u = it->second;
-            if (collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5), shape)) {
+            unit* u = it->second;
+            if (collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5), shape), pred(u)) {
                 *ot = u;
                 ++ot;
             }

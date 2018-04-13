@@ -53,7 +53,8 @@ private:
         enum class state {
             waiting_public_key,
             sending_key,
-            connected
+            connected,
+            disconnected
         };
 
         tcp_socket socket;
