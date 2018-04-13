@@ -394,7 +394,7 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
 	spawn_unit(connected_client.id, starting_position, availabe_position, 102);
 	spawn_unit(connected_client.id, starting_position, availabe_position, 102);
 	spawn_unit(connected_client.id, starting_position, availabe_position, 102);
-	spawn_unit(connected_client.id, starting_position, availabe_position, 102);
+	spawn_unit(connected_client.id, starting_position, availabe_position, 100);
 	spawn_unit(connected_client.id, starting_position, availabe_position, 104);
 }
 
