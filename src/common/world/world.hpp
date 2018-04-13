@@ -34,7 +34,7 @@ public:
 class infinite_world : public world {
     world_generator generator;
 public:
-    explicit infinite_world(uint32_t seed);
+    explicit infinite_world(uint32_t seed, map_choice choice);
 
     world_chunk& generate_at(int x, int z) noexcept;
 

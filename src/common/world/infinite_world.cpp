@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <iterator>
 
-infinite_world::infinite_world(uint32_t seed)
-: generator(seed, CHUNK_WIDTH, CHUNK_DEPTH, map_choice::ISLAND_MAP){
+infinite_world::infinite_world(uint32_t seed, map_choice choice)
+: generator(seed, CHUNK_WIDTH, CHUNK_DEPTH, choice){
 
 }
 

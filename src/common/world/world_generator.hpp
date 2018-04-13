@@ -79,7 +79,7 @@ class world_generator {
     {
         circle island;
         circle lake;
-        oval player_island[2];
+        bool player_island[2];
     };
     user_data data_user;
 
