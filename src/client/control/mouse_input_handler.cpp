@@ -3,42 +3,19 @@
 #include <iterator>
 #include <algorithm>
 
-#include <iostream>
-
 namespace input {
-
-/*
-click_mouse_event_handler::click_mouse_event_handler(std::unique_ptr<command> c)
-: command_to_execute(std::move(c))
-, should_execute(true){
-
-}
-
-void click_mouse_event_handler::on_pressed() {
-    if(should_execute) {
-        command_to_execute->execute();
-        should_execute = false;
-    }
-}
-
-void click_mouse_event_handler::execute() {
-
-}
-
-void click_mouse_event_handler::on_moved() {
-
-}
-
-void click_mouse_event_handler::on_released() {
-    should_execute = true;
-}
-*/
 
 drag_event::drag_event(state s, glm::vec2 start, glm::vec2 end, glm::vec2 rel)
 : current_state(s)
 , start(start)
 , current(end)
 , rel(rel) {
+
+}
+
+click_event::click_event(int count, glm::vec2 pos)
+: count(count)
+, position(pos) {
 
 }
 
@@ -51,11 +28,9 @@ base_mouse_drag_handler::base_mouse_drag_handler(drag_event_handler handler)
 
 void base_mouse_drag_handler::on_moved(const glm::vec2& current, const glm::vec2& delta) {
     if(is_dragging) {
-        std::cout << "is dragging" << std::endl;
         handler(drag_event(drag_event::state::dragging, start_pos, current, delta));
     }
     else {
-        std::cout << "started dragging" << std::endl;
         handler(drag_event(drag_event::state::starting, current, current, delta));
         start_pos = current;
         is_dragging = true;
@@ -64,7 +39,6 @@ void base_mouse_drag_handler::on_moved(const glm::vec2& current, const glm::vec2
 
 void base_mouse_drag_handler::on_released(const glm::vec2& current) {
     if(is_dragging) {
-        std::cout << "ended dragging" << std::endl;
         handler(drag_event(drag_event::state::ending, start_pos, current, glm::vec2{}));
     }
 }
@@ -78,8 +52,8 @@ mouse_input_handler::mouse_input_handler() {
     button_states[SDL_BUTTON_X2] = false;
 }
 
-void mouse_input_handler::register_click(int button, std::unique_ptr<command> c) {
-    click_handlers[button] = std::move(c);
+void mouse_input_handler::register_click(int button, click_event_handler handler) {
+    click_handlers[button] = std::move(handler);
 }
 
 void mouse_input_handler::register_drag(int button, drag_event_handler handler) {
@@ -90,18 +64,16 @@ bool mouse_input_handler::handle(SDL_Event event) {
     bool handled = false;
     switch(event.type) {
         case SDL_MOUSEBUTTONDOWN: {
-            std::cout << "mouse down" << std::endl;
             auto click_it = click_handlers.find(event.button.button);
 
             if(click_it != std::end(click_handlers)) {
-                click_it->second->execute();
+                click_it->second(click_event(event.button.clicks, glm::vec2(event.button.x, event.button.y)));
                 handled = true;
             }
 
             button_states[event.button.button] = true;
         } break;
         case SDL_MOUSEBUTTONUP: {
-            std::cout << "mouse up" << std::endl;
             auto draging_it = drag_handlers.find(event.button.button);
             if(draging_it != std::end(drag_handlers)) {
                 draging_it->second->on_released(glm::vec2(event.button.x, event.button.y));
@@ -117,7 +89,6 @@ bool mouse_input_handler::handle(SDL_Event event) {
             //std::cout << "mouse moving" << std::endl;
             for(auto it = std::begin(drag_handlers); it != std::end(drag_handlers); ++it) {
                 if(button_states[it->first]) {
-                    std::cout << "yeah!" << std::endl;
                     it->second->on_moved(glm::vec2(event.motion.x, event.motion.y), glm::vec2(event.motion.xrel, event.motion.yrel));
                     handled = true;
                 }

@@ -143,6 +143,20 @@ void game::load_shaders() {
     });
 }
 
+bool inside_world_bound(glm::vec3 position) {
+    const float CHUNK_WIDTH = world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE;
+    const float CHUNK_DEPTH = world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE;
+
+    float chunk_x = position.x / CHUNK_WIDTH;
+    float chunk_z = position.z / CHUNK_DEPTH;
+
+    if (chunk_x >= 20.f || chunk_z >= 20.f || chunk_x < 0.f || chunk_z < 0.f)
+        return false;
+
+    return true;
+}
+
+
 void game::setup_inputs() {
     // Camera movements
     key_inputs.register_state(SDLK_LEFT, std::make_unique<input::look_left_command>(game_camera, 10.f));
@@ -166,6 +180,67 @@ void game::setup_inputs() {
         game_camera.translate(cam_translation);
     });
 
+    // Unit selection
+    mouse_inputs.register_click(SDL_BUTTON_LEFT, [this](input::click_event ev) {
+        const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
+        const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
+
+        const glm::vec2 coords{ ev.position.x, G_TO_REMOVE_SCREEN_HEIGHT - ev.position.y };
+        const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
+
+        glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
+        selected_unit_id = -1;
+
+        // clicked outside the map
+        if (inside_world_bound(test))
+        {
+            unit* clicked_unit = nullptr;
+            int size = 0;
+            units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
+                             &clicked_unit, [this, &size](unit* u) {
+                        unit_id id(u->get_id());
+                        if (id.player_id == player_id && size == 0)
+                        {
+                            ++size;
+                            return true;
+                        }
+                        return false;
+                    });
+            if (clicked_unit)
+            {
+                selected_unit_id = clicked_unit->get_id();
+                std::cout << "selected unit is " << selected_unit_id << std::endl;
+            }
+        }
+    });
+
+    mouse_inputs.register_click(SDL_BUTTON_RIGHT, [this](input::click_event ev) {
+        const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
+        const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
+
+        const glm::vec2 coords{ ev.position.x, G_TO_REMOVE_SCREEN_HEIGHT - ev.position.y };
+        const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
+
+        glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
+
+        if(inside_world_bound(test) && selected_unit_id != -1) {
+            // Update target of unit
+            base_unit* selected_unit = units().get(selected_unit_id);
+            if(selected_unit) {
+                unit* u = static_cast<unit*>(selected_unit);
+                u->set_target_position(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
+                                                 test.z / rendering::chunk_renderer::SQUARE_SIZE));
+
+                // Send to server
+                //TODO should remove
+                std::vector<networking::update_target> updates;
+                updates.emplace_back(selected_unit_id, glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
+                                                                 test.z / rendering::chunk_renderer::SQUARE_SIZE));
+
+                network.send_to(networking::packet::make(updates, PACKET_UPDATE_TARGETS), socket);
+            }
+        }
+    });
 }
 
 void game::load_local_datas() {
@@ -633,88 +708,18 @@ void game::render() {
     calculate_fps();
 }
 
-bool inside_world_bound(glm::vec3 position) {
-    const float CHUNK_WIDTH = world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE;
-    const float CHUNK_DEPTH = world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE;
-
-    float chunk_x = position.x / CHUNK_WIDTH;
-    float chunk_z = position.z / CHUNK_DEPTH;
-
-    if (chunk_x >= 20.f || chunk_z >= 20.f || chunk_x < 0.f || chunk_z < 0.f)
-        return false;
-
-    return true;
-}
-
 void game::handle_event(SDL_Event event) {
-    if(event.type == SDL_MOUSEBUTTONDOWN) {
-        if(event.button.button == SDL_BUTTON_LEFT) {
-            const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
-            const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
-
-            const glm::vec2 coords{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y };
-            const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
-
-            glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
-            selected_unit_id = -1;
-
-            // clicked outside the map
-            if (inside_world_bound(test))
-            {
-                unit* clicked_unit = nullptr;
-                int size = 0;
-                units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
-                &clicked_unit, [this, &size](unit* u) {
-                    unit_id id(u->get_id());
-                    if (id.player_id == player_id && size == 0)
-                    {
-                        ++size;
-                        return true;
-                    }
-                    return false;
-                });
-                if (clicked_unit)
-                {
-                    selected_unit_id = clicked_unit->get_id();
-                    std::cout << "selected unit is " << selected_unit_id << std::endl;
-                }
-            }
-        }
-        else if(event.button.button == SDL_BUTTON_RIGHT) {
-            const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
-            const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
-
-            const glm::vec2 coords{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y };
-            const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
-
-            glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
-
-            if(inside_world_bound(test) && selected_unit_id != -1) {
-                // Update target of unit
-                base_unit* selected_unit = units().get(selected_unit_id);
-                if(selected_unit) {
-                    unit* u = static_cast<unit*>(selected_unit);
-                    u->set_target_position(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
-                                                     test.z / rendering::chunk_renderer::SQUARE_SIZE));
-
-                    // Send to server
-                    //TODO should remove
-                    std::vector<networking::update_target> updates;
-                    updates.emplace_back(selected_unit_id, glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
-                                                                     test.z / rendering::chunk_renderer::SQUARE_SIZE));
-
-                    network.send_to(networking::packet::make(updates, PACKET_UPDATE_TARGETS), socket);
-                }
-            }
-        }
-    }
-
-    if(event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEWHEEL) {
-        mouse_inputs.handle(event);
-    }
-    else if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-        profiler_us p("key events");
-        key_inputs.handle(event);
+    switch(event.type) {
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+        case SDL_MOUSEWHEEL:
+        case SDL_MOUSEMOTION:
+            mouse_inputs.handle(event);
+            break;
+        case SDL_KEYDOWN:
+        case SDL_KEYUP:
+            key_inputs.handle(event);
+            break;
     }
 }
 
