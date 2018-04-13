@@ -158,21 +158,23 @@ bool inside_world_bound(glm::vec3 position) {
 
 
 void game::setup_inputs() {
+    input::event_manager::context& root_context = inputs.get(input::event_manager::root);
+
     // Camera movements
-    key_inputs.register_state(SDLK_LEFT, std::make_unique<input::look_left_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_RIGHT, std::make_unique<input::look_right_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_UP, std::make_unique<input::look_up_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_DOWN, std::make_unique<input::look_down_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_a, std::make_unique<input::look_left_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_d, std::make_unique<input::look_right_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_w, std::make_unique<input::look_up_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_LEFT, std::make_unique<input::look_left_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_RIGHT, std::make_unique<input::look_right_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_UP, std::make_unique<input::look_up_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_DOWN, std::make_unique<input::look_down_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_a, std::make_unique<input::look_left_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_d, std::make_unique<input::look_right_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_w, std::make_unique<input::look_up_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
 
     // Wireframe
-    key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
+    root_context.register_key_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
 
     // Mouse scrolling
-    mouse_inputs.register_drag(SDL_BUTTON_MIDDLE, [this](input::drag_event ev) {
+    root_context.register_mouse_drag(SDL_BUTTON_MIDDLE, [this](input::drag_event ev) {
         const glm::vec3 right_translation = game_camera.right() * static_cast<float>(ev.rel.x) * -1.f;
         const glm::vec3 forward_translation = game_camera.forward() * static_cast<float>(ev.rel.y);
         const glm::vec3 cam_translation = right_translation + forward_translation;
@@ -181,7 +183,7 @@ void game::setup_inputs() {
     });
 
     // Unit selection
-    mouse_inputs.register_click(SDL_BUTTON_LEFT, [this](input::click_event ev) {
+    root_context.register_mouse_click(SDL_BUTTON_LEFT, [this](input::click_event ev) {
         const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
         const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
 
@@ -214,7 +216,7 @@ void game::setup_inputs() {
         }
     });
 
-    mouse_inputs.register_click(SDL_BUTTON_RIGHT, [this](input::click_event ev) {
+    root_context.register_mouse_click(SDL_BUTTON_RIGHT, [this](input::click_event ev) {
         const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
         const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
 
@@ -473,8 +475,7 @@ void game::on_update(frame_duration last_frame_duration) {
 
     auto update_task = push_task(std::make_unique<task::update_units>(units(), game_world, last_frame_ms.count() / 1000.0f));
 
-    key_inputs.dispatch();
-    mouse_inputs.dispatch();
+    inputs.dispatch();
 
     update_task.wait();
 
@@ -709,18 +710,7 @@ void game::render() {
 }
 
 void game::handle_event(SDL_Event event) {
-    switch(event.type) {
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:
-        case SDL_MOUSEWHEEL:
-        case SDL_MOUSEMOTION:
-            mouse_inputs.handle(event);
-            break;
-        case SDL_KEYDOWN:
-        case SDL_KEYUP:
-            key_inputs.handle(event);
-            break;
-    }
+    inputs.handle(event);
 }
 
 void game::resize(int new_width, int new_height) {

@@ -18,6 +18,7 @@
 #include "opengl/frame_buffer.hpp"
 #include "opengl/render_buffer.hpp"
 #include "control/mouse_input_handler.hpp"
+#include "control/event_manager.hpp"
 
 #include <chrono>
 #include <array>
@@ -33,8 +34,9 @@ private:
     };
 
     // Inputs
-    input::key_input_handler key_inputs;
-    input::mouse_input_handler mouse_inputs;
+    //input::key_input_handler key_inputs;
+    //input::mouse_input_handler mouse_inputs;
+    input::event_manager inputs;
 
     // Textures
     std::unordered_map<int, gl::texture> textures;
