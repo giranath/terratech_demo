@@ -108,9 +108,9 @@ void make_cube(mesh_builder &builder, float size, glm::vec3 color, glm::vec3 pos
 
 mesh make_cube(float size, glm::vec3 color, glm::vec3 position = {});
 
-void make_circle(mesh_builder &builder, float radius, glm::vec3 color, float resolution, const bounding_box<float>& texture_area);
+void make_circle(mesh_builder &builder, glm::vec3 color, float resolution, const bounding_box<float>& texture_area);
 
-mesh make_circle(float radius, glm::vec3 color, float resolution, const bounding_box<float>& texture_area);
+mesh make_circle(glm::vec3 color, const bounding_box<float>& texture_area);
 }
 
 #endif

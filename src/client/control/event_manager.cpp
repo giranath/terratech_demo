@@ -84,7 +84,7 @@ event_manager::context_handle event_manager::extend_context(context_handle to_ex
 }
 
 event_manager::context& event_manager::get(context_handle handle) {
-    assert(to_extend < contexes.size());
+    assert(handle < contexes.size());
     return contexes[handle];
 }
 

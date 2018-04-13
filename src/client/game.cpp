@@ -78,7 +78,7 @@ void game::setup_selection_circles(){
 	selection_meshes.reserve(MAX_SELECTED_UNITS);
 
 	for (size_t i = 0; i < MAX_SELECTED_UNITS; i++) {
-		selection_meshes.emplace_back(rendering::make_circle(1, { 0,1.0f,0 }, 16, virtual_textures["Selection"].area));
+		selection_meshes.emplace_back(rendering::make_circle({ 0,1.0f,0 }, virtual_textures["Selection"].area));
 	}
 }
 

@@ -113,23 +113,22 @@ void mesh::render() const noexcept {
     glDisableVertexAttribArray(0);
 }
 
-void make_circle(mesh_builder &builder, float radius, glm::vec3 color, float resolution, const bounding_box<float>& texture_area) {
-
+void make_circle(mesh_builder &builder, glm::vec3 color, float resolution, const bounding_box<float>& texture_area) {
 	int actual_resolution = resolution;
 	float step = 360 / actual_resolution;
 
 	for (int i = 0; i <= actual_resolution; i++) {
-		float offset_sin_cur = glm::sin(glm::radians(i * step)) * radius;
-		float offset_cos_cur = glm::cos(glm::radians(i * step)) * radius;
+		float offset_sin_cur = glm::sin(glm::radians(i * step));
+		float offset_cos_cur = glm::cos(glm::radians(i * step));
 
-		float offset_sin_next = glm::sin(glm::radians((i + 1) * step)) * radius;
-		float offset_cos_next = glm::cos(glm::radians((i + 1) * step)) * radius;
+		float offset_sin_next = glm::sin(glm::radians((i + 1) * step));
+		float offset_cos_next = glm::cos(glm::radians((i + 1) * step));
 
-		float uv_sin_cur = (offset_sin_cur / radius / 2) + 0.5f;
-		float uv_cos_cur = (offset_cos_cur / radius / 2) + 0.5f;
+		float uv_sin_cur = (offset_sin_cur / 2) + 0.5f;
+		float uv_cos_cur = (offset_cos_cur / 2) + 0.5f;
 
-		float uv_sin_next = (offset_sin_next / radius / 2) + 0.5f;
-		float uv_cos_next = (offset_cos_next / radius / 2) + 0.5f;
+		float uv_sin_next = (offset_sin_next / 2) + 0.5f;
+		float uv_cos_next = (offset_cos_next / 2) + 0.5f;
 
 		uv_sin_cur = uv_sin_cur * texture_area.height() + texture_area.bottom();
 		uv_cos_cur = uv_cos_cur * texture_area.width() + texture_area.left();
@@ -144,10 +143,12 @@ void make_circle(mesh_builder &builder, float radius, glm::vec3 color, float res
 }
 
 
-mesh make_circle(float radius, glm::vec3 color, float resolution, const bounding_box<float>& texture_area) {
-	mesh_builder builder;
+mesh make_circle( glm::vec3 color, const bounding_box<float>& texture_area) {
+	const int circle_resolution = 12;
 
-	make_circle(builder, radius, color, resolution, texture_area);
+	static_mesh_builder<circle_resolution * 3> builder;
+
+	make_circle(builder, color, circle_resolution, texture_area);
 
 	return builder.build();
 }
