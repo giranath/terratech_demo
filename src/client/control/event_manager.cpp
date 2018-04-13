@@ -12,6 +12,13 @@ event_manager::context::context(context* c)
 
 }
 
+event_manager::context::context(context&& other) 
+: parent(other.parent)
+, mouse_handler(std::move(other.mouse_handler))
+, key_handler(std::move(other.key_handler)) {
+
+}
+
 void event_manager::context::register_key_action(int key, std::unique_ptr<command> c) {
     key_handler.register_action(key, std::move(c));
 }

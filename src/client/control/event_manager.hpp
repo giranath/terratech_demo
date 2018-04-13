@@ -18,10 +18,12 @@ public:
         key_input_handler key_handler;
 
         context(context* c);
+		
         void handle(SDL_Event event);
         void dispatch();
     public:
         context();
+		context(context&& other);
 
         void register_key_action(int key, std::unique_ptr<command> c);
         void register_key_action(int key, int modifiers, std::unique_ptr<command> c);

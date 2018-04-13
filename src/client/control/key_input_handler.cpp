@@ -97,6 +97,11 @@ void key_input_handler::action_key_handler::execute() {
     }
 }
 
+key_input_handler::key_input_handler(key_input_handler&& other)
+: handlers(std::move(other.handlers)){
+
+}
+
 bool key_input_handler::register_state(int key, std::unique_ptr<command> c) {
     return handlers[key].add(std::make_unique<state_key_handler>(std::move(c)));
 }
