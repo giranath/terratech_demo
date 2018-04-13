@@ -43,7 +43,7 @@ private:
     glm::vec2 start_pos;
     drag_event_handler handler;
 public:
-    base_mouse_drag_handler(drag_event_handler handler);
+    explicit base_mouse_drag_handler(drag_event_handler handler);
     virtual void on_moved(const glm::vec2& current, const glm::vec2& delta);
     virtual void on_released(const glm::vec2& current);
 };
@@ -51,7 +51,7 @@ public:
 class mouse_input_handler {
     std::unordered_map<int, click_event_handler> click_handlers;
     std::unordered_map<int, bool> button_states;
-    std::unordered_map<int, std::unique_ptr<base_mouse_drag_handler>> drag_handlers;
+    std::unordered_map<int, base_mouse_drag_handler> drag_handlers;
 public:
     mouse_input_handler();
     void register_click(int button, click_event_handler handler);
