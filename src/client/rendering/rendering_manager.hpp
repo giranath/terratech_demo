@@ -15,14 +15,15 @@ namespace rendering {
 struct mesh_renderer {
     using texture_handle = uint8_t;
     using program_handle = uint8_t;
-    using sort_key = uint16_t;
+    using sort_key = uint32_t;
 
     const rendering::mesh *rendering_mesh;
     texture_handle texture;
     program_handle program;
     glm::mat4 model;
+    uint8_t transparent_order;
 
-    mesh_renderer(const rendering::mesh *m, glm::mat4 model, texture_handle texture, program_handle prog);
+    mesh_renderer(const rendering::mesh *m, glm::mat4 model, texture_handle texture, program_handle prog, uint8_t transparent_order = 0);
 
     sort_key key() const noexcept;
 
@@ -56,7 +57,7 @@ public:
     }
 
     void emplace(const rendering::mesh *m, glm::mat4 model, mesh_renderer::texture_handle texture,
-                 mesh_renderer::program_handle prog);
+                 mesh_renderer::program_handle prog, uint8_t transparency);
 
     void render();
 };

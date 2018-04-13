@@ -22,7 +22,6 @@ void setup_opengl() {
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
 
     gl::enable_debug_messages();
 

@@ -3,6 +3,7 @@
 
 #include "../opengl/opengl.hpp"
 #include "../src/common/memory/static_vector.hpp"
+#include "../../common/bounding_box.hpp"
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -106,6 +107,10 @@ public:
 void make_cube(mesh_builder &builder, float size, glm::vec3 color, glm::vec3 position = {});
 
 mesh make_cube(float size, glm::vec3 color, glm::vec3 position = {});
+
+void make_circle(mesh_builder &builder, glm::vec3 color, float resolution, const bounding_box<float>& texture_area);
+
+mesh make_circle(glm::vec3 color, const bounding_box<float>& texture_area);
 }
 
 #endif
