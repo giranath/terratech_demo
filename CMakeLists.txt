@@ -212,7 +212,7 @@ add_executable(mmap_demo
         src/client/debug/profiler.hpp
         src/client/debug/profiler_administrator.hpp
 
-        src/client/constant/rendering.hpp)
+        src/client/constant/rendering.hpp src/client/control/mouse_input_handler.cpp src/client/control/mouse_input_handler.hpp)
 
 target_include_directories(mmap_demo PUBLIC
         ${terratech_INCLUDE_DIRS}

@@ -156,6 +156,16 @@ void game::setup_inputs() {
 
     // Wireframe
     key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
+
+    // Mouse scrolling
+    mouse_inputs.register_drag(SDL_BUTTON_MIDDLE, [this](input::drag_event ev) {
+        const glm::vec3 right_translation = game_camera.right() * static_cast<float>(ev.rel.x) * -1.f;
+        const glm::vec3 forward_translation = game_camera.forward() * static_cast<float>(ev.rel.y);
+        const glm::vec3 cam_translation = right_translation + forward_translation;
+
+        game_camera.translate(cam_translation);
+    });
+
 }
 
 void game::load_local_datas() {
@@ -168,7 +178,6 @@ void game::load_local_datas() {
 
 game::game(networking::network_manager& manager, networking::network_manager::socket_handle socket)
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<unit_manager>())
-, is_scrolling(false)
 , game_world()
 , world_rendering(game_world)
 , game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)
@@ -390,6 +399,7 @@ void game::on_update(frame_duration last_frame_duration) {
     auto update_task = push_task(std::make_unique<task::update_units>(units(), game_world, last_frame_ms.count() / 1000.0f));
 
     key_inputs.dispatch();
+    mouse_inputs.dispatch();
 
     update_task.wait();
 
@@ -638,10 +648,7 @@ bool inside_world_bound(glm::vec3 position) {
 
 void game::handle_event(SDL_Event event) {
     if(event.type == SDL_MOUSEBUTTONDOWN) {
-        if(event.button.button == SDL_BUTTON_MIDDLE) {
-            is_scrolling = true;
-        }
-        else if(event.button.button == SDL_BUTTON_LEFT) {
+        if(event.button.button == SDL_BUTTON_LEFT) {
             const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
             const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
 
@@ -701,19 +708,9 @@ void game::handle_event(SDL_Event event) {
             }
         }
     }
-    else if(event.type == SDL_MOUSEBUTTONUP) {
-        if(event.button.button == SDL_BUTTON_MIDDLE) {
-            is_scrolling = false;
-        }
-    }
-    else if(event.type == SDL_MOUSEMOTION) {
-        if(is_scrolling) {
-            const glm::vec3 right_translation = game_camera.right() * static_cast<float>(event.motion.xrel) * -1.f;
-            const glm::vec3 forward_translation = game_camera.forward() * static_cast<float>(event.motion.yrel);
-            const glm::vec3 cam_translation = right_translation + forward_translation;
 
-            game_camera.translate(cam_translation);
-        }
+    if(event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEWHEEL) {
+        mouse_inputs.handle(event);
     }
     else if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
         profiler_us p("key events");
