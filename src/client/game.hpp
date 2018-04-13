@@ -34,8 +34,6 @@ private:
     };
 
     // Inputs
-    //input::key_input_handler key_inputs;
-    //input::mouse_input_handler mouse_inputs;
     input::event_manager inputs;
 
     // Textures

@@ -175,8 +175,8 @@ void game::setup_inputs() {
 
     // Mouse scrolling
     root_context.register_mouse_drag(SDL_BUTTON_MIDDLE, [this](input::drag_event ev) {
-        const glm::vec3 right_translation = game_camera.right() * static_cast<float>(ev.rel.x) * -1.f;
-        const glm::vec3 forward_translation = game_camera.forward() * static_cast<float>(ev.rel.y);
+        const glm::vec3 right_translation = game_camera.right() * ev.rel.x * -1.f;
+        const glm::vec3 forward_translation = game_camera.forward() * ev.rel.y;
         const glm::vec3 cam_translation = right_translation + forward_translation;
 
         game_camera.translate(cam_translation);
