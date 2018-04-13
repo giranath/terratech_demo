@@ -54,6 +54,7 @@ class mouse_input_handler {
     std::unordered_map<int, base_mouse_drag_handler> drag_handlers;
 public:
     mouse_input_handler();
+	mouse_input_handler(mouse_input_handler&& other);
     void register_click(int button, click_event_handler handler);
     void register_drag(int button, drag_event_handler handler);
 

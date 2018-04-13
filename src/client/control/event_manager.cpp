@@ -12,6 +12,13 @@ event_manager::context::context(context* c)
 
 }
 
+event_manager::context::context(context&& other) 
+: parent(other.parent)
+, mouse_handler(std::move(other.mouse_handler))
+, key_handler(std::move(other.key_handler)) {
+
+}
+
 void event_manager::context::register_key_action(int key, std::unique_ptr<command> c) {
     key_handler.register_action(key, std::move(c));
 }
@@ -84,7 +91,7 @@ event_manager::context_handle event_manager::extend_context(context_handle to_ex
 }
 
 event_manager::context& event_manager::get(context_handle handle) {
-    assert(to_extend < contexes.size());
+    assert(handle < contexes.size());
     return contexes[handle];
 }
 
