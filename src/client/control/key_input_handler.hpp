@@ -63,13 +63,15 @@ class key_input_handler {
 
     std::unordered_map<int, multiple_key_handler> handlers;
 public:
+	key_input_handler() = default;
+	key_input_handler(key_input_handler&& other);
     bool register_state(int key, std::unique_ptr<command> c);
     bool register_action(int key, std::unique_ptr<command> c);
     bool register_action(int key, int modifiers, std::unique_ptr<command> c);
     void unregister(int key);
     bool is_registered(int key) const noexcept;
 
-    void handle(SDL_Event event);
+    bool handle(SDL_Event event);
 
     void dispatch();
 };

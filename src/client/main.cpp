@@ -22,7 +22,6 @@ void setup_opengl() {
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
 
     gl::enable_debug_messages();
 
@@ -118,7 +117,7 @@ int main(int argc, char* argv[]) {
         frame_time.restart();
 
         if(game_state.fps() > 0) {
-            std::cout << game_state.fps() << " : " << game_state.average_fps() << std::endl;
+           // std::cout << game_state.fps() << " : " << game_state.average_fps() << std::endl;
         }
         // Render last frame on screen
         {

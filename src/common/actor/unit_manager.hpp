@@ -98,8 +98,9 @@ public:
         static_assert(collision::is_collision_shape<CollisionShape>::value, "you must specify a collision shape");
 
         for(auto it = std::begin(units); it != std::end(units); ++it) {
+			static const float select_unit_to_chunk_ratio = 1 / 45.f;
             unit* u = it->second;
-            if(collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5), shape) && pred(u)) {
+            if(collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), select_unit_to_chunk_ratio * u->get_flyweight()->width()), shape) && pred(u)) {
                 *ot = u;
                 ++ot;
             }
@@ -129,7 +130,7 @@ public:
         static_assert(collision::is_collision_shape<CollisionShape>::value, "you must specify a collision shape");
 
         for (auto it = std::begin(buildings); it != std::end(buildings); ++it) {
-            unit* u = it->second;
+            building* u = it->second;
             if (collision::detect(collision::circle_shape(glm::vec2(u->get_position().x, u->get_position().z), 1.5), shape), pred(u)) {
                 *ot = u;
                 ++ot;

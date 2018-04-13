@@ -3,6 +3,7 @@
 
 #include "../opengl/opengl.hpp"
 #include "../src/common/memory/static_vector.hpp"
+#include "../../common/bounding_box.hpp"
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -31,7 +32,7 @@ class static_mesh_builder : public mesh_builder
     static_vector<glm::vec3, MAX_CAPACITY> colors;
     static_vector<glm::vec2, MAX_CAPACITY> uvs;
 public:
-    void add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color = { 1.f, 1.f, 1.f }) {
+    void add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color = { 1.f, 1.f, 1.f }) override {
         vertices.push_back(vertex);
         uvs.push_back(uv);
         colors.push_back(color);
@@ -61,8 +62,8 @@ class dynamic_mesh_builder : public mesh_builder
     std::vector<glm::vec3> colors;
     std::vector<glm::vec2> uvs;
 public:
-    dynamic_mesh_builder(std::size_t t);
-    void add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color = { 1.f, 1.f, 1.f }) {
+    explicit dynamic_mesh_builder(std::size_t t);
+    void add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color = { 1.f, 1.f, 1.f }) override {
         vertices.push_back(vertex);
         uvs.push_back(uv);
         colors.push_back(color);
@@ -106,6 +107,10 @@ public:
 void make_cube(mesh_builder &builder, float size, glm::vec3 color, glm::vec3 position = {});
 
 mesh make_cube(float size, glm::vec3 color, glm::vec3 position = {});
+
+void make_circle(mesh_builder &builder, glm::vec3 color, float resolution, const bounding_box<float>& texture_area);
+
+mesh make_circle(glm::vec3 color, const bounding_box<float>& texture_area);
 }
 
 #endif

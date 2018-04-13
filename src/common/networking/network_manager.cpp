@@ -150,8 +150,7 @@ void network_manager::thread_work() {
             if(active_sockets.is_ready(connection_listener)) {
                 tcp_socket connecting_socket = connection_listener.accept();
 
-                if (connecting_socket.is_connected())
-                {
+                if(connecting_socket.is_connected()) {
                     handle_connection(std::move(connecting_socket));
                 }
             }

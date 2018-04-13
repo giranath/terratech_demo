@@ -17,9 +17,6 @@ struct client {
     // The units this player knows about
     std::unordered_set<uint32_t> known_units;
 
-    // The chunks this player knows about
-    std::unordered_set<glm::i32vec2, util::vec2_hash<glm::i32vec2>> known_chunks;
-
     // Holds this player visibility
     visibility_map map_visibility;
 

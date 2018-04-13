@@ -59,7 +59,7 @@ template<class T>
 class profiler_administrator
 {
     static_assert(is_time<T>::value, "the type is not a time");
-    static const int RECORD_BUFFER_MAX = 4096;
+    static const int RECORD_BUFFER_MAX = 10000;
     static const int RECORD_BUFFER = 2;
 
 #ifndef NPROFILER
@@ -107,6 +107,11 @@ class profiler_administrator
                 admin->write_row(out_stream, record.name, record.time, record.duration);
             }
         }
+
+        for(const log_record& record : admin->records[admin->current_record_buffer]) {
+            admin->write_row(out_stream, record.name, record.time, record.duration);
+        }
+
     }
 
     profiler_administrator()

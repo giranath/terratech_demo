@@ -74,6 +74,14 @@ void game::load_flyweights() {
     }
 }
 
+void game::setup_selection_circles(){
+	selection_meshes.reserve(MAX_SELECTED_UNITS);
+
+	for (size_t i = 0; i < MAX_SELECTED_UNITS; i++) {
+		selection_meshes.emplace_back(rendering::make_circle({ 0,1.0f,0 }, virtual_textures["Selection"].area));
+	}
+}
+
 void game::setup_renderer() {
     mesh_rendering.set_camera(&game_camera);
 
@@ -143,19 +151,106 @@ void game::load_shaders() {
     });
 }
 
+bool inside_world_bound(glm::vec3 position) {
+    const float CHUNK_WIDTH = world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE;
+    const float CHUNK_DEPTH = world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE;
+
+    float chunk_x = position.x / CHUNK_WIDTH;
+    float chunk_z = position.z / CHUNK_DEPTH;
+
+    if (chunk_x >= 20.f || chunk_z >= 20.f || chunk_x < 0.f || chunk_z < 0.f)
+        return false;
+
+    return true;
+}
+
+
 void game::setup_inputs() {
+    input::event_manager::context& root_context = inputs.get(input::event_manager::root);
+
     // Camera movements
-    key_inputs.register_state(SDLK_LEFT, std::make_unique<input::look_left_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_RIGHT, std::make_unique<input::look_right_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_UP, std::make_unique<input::look_up_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_DOWN, std::make_unique<input::look_down_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_a, std::make_unique<input::look_left_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_d, std::make_unique<input::look_right_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_w, std::make_unique<input::look_up_command>(game_camera, 10.f));
-    key_inputs.register_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_LEFT, std::make_unique<input::look_left_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_RIGHT, std::make_unique<input::look_right_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_UP, std::make_unique<input::look_up_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_DOWN, std::make_unique<input::look_down_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_a, std::make_unique<input::look_left_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_d, std::make_unique<input::look_right_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_w, std::make_unique<input::look_up_command>(game_camera, 10.f));
+    root_context.register_key_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
 
     // Wireframe
-    key_inputs.register_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
+    root_context.register_key_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
+
+    // Mouse scrolling
+    root_context.register_mouse_drag(SDL_BUTTON_MIDDLE, [this](input::drag_event ev) {
+        const glm::vec3 right_translation = game_camera.right() * ev.rel.x * -1.f;
+        const glm::vec3 forward_translation = game_camera.forward() * ev.rel.y;
+        const glm::vec3 cam_translation = right_translation + forward_translation;
+
+        game_camera.translate(cam_translation);
+    });
+
+    // Unit selection
+    root_context.register_mouse_click(SDL_BUTTON_LEFT, [this](input::click_event ev) {
+        const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
+        const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
+
+        const glm::vec2 coords{ ev.position.x, G_TO_REMOVE_SCREEN_HEIGHT - ev.position.y };
+        const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
+
+        glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
+        selected_unit_id = -1;
+
+        // clicked outside the map
+        if (inside_world_bound(test))
+        {
+            unit* clicked_unit = nullptr;
+            int size = 0;
+            units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
+                             &clicked_unit, [this, &size](unit* u) {
+                        unit_id id(u->get_id());
+                        if (id.player_id == player_id && size == 0)
+                        {
+                            ++size;
+                            return true;
+                        }
+                        return false;
+                    });
+            if (clicked_unit)
+            {
+                selected_unit_id = clicked_unit->get_id();
+                std::cout << "selected unit is " << selected_unit_id << std::endl;
+            }
+        }
+    });
+
+    root_context.register_mouse_click(SDL_BUTTON_RIGHT, [this](input::click_event ev) {
+        const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
+        const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
+
+        const glm::vec2 coords{ ev.position.x, G_TO_REMOVE_SCREEN_HEIGHT - ev.position.y };
+        const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
+
+        glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
+
+        if(inside_world_bound(test) && selected_unit_id != -1) {
+            // Update target of unit
+            base_unit* selected_unit = units().get(selected_unit_id);
+            if(selected_unit) {
+                unit* u = static_cast<unit*>(selected_unit);
+                u->set_target_position(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
+                                                 test.z / rendering::chunk_renderer::SQUARE_SIZE));
+
+                // Send to server
+                //TODO should remove
+                std::vector<networking::update_target> updates;
+                updates.emplace_back(selected_unit_id, glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
+                                                                 test.z / rendering::chunk_renderer::SQUARE_SIZE));
+
+                network.send_to(networking::packet::make(updates, PACKET_UPDATE_TARGETS), socket);
+            }
+        }
+    });
 }
 
 void game::load_local_datas() {
@@ -168,7 +263,6 @@ void game::load_local_datas() {
 
 game::game(networking::network_manager& manager, networking::network_manager::socket_handle socket)
 : base_game(std::thread::hardware_concurrency() - 1, std::make_unique<unit_manager>())
-, is_scrolling(false)
 , game_world()
 , world_rendering(game_world)
 , game_camera(-400.f, 400.f, -400.f, 400.f, -1000.f, 1000.f)
@@ -253,6 +347,7 @@ void game::on_init() {
 
     setup_fog_of_war();
     setup_screen_quad();
+	setup_selection_circles();
 }
 
 void game::wait_for_server_init_datas() {
@@ -389,7 +484,7 @@ void game::on_update(frame_duration last_frame_duration) {
 
     auto update_task = push_task(std::make_unique<task::update_units>(units(), game_world, last_frame_ms.count() / 1000.0f));
 
-    key_inputs.dispatch();
+    inputs.dispatch();
 
     update_task.wait();
 
@@ -510,12 +605,26 @@ void game::render_chunks() {
 }
 
 void game::render_units() {
+	// render selection
+	if (selected_unit_id != -1)
+	{
+		base_unit* selected_unit = units().get(selected_unit_id);
+
+		rendering::mesh_renderer renderer(&selection_meshes[0],
+			glm::scale(
+				glm::translate(glm::mat4(1.f), selected_unit->get_position() * rendering::chunk_renderer::SQUARE_SIZE + glm::vec3(0.f, 1.f, 0.f)),
+			    glm::vec3(selected_unit->get_flyweight()->width() * 0.5f, 1, selected_unit->get_flyweight()->width() * 0.5f))
+			, virtual_textures["Selection"].id, PROGRAM_STANDARD, 1);
+
+		mesh_rendering.push(std::move(renderer));
+	}
+
     for(auto unit = units().begin_of_units(); unit != units().end_of_units(); ++unit) {
         if(unit->second->is_visible()) {
             rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
                                               glm::translate(glm::mat4{1.f}, unit->second->get_position() *
                                                                              rendering::chunk_renderer::SQUARE_SIZE),
-                                              virtual_textures[unit->second->texture()].id, PROGRAM_BILLBOARD);
+                                              virtual_textures[unit->second->texture()].id, PROGRAM_BILLBOARD, 2);
             mesh_rendering.push(std::move(renderer));
         }
     }
@@ -623,102 +732,8 @@ void game::render() {
     calculate_fps();
 }
 
-bool inside_world_bound(glm::vec3 position) {
-    const float CHUNK_WIDTH = world::CHUNK_WIDTH * rendering::chunk_renderer::SQUARE_SIZE;
-    const float CHUNK_DEPTH = world::CHUNK_DEPTH * rendering::chunk_renderer::SQUARE_SIZE;
-
-    float chunk_x = position.x / CHUNK_WIDTH;
-    float chunk_z = position.z / CHUNK_DEPTH;
-
-    if (chunk_x >= 20.f || chunk_z >= 20.f || chunk_x < 0.f || chunk_z < 0.f)
-        return false;
-
-    return true;
-}
-
 void game::handle_event(SDL_Event event) {
-    if(event.type == SDL_MOUSEBUTTONDOWN) {
-        if(event.button.button == SDL_BUTTON_MIDDLE) {
-            is_scrolling = true;
-        }
-        else if(event.button.button == SDL_BUTTON_LEFT) {
-            const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
-            const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
-
-            const glm::vec2 coords{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y };
-            const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
-
-            glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
-            selected_unit_id = -1;
-
-            // clicked outside the map
-            if (inside_world_bound(test))
-            {
-                unit* clicked_unit = nullptr;
-                int size = 0;
-                units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
-                &clicked_unit, [this, &size](unit* u) {
-                    unit_id id(u->get_id());
-                    if (id.player_id == player_id && size == 0)
-                    {
-                        ++size;
-                        return true;
-                    }
-                    return false;
-                });
-                if (clicked_unit)
-                {
-                    selected_unit_id = clicked_unit->get_id();
-                    std::cout << "selected unit is " << selected_unit_id << std::endl;
-                }
-            }
-        }
-        else if(event.button.button == SDL_BUTTON_RIGHT) {
-            const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
-            const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
-
-            const glm::vec2 coords{ event.button.x, G_TO_REMOVE_SCREEN_HEIGHT - event.button.y };
-            const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
-
-            glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
-
-            if(inside_world_bound(test) && selected_unit_id != -1) {
-                // Update target of unit
-                base_unit* selected_unit = units().get(selected_unit_id);
-                if(selected_unit) {
-                    unit* u = static_cast<unit*>(selected_unit);
-                    u->set_target_position(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
-                                                     test.z / rendering::chunk_renderer::SQUARE_SIZE));
-
-                    // Send to server
-                    //TODO should remove
-                    std::vector<networking::update_target> updates;
-                    updates.emplace_back(selected_unit_id, glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
-                                                                     test.z / rendering::chunk_renderer::SQUARE_SIZE));
-
-                    network.send_to(networking::packet::make(updates, PACKET_UPDATE_TARGETS), socket);
-                }
-            }
-        }
-    }
-    else if(event.type == SDL_MOUSEBUTTONUP) {
-        if(event.button.button == SDL_BUTTON_MIDDLE) {
-            is_scrolling = false;
-        }
-    }
-    else if(event.type == SDL_MOUSEMOTION) {
-        if(is_scrolling) {
-            const glm::vec3 right_translation = game_camera.right() * static_cast<float>(event.motion.xrel) * -1.f;
-            const glm::vec3 forward_translation = game_camera.forward() * static_cast<float>(event.motion.yrel);
-            const glm::vec3 cam_translation = right_translation + forward_translation;
-
-            game_camera.translate(cam_translation);
-        }
-    }
-    else if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-        profiler_us p("key events");
-        key_inputs.handle(event);
-    }
+    inputs.handle(event);
 }
 
 void game::resize(int new_width, int new_height) {
