@@ -117,7 +117,7 @@ void make_circle(mesh_builder &builder, glm::vec3 color, float resolution, const
 	int actual_resolution = resolution;
 	float step = 360 / actual_resolution;
 
-	for (int i = 0; i <= actual_resolution; i++) {
+	for (int i = 0; i < actual_resolution; i++) {
 		float offset_sin_cur = glm::sin(glm::radians(i * step));
 		float offset_cos_cur = glm::cos(glm::radians(i * step));
 
