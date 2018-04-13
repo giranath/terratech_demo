@@ -107,6 +107,11 @@ class profiler_administrator
                 admin->write_row(out_stream, record.name, record.time, record.duration);
             }
         }
+
+        for(const log_record& record : admin->records[admin->current_record_buffer]) {
+            admin->write_row(out_stream, record.name, record.time, record.duration);
+        }
+
     }
 
     profiler_administrator()
