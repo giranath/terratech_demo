@@ -189,8 +189,8 @@ void game::setup_inputs() {
 
         game_camera.translate(cam_translation);
     });
-
-    // Unit selection
+	/*
+    // Single Unit selection
     root_context.register_mouse_click(SDL_BUTTON_LEFT, [this](input::click_event ev) {
         const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
         const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
@@ -199,7 +199,8 @@ void game::setup_inputs() {
         const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
 
         glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
-        selected_unit_id = -1;
+		selected_units.clear();
+		selected_units_id.clear();
 
         // clicked outside the map
         if (inside_world_bound(test))
@@ -207,7 +208,7 @@ void game::setup_inputs() {
             unit* clicked_unit = nullptr;
             int size = 0;
             units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
-                             &clicked_unit, [this, &size](unit* u) {
+                             std::back_inserter(selected_units), [this, &size](unit* u) {
                         unit_id id(u->get_id());
                         if (id.player_id == player_id && size == 0)
                         {
@@ -216,14 +217,51 @@ void game::setup_inputs() {
                         }
                         return false;
                     });
-            if (clicked_unit)
-            {
-                selected_unit_id = clicked_unit->get_id();
-                std::cout << "selected unit is " << selected_unit_id << std::endl;
-            }
+
+			if (selected_units.size() > 0)
+				selected_units_id.push_back(selected_units[0]->get_id());
         }
     });
+	*/
+	// Multiple Unit selection
+	root_context.register_mouse_drag(SDL_BUTTON_LEFT, [this](input::drag_event ev) {
+		const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
+		const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
 
+		const glm::vec2 coords{ ev.current.x, G_TO_REMOVE_SCREEN_HEIGHT - ev.current.y };
+		const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
+
+		glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, { 0,1,0 });
+		selected_units.clear();
+		selected_units_id.clear();
+
+		// clicked outside the map
+		if (inside_world_bound(test))
+		{
+			int size = 0;
+			bounding_box<float> bb(ev.start.x,
+								   ev.current.y,
+								   ev.current.x,
+								   ev.start.y);
+
+			units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
+				std::back_inserter(selected_units), [this, &size](unit* u) {
+				unit_id id(u->get_id());
+				if (id.player_id == player_id && size < 12)
+				{
+					++size;
+					return true;
+				}
+				return false;
+			});
+		}
+
+		for (auto u : selected_units)
+		{
+			selected_units_id.push_back(u->get_id());
+		}
+	});
+	
     root_context.register_mouse_click(SDL_BUTTON_RIGHT, [this](input::click_event ev) {
         const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
         const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
@@ -233,22 +271,26 @@ void game::setup_inputs() {
 
         glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
 
-        if(inside_world_bound(test) && selected_unit_id != -1) {
+        if(inside_world_bound(test) && selected_units_id.size()) {
             // Update target of unit
-            base_unit* selected_unit = units().get(selected_unit_id);
-            if(selected_unit) {
-                unit* u = static_cast<unit*>(selected_unit);
-                u->set_target_position(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
-                                                 test.z / rendering::chunk_renderer::SQUARE_SIZE));
+			std::vector<networking::update_target> updates;
 
-                // Send to server
-                //TODO should remove
-                std::vector<networking::update_target> updates;
-                updates.emplace_back(selected_unit_id, glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
-                                                                 test.z / rendering::chunk_renderer::SQUARE_SIZE));
+			for (auto unit_id : selected_units_id)
+			{
+				base_unit* selected_unit = units().get(unit_id);
 
-                network.send_to(networking::packet::make(updates, PACKET_UPDATE_TARGETS), socket);
-            }
+				unit* u = static_cast<unit*>(selected_unit);
+				u->set_target_position(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
+					test.z / rendering::chunk_renderer::SQUARE_SIZE));
+
+				// Send to server
+				//TODO should remove
+				updates.emplace_back(unit_id, glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
+					test.z / rendering::chunk_renderer::SQUARE_SIZE));
+			}
+
+			if(!updates.empty())
+				network.send_to(networking::packet::make(updates, PACKET_UPDATE_TARGETS), socket);
         }
     });
 }
@@ -270,7 +312,6 @@ game::game(networking::network_manager& manager, networking::network_manager::so
 , frame_count(0) 
 , network{manager}
 , socket(socket)
-, selected_unit_id(-1)
 , local_visibility(20 * world::CHUNK_WIDTH, 20 * world::CHUNK_DEPTH)
 , fow_size(0) {
     last_fps_durations.reserve(10);
@@ -606,9 +647,9 @@ void game::render_chunks() {
 
 void game::render_units() {
 	// render selection
-	if (selected_unit_id != -1)
+	for(int unit_id : selected_units_id)
 	{
-		base_unit* selected_unit = units().get(selected_unit_id);
+		base_unit* selected_unit = units().get(unit_id);
 
 		rendering::mesh_renderer renderer(&selection_meshes[0],
 			glm::scale(

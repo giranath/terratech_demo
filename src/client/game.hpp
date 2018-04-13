@@ -62,7 +62,8 @@ private:
     game_time::highres_clock fps_clock;
 
     // Gameplay
-    int selected_unit_id;
+	static_vector<unit*,12> selected_units;
+	static_vector<int, 12> selected_units_id;
     uint8_t player_id;
 
     //Networking

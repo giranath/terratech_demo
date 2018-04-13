@@ -8,6 +8,10 @@
 template <class T, size_t NB>
 class static_vector 
 {
+public:
+	using value_type = T;
+
+private:
     std::unique_ptr<std::array<T, NB>> values;
     size_t position;
 
