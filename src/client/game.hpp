@@ -14,8 +14,11 @@
 #include "../common/game/base_game.hpp"
 #include "../common/networking/network_manager.hpp"
 #include "../common/world/visibility_map.hpp"
+#include "../common/memory/static_vector.hpp"
 #include "opengl/frame_buffer.hpp"
 #include "opengl/render_buffer.hpp"
+#include "control/mouse_input_handler.hpp"
+#include "control/event_manager.hpp"
 
 #include <chrono>
 #include <array>
@@ -31,8 +34,7 @@ private:
     };
 
     // Inputs
-    input::key_input_handler key_inputs;
-    bool is_scrolling;
+    input::event_manager inputs;
 
     // Textures
     std::unordered_map<int, gl::texture> textures;
@@ -72,7 +74,6 @@ private:
     gl::buffer fow_vertices;
     gl::buffer fow_colors;
     std::size_t fow_size;
-    //rendering::mesh fog_of_war;
 
     std::vector<glm::i32vec2> discovered_chunks;
 

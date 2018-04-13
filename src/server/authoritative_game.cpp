@@ -282,13 +282,12 @@ void authoritative_game::setup_listener() {
         std::cout << disconnected << " has disconnected" << std::endl;
 
         std::lock_guard<std::mutex> lock(clients_mutex);
-        auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [disconnected](const client& c) {
+        std::vector<client>::iterator it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [disconnected](const client& c) {
             return c.socket == disconnected;
         });
 
         if(it != std::end(connected_clients)) {
-            connected_clients.erase(it);
-            std::cout << "stopping server" << std::endl;
+            removed_client.push_back(it->id);
             stop();
         }
     });
@@ -324,14 +323,9 @@ void authoritative_game::send_flyweights(networking::network_manager::socket_han
 
 void authoritative_game::send_map(const client& connecting_client) {
     std::cout << "sending map..." << std::endl;
-    world::chunk_collection filtered_chunks;
-    std::copy_if(std::begin(world), std::end(world), std::back_inserter(filtered_chunks), [&connecting_client](const world_chunk& chunk) {
-       return connecting_client.known_chunks.find(chunk.position()) != std::end(connecting_client.known_chunks);
-    });
-
     std::vector<networking::world_chunk> chunks_to_send;
     chunks_to_send.reserve(std::distance(world.begin(), world.end()));
-    std::transform(std::begin(filtered_chunks), std::end(filtered_chunks), std::back_inserter(chunks_to_send), [&connecting_client](const world_chunk& chunk) {
+    std::transform(std::begin(world), std::end(world), std::back_inserter(chunks_to_send), [&connecting_client](const world_chunk& chunk) {
         std::vector<uint8_t> biomes;
         biomes.reserve(world::CHUNK_WIDTH * world::CHUNK_HEIGHT * world::CHUNK_DEPTH);
 
@@ -373,7 +367,6 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
                                 spawn_position.y * world::CHUNK_DEPTH);
 
     std::cout << "client #" << connected_client.id << " spawns at " << spawn_position.x << ", " << spawn_position.y << std::endl;
-    connected_client.known_chunks.insert(spawn_position);
 
     {
         std::lock_guard<std::mutex> lock(clients_mutex);
@@ -547,23 +540,17 @@ void authoritative_game::on_update(frame_duration last_frame) {
         });
         c.known_units.insert(std::begin(unit_ids), std::end(unit_ids));
 
-        bool has_explored = false;
         for(std::size_t y = 0; y < c.map_visibility.height(); ++y) {
             for(std::size_t x = 0; x < c.map_visibility.width(); ++x) {
                 const int chunk_x = x / world::CHUNK_WIDTH;
                 const int chunk_z = y / world::CHUNK_DEPTH;
 
-                if(c.map_visibility.at(x, y) != visibility::unexplored) {
-                    if(c.known_chunks.find(glm::i32vec2(chunk_x, chunk_z)) == c.known_chunks.end()) {
-                        has_explored = true;
-                    }
-
-                    c.known_chunks.emplace(chunk_x, chunk_z);
-                }
-
                 if(c.map_visibility.at(x, y) == visibility::visible) {
                     std::vector<unit*> units_in_tile;
-                    units().units_in(collision::aabb_shape(glm::vec2(x, y), 1.0f), std::back_inserter(units_in_tile));
+                    units().units_in(collision::aabb_shape(glm::vec2(x, y), 1.0f), std::back_inserter(units_in_tile), [](unit*)
+                    {
+                        return true;
+                    });
 
                     std::vector<uint32_t> units_ids(units_in_tile.size(), 0);
                     std::transform(std::begin(units_in_tile), std::end(units_in_tile), std::begin(units_ids), [](const unit* u) {
@@ -574,10 +561,6 @@ void authoritative_game::on_update(frame_duration last_frame) {
                 }
             }
         }
-
-        if(has_explored) {
-            send_map(c);
-        }
     }
 
     // Broadcast current state every seconds
@@ -585,7 +568,32 @@ void authoritative_game::on_update(frame_duration last_frame) {
         broadcast_current_state();
         world_state_sync_clock.substract(std::chrono::milliseconds(250));
     }
+
+    for (auto& u : removed_client)
+    {
+        auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [u](const client& c) {
+            return c.id == u;
+        });
+        if (it != connected_clients.end())
+        {
+            connected_clients.erase(it);
+
+        }
+    }
+    removed_client.clear();
 }
 
 void authoritative_game::on_release() {
+    for (auto& u : removed_client)
+    {
+        auto it = std::find_if(std::begin(connected_clients), std::end(connected_clients), [u](const client& c) {
+            return c.id == u;
+        });
+        if (it != connected_clients.end())
+        {
+            connected_clients.erase(it);
+
+        }
+    }
+    removed_client.clear();
 }

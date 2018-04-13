@@ -2,41 +2,35 @@
 
 namespace rendering {
 
-mesh_builder::mesh_builder(std::size_t capacity) {
+dynamic_mesh_builder::dynamic_mesh_builder(std::size_t capacity) {
     vertices.reserve(capacity);
     uvs.reserve(capacity);
     colors.reserve(capacity);
 }
 
-void mesh_builder::add_vertex(glm::vec3 vertex, glm::vec2 uv, glm::vec3 color) {
-    vertices.push_back(vertex);
-    uvs.push_back(uv);
-    colors.push_back(color);
-}
-
 mesh mesh_builder::build() const noexcept {
-    if (vertices.empty())
+    if (count() == 0)
         return mesh{};
 
     gl::buffer vertices_buffer = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(vertices_buffer));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices.front(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * count(), get_vertices(), GL_STATIC_DRAW);
 
     gl::buffer colors_buffer = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(colors_buffer));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * colors.size(), &colors.front(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * count(), get_colors(), GL_STATIC_DRAW);
 
     gl::buffer uvs_buffer = gl::buffer::make();
     gl::bind(gl::buffer_bind<GL_ARRAY_BUFFER>(uvs_buffer));
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * uvs.size(), &uvs.front(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * count(), get_uvs(), GL_STATIC_DRAW);
 
-    return mesh{std::move(vertices_buffer), std::move(uvs_buffer), std::move(colors_buffer), vertices.size()};
+    return mesh{std::move(vertices_buffer), std::move(uvs_buffer), std::move(colors_buffer), count()};
 }
 
 void mesh_builder::rebuild(mesh& m) const noexcept {
-    if(!vertices.empty()) {
-        m.update(&vertices[0], &colors[0], &uvs[0], vertices.size());
-        m.resize(vertices.size());
+    if(count() > 0) {
+        m.update(get_vertices(), get_colors(), get_uvs(), count());
+        m.resize(count());
     }
 }
 
@@ -119,41 +113,45 @@ void mesh::render() const noexcept {
     glDisableVertexAttribArray(0);
 }
 
-void make_circle(mesh_builder &builder, float radius, glm::vec3 color, glm::vec3 position, float resolution) {
-	// Front face
-	builder.add_vertex({ position.x, position.y, position.z }, {}, color);
+void make_circle(mesh_builder &builder, glm::vec3 color, float resolution, const bounding_box<float>& texture_area) {
+	int actual_resolution = resolution;
+	float step = 360 / actual_resolution;
 
-	int actual_resolution = 360 / resolution;
-	float step = 360 / resolution;
+	for (int i = 0; i < actual_resolution; i++) {
+		float offset_sin_cur = glm::sin(glm::radians(i * step));
+		float offset_cos_cur = glm::cos(glm::radians(i * step));
 
-	for (int i = 0; i <= actual_resolution; i++) {
-		float offset_sin_cur = glm::sin(glm::radians(i * step)) * radius;
-		float offset_cos_cur = glm::cos(glm::radians(i * step)) * radius;
+		float offset_sin_next = glm::sin(glm::radians((i + 1) * step));
+		float offset_cos_next = glm::cos(glm::radians((i + 1) * step));
 
-		float offset_sin_next = glm::sin(glm::radians((i + 1) * step)) * radius;
-		float offset_cos_next = glm::cos(glm::radians((i + 1) * step)) * radius;
+		float uv_sin_cur = (offset_sin_cur / 2) + 0.5f;
+		float uv_cos_cur = (offset_cos_cur / 2) + 0.5f;
 
-		float uv_sin_cur = (offset_sin_cur / radius / 2) + 0.5f;
-		float uv_cos_cur = (offset_cos_cur / radius / 2) + 0.5f;
+		float uv_sin_next = (offset_sin_next / 2) + 0.5f;
+		float uv_cos_next = (offset_cos_next / 2) + 0.5f;
 
-		float uv_sin_next = (offset_sin_next / radius / 2) + 0.5f;
-		float uv_cos_next = (offset_cos_next / radius / 2) + 0.5f;
+		uv_sin_cur = uv_sin_cur * texture_area.height() + texture_area.bottom();
+		uv_cos_cur = uv_cos_cur * texture_area.width() + texture_area.left();
 
+		uv_sin_next = uv_sin_next * texture_area.height() + texture_area.bottom();
+		uv_cos_next = uv_cos_next * texture_area.width() + texture_area.left();
 
-		builder.add_vertex({ position.x + offset_sin_cur, position.y, position.z + offset_cos_cur }, { uv_cos_cur, uv_sin_cur }, color);
-		builder.add_vertex({ position.x + offset_sin_next, position.y, position.z + offset_cos_next }, { uv_cos_next, uv_sin_next }, color);
-		builder.add_vertex({ position.x, position.y, position.z }, { 0.5, 0.5 }, color);
+		builder.add_vertex({offset_sin_cur, 0, offset_cos_cur}, { uv_cos_cur, uv_sin_cur }, color);
+		builder.add_vertex({offset_sin_next, 0, offset_cos_next }, { uv_cos_next, uv_sin_next }, color);
+		builder.add_vertex({0, 0, 0}, { texture_area.width() / 2 + texture_area.left(), texture_area.height() / 2 + texture_area.bottom() }, color);
 	}
 }
 
-mesh make_circle(float radius, glm::vec3 color, glm::vec3 position, float resolution) {
-	mesh_builder builder;
 
-	make_circle(builder, radius, color, position, resolution);
+mesh make_circle( glm::vec3 color, const bounding_box<float>& texture_area) {
+	const int circle_resolution = 12;
+
+	static_mesh_builder<circle_resolution * 3> builder;
+
+	make_circle(builder, color, circle_resolution, texture_area);
 
 	return builder.build();
 }
-
 void mesh::resize(std::size_t size) noexcept {
     count = size;
 }
@@ -209,7 +207,7 @@ void make_cube(mesh_builder &cube_builder, float size, glm::vec3 color, glm::vec
 }
 
 mesh make_cube(float size, glm::vec3 color, glm::vec3 position) {
-    mesh_builder builder;
+    static_mesh_builder<6*6> builder;
 
     make_cube(builder, size, color, position);
 

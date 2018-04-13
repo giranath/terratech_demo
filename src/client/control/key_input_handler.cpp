@@ -97,6 +97,11 @@ void key_input_handler::action_key_handler::execute() {
     }
 }
 
+key_input_handler::key_input_handler(key_input_handler&& other)
+: handlers(std::move(other.handlers)){
+
+}
+
 bool key_input_handler::register_state(int key, std::unique_ptr<command> c) {
     return handlers[key].add(std::make_unique<state_key_handler>(std::move(c)));
 }
@@ -119,7 +124,7 @@ bool key_input_handler::is_registered(int key) const noexcept {
     return it != handlers.end();
 }
 
-void key_input_handler::handle(SDL_Event event) {
+bool key_input_handler::handle(SDL_Event event) {
     auto it = handlers.find(event.key.keysym.sym);
 
     if(it != handlers.end()) {
@@ -129,7 +134,10 @@ void key_input_handler::handle(SDL_Event event) {
         else if(event.key.state == SDL_RELEASED) {
             it->second.release(event.key.keysym.mod);
         }
+        return true;
     }
+
+    return false;
 }
 
 void key_input_handler::dispatch() {
