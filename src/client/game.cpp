@@ -20,6 +20,7 @@
 #include "../common/task/update_player_visibility.hpp"
 #include "../common/task/update_units.hpp"
 #include "../common/networking/player_init.hpp"
+#include "../common/networking/build.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -283,16 +284,62 @@ void game::setup_inputs() {
     input::event_manager::context& worker_context = inputs.get(worker_context_hdl);
 
     worker_context.register_key_action(SDLK_b, input::make_generic_command([this, builder_context_hdl]() {
+        std::cout << "changed to build mode" << std::endl;
         inputs.change_current(builder_context_hdl);
     }));
 
     // Builder context
     input::event_manager::context& builder_context = inputs.get(builder_context_hdl);
     builder_context.register_mouse_click(SDL_BUTTON_LEFT, [this, worker_context_hdl](input::click_event ev) {
-        glm::vec3 world_coord = get_world_coord(ev.position);
+        glm::vec3 world_coord = get_world_coord(ev.position) / rendering::chunk_renderer::SQUARE_SIZE;
+
+        uint8_t building_id = 201;
+        unit_flyweight& building_flyweight = unit_flyweights()[building_id];
 
         if(inside_world_bound(world_coord)) {
+            int chunk_x = static_cast<int>(world_coord.x / world::CHUNK_WIDTH);
+            int chunk_z = static_cast<int>(world_coord.z / world::CHUNK_DEPTH);
 
+            const world_chunk* chunk = game_world.chunk_at(chunk_x, chunk_z);
+            if(chunk) {
+                const glm::vec3 chunk_space_position(world_coord.x - chunk_x * world::CHUNK_WIDTH,
+                                                     world_coord.y,
+                                                     world_coord.z - chunk_z * world::CHUNK_DEPTH);
+
+                int biome = chunk->biome_at(chunk_space_position.x, chunk_space_position.y, chunk_space_position.z);
+                biome_type b;
+                switch(biome) {
+                    case BIOME_WATER:
+                        b = biome_type::water;
+                        break;
+                    case BIOME_GRASS:
+                        b = biome_type::grass;
+                        break;
+                    case BIOME_ROCK:
+                        b = biome_type::rock;
+                        break;
+                    case BIOME_DESERT:
+                        b = biome_type::desert;
+                        break;
+                    case BIOME_SNOW:
+                        b = biome_type::snow;
+                        break;
+                    default:
+                        b = biome_type::unknown;
+                        break;
+                }
+
+                if(building_flyweight.can_walk_on(b)) {
+                    const glm::vec2 building_target(world_coord.x, world_coord.z);
+                    auto selected_unit = static_cast<unit*>(units().get(selected_unit_id));
+                    selected_unit->set_target_position(building_target);
+                    // Can build building
+                    network.send_to(networking::packet::make(networking::build_building(building_id,
+                                                                                        selected_unit_id,
+                                                                                        building_target),
+                                                             PACKET_CONSTRUCT), socket);
+                }
+            }
 
             inputs.change_current(worker_context_hdl);
         }
