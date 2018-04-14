@@ -79,10 +79,12 @@ int main(int argc, char const** argv) {
     preview.setPosition(window.getPosition() + sf::Vector2i(-200, 0));
     
     sf::Font font;
-#ifdef __APPLE__
+#if defined(__APPLE__)
     font.loadFromFile("/Library/Fonts/Courier New.ttf");
-#else
+#elif defined(_WIN32)
      font.loadFromFile("Courier New.ttf");
+#else
+    font.loadFromFile("/usr/share/fonts/truetype/ubuntu-font-family/UbuntuMono-R.ttf");
 #endif
     sf::Text modeTxt;
     modeTxt.setFont(font);

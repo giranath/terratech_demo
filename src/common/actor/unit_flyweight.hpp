@@ -172,6 +172,10 @@ public:
         return visibility_radius;
     }
 
+    bool can_walk_on(biome_type biome) const noexcept {
+        return std::find(std::begin(walkable_biome), std::end(walkable_biome), biome) != std::end(walkable_biome);
+    }
+
     friend void to_json(nlohmann::json& j, const unit_flyweight& uf);
 };
 

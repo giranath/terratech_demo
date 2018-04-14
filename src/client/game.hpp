@@ -120,6 +120,7 @@ private:
     void poll_units_update();
     void cull_out_of_view_chunks();
 
+    glm::vec3 get_world_coord(glm::vec2 screen_coords) const noexcept;
 public:
     game(networking::network_manager& manager, networking::network_manager::socket_handle socket);
     

@@ -196,21 +196,15 @@ void game::setup_inputs() {
 
     // Unit selection
     root_context.register_mouse_click(SDL_BUTTON_LEFT, [this, worker_context_hdl](input::click_event ev) {
-        const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
-        const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
-
-        const glm::vec2 coords{ ev.position.x, G_TO_REMOVE_SCREEN_HEIGHT - ev.position.y };
-        const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
-
-        glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
+        glm::vec3 world_coord = get_world_coord(ev.position);
         selected_unit_id = -1;
 
         // clicked outside the map
-        if (inside_world_bound(test))
+        if (inside_world_bound(world_coord))
         {
             unit* clicked_unit = nullptr;
             int size = 0;
-            units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
+            units().units_in(glm::vec2(world_coord.x / rendering::chunk_renderer::SQUARE_SIZE, world_coord.z / rendering::chunk_renderer::SQUARE_SIZE),
                              &clicked_unit, [this, &size](unit* u) {
                         unit_id id(u->get_id());
                         if (id.player_id == player_id && size == 0)
@@ -233,27 +227,21 @@ void game::setup_inputs() {
     });
 
     root_context.register_mouse_click(SDL_BUTTON_RIGHT, [this](input::click_event ev) {
-        const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
-        const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
+        glm::vec3 world_coord = get_world_coord(ev.position);
 
-        const glm::vec2 coords{ ev.position.x, G_TO_REMOVE_SCREEN_HEIGHT - ev.position.y };
-        const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
-
-        glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
-
-        if(inside_world_bound(test) && selected_unit_id != -1) {
+        if(inside_world_bound(world_coord) && selected_unit_id != -1) {
             // Update target of unit
             base_unit* selected_unit = units().get(selected_unit_id);
             if(selected_unit) {
                 unit* u = static_cast<unit*>(selected_unit);
-                u->set_target_position(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
-                                                 test.z / rendering::chunk_renderer::SQUARE_SIZE));
+                u->set_target_position(glm::vec2(world_coord.x / rendering::chunk_renderer::SQUARE_SIZE,
+                                                 world_coord.z / rendering::chunk_renderer::SQUARE_SIZE));
 
                 // Send to server
                 //TODO should remove
                 std::vector<networking::update_target> updates;
-                updates.emplace_back(selected_unit_id, glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE,
-                                                                 test.z / rendering::chunk_renderer::SQUARE_SIZE));
+                updates.emplace_back(selected_unit_id, glm::vec2(world_coord.x / rendering::chunk_renderer::SQUARE_SIZE,
+                                                                 world_coord.z / rendering::chunk_renderer::SQUARE_SIZE));
 
                 network.send_to(networking::packet::make(updates, PACKET_UPDATE_TARGETS), socket);
             }
@@ -269,12 +257,18 @@ void game::setup_inputs() {
 
     // Builder context
     input::event_manager::context& builder_context = inputs.get(builder_context_hdl);
-    builder_context.register_mouse_click(SDL_BUTTON_LEFT, [this](input::click_event ev) {
-        std::cout << "Build a forum" << std::endl;
+    builder_context.register_mouse_click(SDL_BUTTON_LEFT, [this, worker_context_hdl](input::click_event ev) {
+        glm::vec3 world_coord = get_world_coord(ev.position);
+
+        if(inside_world_bound(world_coord)) {
+
+
+            inputs.change_current(worker_context_hdl);
+        }
     });
 
-    builder_context.register_key_action(SDLK_ESCAPE, input::make_generic_command([this, builder_context_hdl]() {
-        inputs.change_current(builder_context_hdl);
+    builder_context.register_key_action(SDLK_ESCAPE, input::make_generic_command([this, worker_context_hdl]() {
+        inputs.change_current(worker_context_hdl);
     }));
 }
 
@@ -498,6 +492,16 @@ void game::cull_out_of_view_chunks() {
         }
     });
 
+}
+
+glm::vec3 game::get_world_coord(glm::vec2 screen_coords) const noexcept {
+    const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
+    const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
+
+    const glm::vec2 coords{ screen_coords.x, G_TO_REMOVE_SCREEN_HEIGHT - screen_coords.y };
+    const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
+
+    return game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, {0,1,0});
 }
 
 void game::on_update(frame_duration last_frame_duration) {

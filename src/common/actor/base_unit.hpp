@@ -72,6 +72,10 @@ public:
         return flyweight->visibility();
     }
 
+    bool can_walk_on(biome_type b) const noexcept {
+        return flyweight->can_walk_on(b);
+    }
+
     friend void from_json(const nlohmann::json& j, base_unit& u);
     friend void to_json(nlohmann::json& j, const base_unit& u);
 };

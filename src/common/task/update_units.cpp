@@ -13,7 +13,31 @@ bool update_units::can_move(base_unit* unit, glm::vec3 position, world& w) noexc
                                                  position.y,
                                                  position.z - chunk_z * world::CHUNK_DEPTH);
 
-            return chunk->biome_at(chunk_space_position.x, 0, chunk_space_position.z) != BIOME_WATER;
+            const int biome = chunk->biome_at(chunk_space_position.x, 0, chunk_space_position.z);
+
+            biome_type b;
+            switch(biome) {
+                case BIOME_WATER:
+                    b = biome_type::water;
+                    break;
+                case BIOME_SNOW:
+                    b = biome_type::snow;
+                    break;
+                case BIOME_DESERT:
+                    b = biome_type::desert;
+                    break;
+                case BIOME_ROCK:
+                    b = biome_type::rock;
+                    break;
+                case BIOME_GRASS:
+                    b = biome_type::grass;
+                    break;
+                default:
+                    b = biome_type::unknown;
+                    break;
+            }
+
+            return unit->can_walk_on(b);
         }
     }
 
