@@ -17,7 +17,7 @@
     "Range": 0,
     "ResourceGatheringCapacity": 0,
     "RessourceGatheringType": [],
-	"RessourceDropOff": false,
+	"RessourceDropOff": [],
     "Stone": 0,
     "Texture": "Workshop",
     "TransportCapacity": 0,
@@ -26,5 +26,6 @@
 	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
     "Width": 2.0,
     "Wood": 0,
-    "id": 204
+    "id": 204,
+    "Visibility" : 3
 }

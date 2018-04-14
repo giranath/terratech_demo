@@ -20,15 +20,15 @@
     "Range": 0,
     "ResourceGatheringCapacity": 0,
     "RessourceGatheringType": [],
-	"RessourceDropOff": false
-	"RessourceDropOff": ["MagicEssence"],
+    "RessourceDropOff": ["MagicEssence"],
     "Stone": 0,
     "Texture": "Laboratory",
     "TransportCapacity": 0,
     "Transportable": false,
     "WalkSpeed": 0,
-	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
+    "WalkableType": ["Grass", "Rock", "Snow", "Desert"],
     "Width": 2.0,
     "Wood": 0,
-    "id": 205
+    "id": 205,
+    "Visibility" : 3
 }

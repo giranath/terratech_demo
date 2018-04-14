@@ -25,5 +25,6 @@
 	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
     "Width": 200.0,
     "Wood": 0,
-    "id": 201
+    "id": 201,
+    "Visibility" : 3
 }
