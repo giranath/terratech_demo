@@ -7,7 +7,7 @@
     "Essence": 0,
     "Food": 100,
     "Gold": 50,
-    "Height": 1.0,
+    "Height": 60.0,
     "Life": 50,
     "Name": "knight",
     "PopulationCost": 1,
@@ -19,10 +19,10 @@
     "Texture": "Cavalier",
     "TransportCapacity": 0,
     "Transportable": true,
-    "WalkSpeed": 3,
+    "WalkSpeed": 7,
 	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
-    "Width": 2.0,
+    "Width": 60.0,
     "Wood": 50,
     "id": 104,
-    "Visibility" : 3
+    "Visibility" : 10
 }

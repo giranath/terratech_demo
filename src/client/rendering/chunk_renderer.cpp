@@ -155,8 +155,8 @@ void chunk_renderer::build() noexcept {
 }
 
 void chunk_renderer::render(mesh_rendering_system &renderer, glm::mat4 parent_model) const noexcept {
-    renderer.emplace(&floor_mesh, parent_model, TEXTURE_TERRAIN, PROGRAM_STANDARD);
-    renderer.emplace(&sites_mesh, parent_model, TEXTURE_NONE, PROGRAM_STANDARD);
+    renderer.emplace(&floor_mesh, parent_model, TEXTURE_TERRAIN, PROGRAM_STANDARD, 0);
+    renderer.emplace(&sites_mesh, parent_model, TEXTURE_NONE, PROGRAM_STANDARD, 0);
 }
 
 const world_chunk& chunk_renderer::displayed_chunk() const {

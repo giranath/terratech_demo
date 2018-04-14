@@ -75,6 +75,14 @@ void game::load_flyweights() {
     }
 }
 
+void game::setup_selection_circles(){
+	selection_meshes.reserve(MAX_SELECTED_UNITS);
+
+	for (size_t i = 0; i < MAX_SELECTED_UNITS; i++) {
+		selection_meshes.emplace_back(rendering::make_circle({ 0,1.0f,0 }, virtual_textures["Selection"].area));
+	}
+}
+
 void game::setup_renderer() {
     mesh_rendering.set_camera(&game_camera);
 
@@ -340,6 +348,7 @@ void game::on_init() {
 
     setup_fog_of_war();
     setup_screen_quad();
+	setup_selection_circles();
 }
 
 void game::wait_for_server_init_datas() {
@@ -597,12 +606,26 @@ void game::render_chunks() {
 }
 
 void game::render_units() {
+	// render selection
+	if (selected_unit_id != -1)
+	{
+		base_unit* selected_unit = units().get(selected_unit_id);
+
+		rendering::mesh_renderer renderer(&selection_meshes[0],
+			glm::scale(
+				glm::translate(glm::mat4(1.f), selected_unit->get_position() * rendering::chunk_renderer::SQUARE_SIZE + glm::vec3(0.f, 1.f, 0.f)),
+			    glm::vec3(selected_unit->get_flyweight()->width() * 0.5f, 1, selected_unit->get_flyweight()->width() * 0.5f))
+			, virtual_textures["Selection"].id, PROGRAM_STANDARD, 1);
+
+		mesh_rendering.push(std::move(renderer));
+	}
+
     for(auto unit = units().begin_of_units(); unit != units().end_of_units(); ++unit) {
         if(unit->second->is_visible()) {
             rendering::mesh_renderer renderer(&unit_meshes[unit->second->get_type_id()],
                                               glm::translate(glm::mat4{1.f}, unit->second->get_position() *
                                                                              rendering::chunk_renderer::SQUARE_SIZE),
-                                              virtual_textures[unit->second->texture()].id, PROGRAM_BILLBOARD);
+                                              virtual_textures[unit->second->texture()].id, PROGRAM_BILLBOARD, 2);
             mesh_rendering.push(std::move(renderer));
         }
     }

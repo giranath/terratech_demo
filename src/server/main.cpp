@@ -28,7 +28,7 @@ extern "C" void sign_handler(int signo) {
 #endif
 }
 
-int main(int /*argc*/, char* /*argv*/[]) {
+int main(int argc, char* argv[]) {
     if(SDL_Init(0) == -1) {
         std::cerr << "cannot initialize SDL: " << SDL_GetError() << std::endl;
         return 1;
@@ -39,8 +39,29 @@ int main(int /*argc*/, char* /*argv*/[]) {
         SDL_Quit();
         return 1;
     }
+    map_choice chosen_map = map_choice::PLAIN_MAP;
+    if (argc >= 2 && argv[1] != NULL)
+    {
+        std::string map_string = argv[1];
 
-    authoritative_game game;
+       if (map_string == "plain")
+       {
+           chosen_map = map_choice::PLAIN_MAP;
+       }
+       else if (map_string == "island")
+       {
+           chosen_map = map_choice::ISLAND_MAP;
+       }
+       else if (map_string == "lake")
+       {
+           chosen_map = map_choice::LAKE_MAP;
+       }
+       else if (map_string == "river")
+       {
+           chosen_map = map_choice::RIVER_MAP;
+       }
+    }
+    authoritative_game game(chosen_map);
     game.init();
 
     if(std::signal(SIGTERM, sign_handler) == SIG_ERR) {

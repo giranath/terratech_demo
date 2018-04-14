@@ -35,7 +35,7 @@ class authoritative_game : public gameplay::base_game {
 
 public:
     authoritative_game();
-
+    authoritative_game(map_choice chosen_map);
     void on_init() override;
     void on_update(frame_duration last_frame) override;
     void on_release() override;
