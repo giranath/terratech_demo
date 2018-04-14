@@ -181,6 +181,37 @@ void game::setup_inputs() {
     root_context.register_key_state(SDLK_d, std::make_unique<input::look_right_command>(game_camera, 10.f));
     root_context.register_key_state(SDLK_w, std::make_unique<input::look_up_command>(game_camera, 10.f));
     root_context.register_key_state(SDLK_s, std::make_unique<input::look_down_command>(game_camera, 10.f));
+    root_context.register_key_action(SDLK_TAB, input::make_generic_command([this]() {
+        static_vector<unit*, 200> my_units;
+        units().units_of(player_id, std::back_inserter(my_units));
+
+        if(my_units.size() > 0) {
+            auto it = std::find_if(std::begin(my_units), std::end(my_units), [this](const unit *u) {
+                return u->get_id() == last_camera_tab_unit_id;
+            });
+
+            // Roll back to first unit
+            if (it == std::end(my_units)) {
+                it = std::begin(my_units);
+            }
+            else {
+                // Move to next unit
+                ++it;
+                if(it == std::end(my_units)) {
+                    it = std::begin(my_units);
+                }
+            }
+
+            last_camera_tab_unit_id = (*it)->get_id();
+
+            game_camera.reset({ (*it)->get_position().x * rendering::chunk_renderer::SQUARE_SIZE,
+                                game_camera.position().y,
+                                (*it)->get_position().z * rendering::chunk_renderer::SQUARE_SIZE });
+        }
+        else {
+            last_camera_tab_unit_id = -1;
+        }
+    }));
 
     // Wireframe
     root_context.register_key_action(SDLK_m, KMOD_CTRL, std::make_unique<input::wireframe_command>());
@@ -366,7 +397,7 @@ void game::on_init() {
 
     setup_fog_of_war();
     setup_screen_quad();
-	setup_selection_circles();
+    setup_selection_circles();
 }
 
 void game::wait_for_server_init_datas() {

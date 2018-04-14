@@ -140,7 +140,7 @@ add_library(common
         src/common/task/update_player_visibility.hpp
         src/common/task/update_units.cpp
         src/common/task/update_units.hpp
-        )
+        src/common/networking/build.hpp src/common/networking/build.cpp)
 target_include_directories(common PUBLIC
         "${CMAKE_SOURCE_DIR}/thirdparty"
 		${CRYPTO++_INCLUDE_DIR}

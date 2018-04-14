@@ -12,6 +12,8 @@ class static_vector
     size_t position;
 
 public:
+    using value_type = T;
+
     static_vector() : 
         values(std::make_unique<std::array<T, NB>>()),
         position{0}

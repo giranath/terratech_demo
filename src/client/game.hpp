@@ -64,6 +64,7 @@ private:
     // Gameplay
     int selected_unit_id;
     uint8_t player_id;
+    int last_camera_tab_unit_id;
 
     //Networking
     networking::network_manager& network;
@@ -92,7 +93,7 @@ private:
     void load_textures();
     void load_virtual_textures();
     void load_shaders(); 
-	void setup_selection_circles();
+    void setup_selection_circles();
 
     void load_local_datas();
 
