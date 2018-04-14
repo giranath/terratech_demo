@@ -96,6 +96,7 @@ void mesh_rendering_system::render() {
             }
 
             if (renderer.program != last_program) {
+                gl::bind(gl::program{});
                 current_program = &programs[renderer.program];
                 gl::bind(*current_program);
 

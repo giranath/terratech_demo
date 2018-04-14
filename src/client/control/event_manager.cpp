@@ -68,8 +68,9 @@ void event_manager::context::dispatch() {
 }
 
 event_manager::event_manager()
-: contexes(1)
+: contexes()
 , current_context(0) {
+    contexes.push_back(std::make_unique<context>());
 }
 
 event_manager::context_handle event_manager::make_context() {
@@ -85,14 +86,14 @@ event_manager::context_handle event_manager::extend_context(context_handle to_ex
 
     context_handle hdl = contexes.size();
 
-    contexes.push_back(context(&get(to_extend)));
+    contexes.push_back(std::make_unique<context>(contexes[to_extend].get()));
 
     return hdl;
 }
 
 event_manager::context& event_manager::get(context_handle handle) {
     assert(handle < contexes.size());
-    return contexes[handle];
+    return *contexes[handle];
 }
 
 void event_manager::change_current(context_handle new_current) {
@@ -102,11 +103,11 @@ void event_manager::change_current(context_handle new_current) {
 }
 
 void event_manager::handle(SDL_Event event) {
-    contexes[current_context].handle(event);
+    contexes[current_context]->handle(event);
 }
 
 void event_manager::dispatch() {
-    contexes[current_context].dispatch();
+    contexes[current_context]->dispatch();
 }
 
 }

@@ -64,7 +64,11 @@ class key_input_handler {
     std::unordered_map<int, multiple_key_handler> handlers;
 public:
 	key_input_handler() = default;
-	key_input_handler(key_input_handler&& other);
+	key_input_handler(key_input_handler&& other) noexcept;
+    key_input_handler(const key_input_handler&) = delete;
+
+    key_input_handler& operator=(key_input_handler&& other) noexcept;
+
     bool register_state(int key, std::unique_ptr<command> c);
     bool register_action(int key, std::unique_ptr<command> c);
     bool register_action(int key, int modifiers, std::unique_ptr<command> c);

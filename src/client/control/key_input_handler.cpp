@@ -97,9 +97,15 @@ void key_input_handler::action_key_handler::execute() {
     }
 }
 
-key_input_handler::key_input_handler(key_input_handler&& other)
+key_input_handler::key_input_handler(key_input_handler&& other) noexcept
 : handlers(std::move(other.handlers)){
 
+}
+
+key_input_handler& key_input_handler::operator=(key_input_handler&& other) noexcept {
+    std::swap(handlers, other.handlers);
+
+    return *this;
 }
 
 bool key_input_handler::register_state(int key, std::unique_ptr<command> c) {

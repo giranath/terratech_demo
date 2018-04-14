@@ -136,7 +136,7 @@ void game::load_shaders() {
         auto fragment_shader = load_shader<gl::fragment_shader>("asset/shader/" + record.fragment_path);
 
         if(vertex_shader.good() && fragment_shader.good()) {
-            gl::program program;
+            gl::program program = gl::program::make();
             program.attach(vertex_shader);
             program.attach(fragment_shader);
 
@@ -167,6 +167,9 @@ bool inside_world_bound(glm::vec3 position) {
 
 
 void game::setup_inputs() {
+    auto worker_context_hdl = inputs.extend_context(input::event_manager::root);
+    auto builder_context_hdl = inputs.extend_context(input::event_manager::root);
+
     input::event_manager::context& root_context = inputs.get(input::event_manager::root);
 
     // Camera movements
@@ -192,7 +195,7 @@ void game::setup_inputs() {
     });
 
     // Unit selection
-    root_context.register_mouse_click(SDL_BUTTON_LEFT, [this](input::click_event ev) {
+    root_context.register_mouse_click(SDL_BUTTON_LEFT, [this, worker_context_hdl](input::click_event ev) {
         const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
         const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
 
@@ -221,6 +224,10 @@ void game::setup_inputs() {
             {
                 selected_unit_id = clicked_unit->get_id();
                 std::cout << "selected unit is " << selected_unit_id << std::endl;
+
+                if(clicked_unit->get_type_id() == 100) {
+                    inputs.change_current(worker_context_hdl);
+                }
             }
         }
     });
@@ -252,6 +259,23 @@ void game::setup_inputs() {
             }
         }
     });
+
+    // Worker context
+    input::event_manager::context& worker_context = inputs.get(worker_context_hdl);
+
+    worker_context.register_key_action(SDLK_b, input::make_generic_command([this, builder_context_hdl]() {
+        inputs.change_current(builder_context_hdl);
+    }));
+
+    // Builder context
+    input::event_manager::context& builder_context = inputs.get(builder_context_hdl);
+    builder_context.register_mouse_click(SDL_BUTTON_LEFT, [this](input::click_event ev) {
+        std::cout << "Build a forum" << std::endl;
+    });
+
+    builder_context.register_key_action(SDLK_ESCAPE, input::make_generic_command([this, builder_context_hdl]() {
+        inputs.change_current(builder_context_hdl);
+    }));
 }
 
 void game::load_local_datas() {

@@ -52,10 +52,18 @@ mouse_input_handler::mouse_input_handler() {
     button_states[SDL_BUTTON_X2] = false;
 }
 
-mouse_input_handler::mouse_input_handler(mouse_input_handler&& other) 
+mouse_input_handler::mouse_input_handler(mouse_input_handler&& other) noexcept
 : click_handlers(std::move(other.click_handlers))
 , button_states(std::move(other.button_states))
 , drag_handlers(std::move(other.drag_handlers)) {
+}
+
+mouse_input_handler& mouse_input_handler::operator=(mouse_input_handler&& other) noexcept {
+    std::swap(click_handlers, other.click_handlers);
+    std::swap(button_states, other.button_states);
+    std::swap(drag_handlers, other.drag_handlers);
+
+    return *this;
 }
 
 void mouse_input_handler::register_click(int button, click_event_handler handler) {
@@ -80,8 +88,7 @@ bool mouse_input_handler::handle(SDL_Event event) {
             button_states[event.button.button] = true;
         } break;
         case SDL_MOUSEBUTTONUP: {
-           
-			auto draging_it = drag_handlers.find(event.button.button);
+            auto draging_it = drag_handlers.find(event.button.button);
             if(draging_it != std::end(drag_handlers)) {
                 draging_it->second.on_released(glm::vec2(event.button.x, event.button.y));
                 handled = true;

@@ -42,6 +42,7 @@ struct is_pointer_like<std::shared_ptr<ptr>> {
 
 class program {
     GLuint prog;
+    program(GLuint prog);
 public:
     class link_status {
         bool is_linked;
@@ -111,6 +112,8 @@ public:
 
         return uniform<T>{};
     }
+
+    static program make() noexcept;
 };
 
 template<>

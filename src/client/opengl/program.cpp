@@ -20,8 +20,17 @@ const std::string& program::link_status::message() const noexcept {
     return msg;
 }
 
+program program::make() noexcept {
+    return program(glCreateProgram());
+}
+
+program::program(GLuint prog)
+: prog(prog) {
+
+}
+
 program::program() noexcept
-: prog{glCreateProgram()}{
+: prog{0}{
 }
 
 program::program(program&& other) noexcept

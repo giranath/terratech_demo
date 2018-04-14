@@ -17,13 +17,12 @@ public:
         mouse_input_handler mouse_handler;
         key_input_handler key_handler;
 
-        context(context* c);
-		
         void handle(SDL_Event event);
         void dispatch();
     public:
         context();
-		context(context&& other);
+        context(context* c);
+        context(context&& other);
 
         void register_key_action(int key, std::unique_ptr<command> c);
         void register_key_action(int key, int modifiers, std::unique_ptr<command> c);
@@ -36,7 +35,7 @@ public:
     using context_handle = std::size_t;
     static const context_handle root = 0;
 private:
-    std::vector<context> contexes;
+    std::vector<std::unique_ptr<context>> contexes;
     context_handle current_context;
 public:
     event_manager();
