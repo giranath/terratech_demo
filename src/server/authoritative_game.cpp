@@ -56,6 +56,24 @@ void authoritative_game::load_flyweights() {
             std::cerr << "  cannot open " << full_path << std::endl;
         }
     });
+
+    std::ifstream buildings_list_stream("asset/data/building.list");
+    if(!buildings_list_stream.is_open()) {
+        std::cerr << "cannot open 'asset/data/building.list'" << std::endl;
+    }
+
+    data::load_data_list<std::string>(buildings_list_stream, [this](const std::string& rel_path) {
+       std::string full_path = "asset/data/" + rel_path;
+
+        std::ifstream building_stream(full_path);
+        if(building_stream.is_open()) {
+            std::cout << "  loading flyweight '" << full_path << "'" << std::endl;
+            load_flyweight(nlohmann::json::parse(building_stream));
+        }
+        else {
+            std::cerr << "  cannot open " << full_path << std::endl;
+        }
+    });
 }
 
 void authoritative_game::load_assets() {
