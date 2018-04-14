@@ -16,6 +16,7 @@
 #include "../common/task/update_player_visibility.hpp"
 #include "../common/task/update_units.hpp"
 #include "../common/networking/player_init.hpp"
+#include "../common/networking/build.hpp"
 
 // The states:
 //  - lobby
@@ -416,12 +417,10 @@ void authoritative_game::on_connection(networking::network_manager::socket_handl
     glm::vec2 availabe_position = find_available_position(world.chunk_at(spawn_chunks[connected_client.id - 1].x, spawn_chunks[connected_client.id - 1].y));
 
     spawn_unit(connected_client.id, starting_position, availabe_position, 100);
+    spawn_unit(connected_client.id, starting_position, availabe_position, 102);
+    spawn_unit(connected_client.id, starting_position, availabe_position, 104);
     spawn_unit(connected_client.id, starting_position, availabe_position, 106);
-	spawn_unit(connected_client.id, starting_position, availabe_position, 102);
-	spawn_unit(connected_client.id, starting_position, availabe_position, 102);
-	spawn_unit(connected_client.id, starting_position, availabe_position, 102);
-	spawn_unit(connected_client.id, starting_position, availabe_position, 111);
-	spawn_unit(connected_client.id, starting_position, availabe_position, 104);
+    spawn_unit(connected_client.id, starting_position, availabe_position, 111);
 }
 
 glm::vec2 authoritative_game::find_available_position(world_chunk* player_chunk)
@@ -447,6 +446,10 @@ glm::vec2 authoritative_game::find_available_position(world_chunk* player_chunk)
         }
     }
     return player_start_position;
+}
+
+void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, int flyweight_id) {
+    spawn_unit(owner, position, glm::vec2(position.x, position.z), flyweight_id);
 }
 
 void authoritative_game::spawn_unit(uint8_t owner, glm::vec3 position, glm::vec2 target, int flyweight_id) {
@@ -505,7 +508,6 @@ void authoritative_game::on_update(frame_duration last_frame) {
         });
 
         if(it != std::end(connected_clients)) {
-            // TODO: Handle packet for this client
             switch(packet.second.head.packet_id) {
                 case PACKET_UPDATE_TARGETS: {
                     std::vector<networking::update_target> updates = packet.second.as<std::vector<networking::update_target>>();
@@ -517,6 +519,60 @@ void authoritative_game::on_update(frame_duration last_frame) {
                         // it can move this unit
                         if(id.player_id == it->id) {
                             static_cast<unit*>(units().get(update.unit_id))->set_target_position(update.new_target);
+                        }
+                    }
+                }
+                    break;
+                case PACKET_CONSTRUCT: {
+                    auto build_command = packet.second.as<networking::build_building>();
+
+                    unit* u = static_cast<unit*>(units().get(build_command.builder_id));
+                    const unit_flyweight& building_flyweight = unit_flyweights()[build_command.building_id];
+
+                    unit_id id(build_command.builder_id);
+
+                    // Check the specified unit id is a valid builder
+                    if(id.player_id == it->id && u && u->get_type_id() == 100) {
+                        // Validate position
+
+                        int chunk_x = static_cast<int>(build_command.position.x / world::CHUNK_WIDTH);
+                        int chunk_z = static_cast<int>(build_command.position.y / world::CHUNK_DEPTH);
+
+                        const world_chunk* chunk = world.chunk_at(chunk_x, chunk_z);
+                        if(chunk) {
+                            const glm::vec3 chunk_space_position(build_command.position.x - chunk_x * world::CHUNK_WIDTH,
+                                                                 0,
+                                                                 build_command.position.y - chunk_z * world::CHUNK_DEPTH);
+
+                            int biome = chunk->biome_at(chunk_space_position.x, chunk_space_position.y, chunk_space_position.z);
+                            biome_type b;
+                            switch(biome) {
+                                case BIOME_WATER:
+                                    b = biome_type::water;
+                                    break;
+                                case BIOME_GRASS:
+                                    b = biome_type::grass;
+                                    break;
+                                case BIOME_ROCK:
+                                    b = biome_type::rock;
+                                    break;
+                                case BIOME_DESERT:
+                                    b = biome_type::desert;
+                                    break;
+                                case BIOME_SNOW:
+                                    b = biome_type::snow;
+                                    break;
+                                default:
+                                    b = biome_type::unknown;
+                                    break;
+                            }
+
+                            if(building_flyweight.can_walk_on(b)) {
+                                // The building can be placed
+                                u->set_target_position(build_command.position);
+
+                                spawn_unit(it->id, glm::vec3(build_command.position.x, 0, build_command.position.y), build_command.building_id);
+                            }
                         }
                     }
                 }

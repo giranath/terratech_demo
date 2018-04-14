@@ -9,7 +9,7 @@
     "Essence": 0,
     "Food": 0,
     "Gold": 0,
-    "Height": 200.0,
+    "Height": 128,
     "Life": 50,
     "Name": "Forum",
     "PopulationCost": 1,
@@ -23,7 +23,7 @@
     "Transportable": false,
     "WalkSpeed": 0,
 	"WalkableType": ["Grass", "Rock", "Snow", "Desert"],
-    "Width": 200.0,
+    "Width": 128,
     "Wood": 0,
     "id": 201,
     "Visibility" : 3

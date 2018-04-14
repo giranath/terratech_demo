@@ -8,10 +8,11 @@
 namespace networking {
 
 struct build_building {
-    uint8_t building_id;
-    uint32_t builder_id;
-    glm::vec2 position;
+    uint8_t building_id = {};
+    uint32_t builder_id = {};
+    glm::vec2 position = {};
 
+    build_building() = default;
     build_building(uint8_t building, uint32_t builder, glm::vec2 position);
 };
 
