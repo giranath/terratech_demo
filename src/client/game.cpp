@@ -19,6 +19,7 @@
 #include "../common/task/update_player_visibility.hpp"
 #include "../common/task/update_units.hpp"
 #include "../common/networking/player_init.hpp"
+#include "rendering/mesh.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -257,7 +258,10 @@ void game::setup_inputs() {
 		if (inside_world_bound(start_position_world))
 		{
 			if(ev.current_state != input::drag_event::state::starting)
-			{ 
+			{
+                float screen_width = glm::abs(ev.current.x - ev.start.x);
+                float screen_height = glm::abs(ev.current.y - ev.start.y);
+
 				float width = glm::abs(start_position_world.x - current_position_world.x);
 				float height = glm::abs(start_position_world.z - current_position_world.z);
 
@@ -265,13 +269,35 @@ void game::setup_inputs() {
 				center += start_position_world;
 				center.y = 0.1f;
 
+                float inverted_current_y = G_TO_REMOVE_SCREEN_HEIGHT - ev.current.y;
+                float invertex_start_y = G_TO_REMOVE_SCREEN_HEIGHT - ev.start.y;
+
+                // 0 -> 800 => -400, 400
+                glm::vec3 top_left_pos{     ev.start.x - 400.f,   invertex_start_y - 400.f, 0.f};
+                glm::vec3 top_right_pos{    ev.current.x - 400.f, invertex_start_y - 400.f, 0.f};
+                glm::vec3 bottom_right_pos{ ev.current.x - 400.f, inverted_current_y - 400.f, 0.f};
+                glm::vec3 bottom_left_pos{  ev.start.x - 400.f,   inverted_current_y - 400.f, 0.f};
+
+                rendering::static_mesh_builder<6> selection_builder;
+                selection_builder.add_vertex(top_left_pos, glm::vec2{virtual_textures["Square_Sel"].area.left(), virtual_textures["Square_Sel"].area.top()});
+                selection_builder.add_vertex(top_right_pos, glm::vec2{virtual_textures["Square_Sel"].area.right(), virtual_textures["Square_Sel"].area.top()});
+                selection_builder.add_vertex(bottom_right_pos, glm::vec2{virtual_textures["Square_Sel"].area.right(), virtual_textures["Square_Sel"].area.bottom()});
+
+                selection_builder.add_vertex(top_left_pos, glm::vec2{virtual_textures["Square_Sel"].area.left(), virtual_textures["Square_Sel"].area.top()});
+                selection_builder.add_vertex(bottom_right_pos, glm::vec2{virtual_textures["Square_Sel"].area.right(), virtual_textures["Square_Sel"].area.bottom()});
+                selection_builder.add_vertex(bottom_left_pos, glm::vec2{virtual_textures["Square_Sel"].area.left(), virtual_textures["Square_Sel"].area.bottom()});
+
+                selection_builder.rebuild(selection_square);
 
 				// Render dat
+                /*
 				rendering::mesh_renderer renderer(&selection_square
 					    , glm::scale(
-						    glm::translate(glm::mat4(1.f), center),
-						    glm::vec3(width / 2.f, 1, height / 2.f))
-					    , virtual_textures["Square_Sel"].id, PROGRAM_BILLBOARD, 3);
+						    glm::translate(glm::mat4(1.f), glm::vec3{ev.start.x - 400.f, (G_TO_REMOVE_SCREEN_HEIGHT - ev.start.y) - 400.f, 0.f}),
+						    glm::vec3(screen_width, screen_height, 0.f))
+					    , virtual_textures["Square_Sel"].id, PROGRAM_SELECTION, 3);
+                 */
+                rendering::mesh_renderer renderer(&selection_square, glm::mat4(1.f), virtual_textures["Square_Sel"].id, PROGRAM_SELECTION, 3);
 
 				mesh_rendering.push(std::move(renderer));
 

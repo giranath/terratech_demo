@@ -15,7 +15,7 @@ uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
 
 void main(){
-   mat4 mvp = projection_matrix * model_matrix;
+    mat4 mvp = projection_matrix * model_matrix;
 
     gl_Position =  mvp * vec4(vertex_position_modelspace, 1);
     fragment_color = vec4(vertex_color, 1);

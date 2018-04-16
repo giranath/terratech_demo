@@ -2,4 +2,4 @@
 1 billboard.vert billboard.frag
 2 fullscreen.vert fullscreen.frag
 3 fow.vert fow.frag
-4 selection.vert selection.frag
+4 selection.vert standard.frag
