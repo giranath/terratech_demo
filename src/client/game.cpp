@@ -74,12 +74,14 @@ void game::load_flyweights() {
     }
 }
 
-void game::setup_selection_circles(){
+void game::setup_selection_meshes(){
 	selection_meshes.reserve(MAX_SELECTED_UNITS);
 
 	for (size_t i = 0; i < MAX_SELECTED_UNITS; i++) {
 		selection_meshes.emplace_back(rendering::make_circle({ 0,1.0f,0 }, virtual_textures["Selection"].area));
 	}
+
+	selection_square = rendering::make_square({ 0, 1.0f , 0 }, virtual_textures["Square_Sel"].area);
 }
 
 void game::setup_renderer() {
@@ -164,6 +166,16 @@ bool inside_world_bound(glm::vec3 position) {
     return true;
 }
 
+void create_aabb_point_from_vec(glm::vec3 pt1, glm::vec3 pt2, glm::vec3 &top_left, glm::vec3 & bottom_right)
+{
+	top_left.x = glm::min(pt1.x, pt2.x);
+	top_left.y = glm::min(pt1.y, pt2.y);
+	top_left.z = glm::min(pt1.z, pt2.z);
+
+	bottom_right.x = glm::max(pt1.x, pt2.x);
+	bottom_right.y = glm::max(pt1.y, pt2.y);
+	bottom_right.z = glm::max(pt1.z, pt2.z);
+}
 
 void game::setup_inputs() {
     input::event_manager::context& root_context = inputs.get(input::event_manager::root);
@@ -228,32 +240,63 @@ void game::setup_inputs() {
 		const float screen_half_width = G_TO_REMOVE_SCREEN_WIDTH / 2.f;
 		const float screen_half_height = G_TO_REMOVE_SCREEN_HEIGHT / 2.f;
 
-		const glm::vec2 coords{ ev.current.x, G_TO_REMOVE_SCREEN_HEIGHT - ev.current.y };
-		const glm::vec2 normalized_coords{ (coords.x - screen_half_width) / screen_half_width, (coords.y - screen_half_height) / screen_half_height };
+		const glm::vec2 start_position{ ev.start.x, G_TO_REMOVE_SCREEN_HEIGHT - ev.start.y };
+		const glm::vec2 normalized_coords_start{ (start_position.x - screen_half_width) / screen_half_width, (start_position.y - screen_half_height) / screen_half_height };
 
-		glm::vec3 test = game_camera.world_coordinate_of(normalized_coords, { 0,0,0 }, { 0,1,0 });
+		glm::vec3 start_position_world = game_camera.world_coordinate_of(normalized_coords_start, { 0,0,0 }, { 0,1,0 });
+		
+		const glm::vec2 current_position{ ev.current.x, G_TO_REMOVE_SCREEN_HEIGHT - ev.current.y };
+		const glm::vec2 normalized_coords_cur{ (current_position.x - screen_half_width) / screen_half_width, (current_position.y - screen_half_height) / screen_half_height };
+
+		glm::vec3 current_position_world = game_camera.world_coordinate_of(normalized_coords_cur, { 0,0,0 }, { 0,1,0 });
+
 		selected_units.clear();
 		selected_units_id.clear();
 
 		// clicked outside the map
-		if (inside_world_bound(test))
+		if (inside_world_bound(start_position_world))
 		{
-			int size = 0;
-			bounding_box<float> bb(ev.start.x,
-								   ev.current.y,
-								   ev.current.x,
-								   ev.start.y);
+			if(ev.current_state != input::drag_event::state::starting)
+			{ 
+				float width = glm::abs(start_position_world.x - current_position_world.x);
+				float height = glm::abs(start_position_world.z - current_position_world.z);
 
-			units().units_in(glm::vec2(test.x / rendering::chunk_renderer::SQUARE_SIZE, test.z / rendering::chunk_renderer::SQUARE_SIZE),
-				std::back_inserter(selected_units), [this, &size](unit* u) {
-				unit_id id(u->get_id());
-				if (id.player_id == player_id && size < 12)
-				{
-					++size;
-					return true;
-				}
-				return false;
-			});
+				glm::vec3 center = (start_position_world - current_position_world) / 2.f;
+				center += start_position_world;
+				center.y = 0.1f;
+
+
+				// Render dat
+				rendering::mesh_renderer renderer(&selection_square
+					    , glm::scale(
+						    glm::translate(glm::mat4(1.f), center),
+						    glm::vec3(width / 2.f, 1, height / 2.f))
+					    , virtual_textures["Square_Sel"].id, PROGRAM_BILLBOARD, 3);
+
+				mesh_rendering.push(std::move(renderer));
+
+				glm::vec3 top_left,bottom_right;
+
+				create_aabb_point_from_vec(start_position_world, current_position_world, top_left, bottom_right);
+
+				// Create a box with the calculated positions
+				int size = 0;
+				collision::aabb_shape bb(glm::vec2{center.x, center.z} / rendering::chunk_renderer::SQUARE_SIZE, 
+					                     width / rendering::chunk_renderer::SQUARE_SIZE,
+					                     height / rendering::chunk_renderer::SQUARE_SIZE);
+
+				// Select everything that belongs to you and is in colision with the box
+				units().units_in(bb,
+					std::back_inserter(selected_units), [this, &size](unit* u) {
+					unit_id id(u->get_id());
+					if (id.player_id == player_id && size < 12)
+					{
+						++size;
+						return true;
+					}
+					return false;
+				});
+			}
 		}
 
 		for (auto u : selected_units)
@@ -388,7 +431,7 @@ void game::on_init() {
 
     setup_fog_of_war();
     setup_screen_quad();
-	setup_selection_circles();
+	setup_selection_meshes();
 }
 
 void game::wait_for_server_init_datas() {

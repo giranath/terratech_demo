@@ -113,6 +113,26 @@ void mesh::render() const noexcept {
     glDisableVertexAttribArray(0);
 }
 
+void make_square(mesh_builder &builder, glm::vec3 color, const bounding_box<float>& texture_area) {
+
+	builder.add_vertex(glm::vec3{ -0.5f, 0.f,    0.f }, glm::vec2{ texture_area.left(),  texture_area.top() });
+	builder.add_vertex(glm::vec3{ 0.5f, 0.f,    0.f }, glm::vec2{ texture_area.right(), texture_area.top() });
+	builder.add_vertex(glm::vec3{ 0.5f, 1, 0.f }, glm::vec2{ texture_area.right(), texture_area.bottom() });
+
+	builder.add_vertex(glm::vec3{ -0.5f, 0.f,    0.f }, glm::vec2{ texture_area.left(),  texture_area.top() });
+	builder.add_vertex(glm::vec3{ 0.5f, 1, 0.f }, glm::vec2{ texture_area.right(), texture_area.bottom() });
+	builder.add_vertex(glm::vec3{ -0.5f, 1, 0.f }, glm::vec2{ texture_area.left(),  texture_area.bottom() });
+}
+
+
+mesh make_square(glm::vec3 color, const bounding_box<float>& texture_area) {
+	static_mesh_builder<6> builder;
+
+	make_square(builder, color, texture_area);
+
+	return builder.build();
+}
+
 void make_circle(mesh_builder &builder, glm::vec3 color, float resolution, const bounding_box<float>& texture_area) {
 	int actual_resolution = resolution;
 	float step = 360 / actual_resolution;

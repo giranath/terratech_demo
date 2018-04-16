@@ -16,6 +16,7 @@ struct drag_event {
     enum class state {
         starting,
         dragging,
+		idle,
         ending
     };
 
@@ -41,11 +42,13 @@ class base_mouse_drag_handler {
 private:
     bool is_dragging;
     glm::vec2 start_pos;
+	glm::vec2 last_pos;
     drag_event_handler handler;
 public:
     explicit base_mouse_drag_handler(drag_event_handler handler);
     virtual void on_moved(const glm::vec2& current, const glm::vec2& delta);
     virtual void on_released(const glm::vec2& current);
+	virtual void on_idle();
 };
 
 class mouse_input_handler {

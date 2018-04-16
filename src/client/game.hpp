@@ -46,6 +46,7 @@ private:
 	// Selection
 	static const int MAX_SELECTED_UNITS = 12;
 	std::vector<rendering::mesh> selection_meshes;
+	rendering::mesh selection_square;
 
     // Units
     unit_mesh_collection unit_meshes;
@@ -93,7 +94,7 @@ private:
     void load_textures();
     void load_virtual_textures();
     void load_shaders(); 
-	void setup_selection_circles();
+	void setup_selection_meshes();
 
     void load_local_datas();
 

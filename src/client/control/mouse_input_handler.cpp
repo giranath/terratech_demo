@@ -22,24 +22,35 @@ click_event::click_event(int count, glm::vec2 pos)
 base_mouse_drag_handler::base_mouse_drag_handler(drag_event_handler handler)
 : is_dragging(false)
 , start_pos()
+, last_pos()
 , handler(std::move(handler)) {
 
 }
 
 void base_mouse_drag_handler::on_moved(const glm::vec2& current, const glm::vec2& delta) {
     if(is_dragging) {
-        handler(drag_event(drag_event::state::dragging, start_pos, current, delta));
+		last_pos = current;
     }
     else {
-        handler(drag_event(drag_event::state::starting, current, current, delta));
-        start_pos = current;
+		start_pos = current;
+		last_pos = current;
         is_dragging = true;
     }
+
+	handler(drag_event(drag_event::state::starting, start_pos, last_pos, delta));
+}
+
+void base_mouse_drag_handler::on_idle()
+{
+	if (is_dragging){
+		handler(drag_event(drag_event::state::idle, start_pos, last_pos, {0,0}));
+	}
 }
 
 void base_mouse_drag_handler::on_released(const glm::vec2& current) {
     if(is_dragging) {
         handler(drag_event(drag_event::state::ending, start_pos, current, glm::vec2{}));
+		is_dragging = false;
     }
 }
 
@@ -77,6 +88,13 @@ bool mouse_input_handler::handle(SDL_Event event) {
                 handled = true;
             }
 
+			for (auto it = std::begin(drag_handlers); it != std::end(drag_handlers); ++it) {
+				if (button_states[it->first]) {
+					it->second.on_idle();
+					handled = true;
+				}
+			}
+
             button_states[event.button.button] = true;
         } break;
         case SDL_MOUSEBUTTONUP: {
@@ -100,18 +118,19 @@ bool mouse_input_handler::handle(SDL_Event event) {
                     handled = true;
                 }
             }
-        }   break;
+			break;
+		}   
     }
 
     return handled;
 }
 
 void mouse_input_handler::dispatch() {
-    /*
-    for(auto it = std::begin(button_handlers); it != std::end(button_handlers); ++it) {
-        it->second->execute();
-    }
-     */
+	for (auto it = std::begin(drag_handlers); it != std::end(drag_handlers); ++it) {
+		if (button_states[it->first]) {
+			it->second.on_idle();
+		}
+	}
 }
 
 }
